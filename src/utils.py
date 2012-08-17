@@ -5,7 +5,7 @@
 """
 Created on 10.07.2012
 
-@author: razor
+@author: tetra5 <tetra5dotorg@gmail.com>
 """
 
 
