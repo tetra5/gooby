@@ -3,8 +3,6 @@
 
 
 """
-Created on 02.08.2012
-
 @author: tetra5 <tetra5dotorg@gmail.com>
 """
 
