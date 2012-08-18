@@ -11,7 +11,6 @@ __version__ = "2012.1"
 
 
 from plugin import ConferenceCommandPlugin
-from plugin.ConferenceCommandPlugin import log_request
 
 
 class ConferenceInformer(ConferenceCommandPlugin):
@@ -21,7 +20,7 @@ class ConferenceInformer(ConferenceCommandPlugin):
             "!topic": self.on_topic_command,
             }
 
-    @log_request
+    @ConferenceCommandPlugin.log_request
     def on_topic_command(self, message):
         """Displays current chat room topic."""
         chat = message.Chat

@@ -11,7 +11,6 @@ __version__ = "2012.1"
 
 
 from plugin import ConferenceCommandPlugin
-from plugin.ConferenceCommandPlugin import log_request
 
 
 class Maintenance(ConferenceCommandPlugin):
@@ -28,14 +27,14 @@ class Maintenance(ConferenceCommandPlugin):
             "!help": self.on_help_command,
             }
 
-    @log_request
+    @ConferenceCommandPlugin.log_request
     def on_help_command(self, message):
         """Displays help information."""
         chat = message.Chat
         output = "Type '!commands' to display a list of supported commands"
         chat.SendMessage(output)
 
-    @log_request
+    @ConferenceCommandPlugin.log_request
     def on_plugins_command(self, message):
         """Retrieves list of all registered plugins."""
         chat = message.Chat
@@ -47,7 +46,7 @@ class Maintenance(ConferenceCommandPlugin):
 
         chat.SendMessage("Registered plugins: " + ", ".join(output))
 
-    @log_request
+    @ConferenceCommandPlugin.log_request
     def on_commands_command(self, message):
         """Retrieves list of all available commands from all successfully
         registered plugins."""
@@ -65,7 +64,7 @@ class Maintenance(ConferenceCommandPlugin):
 
         chat.SendMessage("\n".join(output))
 
-    @log_request
+    @ConferenceCommandPlugin.log_request
     def on_version_command(self, message):
         """Displays bot version."""
         from gooby import __version__ as gooby_version
