@@ -15,5 +15,7 @@ from plugin import Plugin
 
 class VerboseDebugger(Plugin):
     def on_message_status(self, message, status):
-        self._logger.debug("Message received: %s, status: %s" %
-                           (message, status))
+        self._logger.debug(
+            "Message status: %s, type: %s, from: %s (%s), chat name: %s" %
+                (status, message.Type, message.FromDisplayName,
+                 message.FromHandle, message.ChatName))
