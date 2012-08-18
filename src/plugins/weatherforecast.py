@@ -13,6 +13,7 @@ __version__ = "2012.1"
 import re
 import urllib
 import urllib2
+import time
 
 try:
     from lxml import etree
@@ -23,6 +24,11 @@ except ImportError:
         from xml.etree import ElementTree as etree
 
 from plugin import ConferenceCommandPlugin
+
+
+_cache = {}
+# Cache time to live in seconds.
+_cache_ttl = 120
 
 
 def sanitize_temperature(temp):
@@ -87,6 +93,14 @@ def get_google_weather_forecast(location, language="en"):
     >>> len(data["forecasts"])
     4
     """
+    global _cache
+    global _chache_ttl
+
+    cached = _cache.get(location)
+    if cached:
+        if time.time() - cached[0] <= _cache_ttl:
+            return cached[1]
+
     api_url = "http://www.google.com/ig/api?"
     url = api_url + urllib.urlencode({"weather": location, "hl": language})
 
@@ -155,6 +169,7 @@ def get_google_weather_forecast(location, language="en"):
         for temp in temperatures:
             temp = sanitize_temperature(temp)
 
+    _cache.update({location: (time.time(), data)})
     return data
 
 
@@ -203,7 +218,10 @@ class WeatherForecast(ConferenceCommandPlugin):
                     location = v
                     break
 
-        language = message.Sender.CountryCode or "en"
+        # TODO: this one requires some tweaking.
+        # language = message.Sender.CountryCode or "en"
+
+        language = "en"
 
         try:
             forecast = get_google_weather_forecast(location, language)
