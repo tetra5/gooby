@@ -23,6 +23,7 @@ except ImportError:
         from xml.etree import ElementTree as etree
 
 from plugin import ConferenceCommandPlugin
+from plugin.ConferenceCommandPlugin import log_request
 
 
 def sanitize_temperature(temp):
@@ -166,13 +167,11 @@ class WeatherForecast(ConferenceCommandPlugin):
             "!weather": self.on_weather_command,
             }
 
+    @log_request
     def on_weather_command(self, message):
         """Retrieves Google Weather API forecast information. Type
         !weather <location> to specify location which is otherwise taken from
         your Skype public profile."""
-        self._logger.debug("Weather forecast request from '%s'" %
-                           message.FromHandle)
-
         substitutes = {
             "дс": "Moscow",
             "dc": "Moscow",
