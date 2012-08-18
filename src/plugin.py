@@ -9,7 +9,7 @@
 
 __all__ = ["Plugin", "ConferenceCommandPlugin", ]
 
-__version__ = "0.1.0"
+__version__ = "2012.1"
 
 
 import logging

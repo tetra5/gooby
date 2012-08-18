@@ -7,7 +7,7 @@
 """
 
 
-__version__ = "0.1.0"
+__version__ = "2012.1"
 
 __all__ = ["Application", ]
 
