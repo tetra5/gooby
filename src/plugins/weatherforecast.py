@@ -203,18 +203,20 @@ class WeatherForecast(ConferenceCommandPlugin):
         if not match:
             # Acquires location from user's Skype public profile.
             location = message.Sender.City
-            if not location:
-                chat.SendMessage(
-                    "%s, city of your location has not been set in your " \
-                    "Skype profile. Specify the location with !weather " \
-                    "<location> command." % message.FromDisplayName)
-                return
         else:
             location = match.group(1)
-            for k, v in substitutes.iteritems():
-                if k.lower() in location.lower():
-                    location = v
-                    break
+
+        if not location:
+            chat.SendMessage(
+                "%s, city of your location has not been set in your " \
+                "Skype profile. Specify the location with !weather " \
+                "<location> command." % message.FromDisplayName)
+            return
+
+        for k, v in substitutes.iteritems():
+            if k.lower() in location.lower():
+                location = v
+                break
 
         language = message.Sender.CountryCode or "en"
 
