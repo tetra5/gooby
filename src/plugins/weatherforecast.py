@@ -28,7 +28,7 @@ from plugin import ConferenceCommandPlugin
 
 _cache = {}
 # Cache time to live in seconds.
-_cache_ttl = 120
+_cache_ttl = 600
 
 
 def sanitize_temperature(temp):
@@ -159,15 +159,13 @@ def get_google_weather_forecast(location, language="en"):
         is_si = False
 
     for forecast in data["forecasts"]:
-        temperatures = (forecast["high"], forecast["low"])
-
         # Temperature is set to Fahrenheit degrees. Converts units to Celsius.
         if not is_si:
-            for temp_f in temperatures:
-                temp_f = fahrenheit_to_celsius(temp_f)
+            forecast["high"] = fahrenheit_to_celsius(forecast["high"])
+            forecast["low"] = fahrenheit_to_celsius(forecast["low"])
 
-        for temp in temperatures:
-            temp = sanitize_temperature(temp)
+        forecast["high"] = sanitize_temperature(forecast["high"])
+        forecast["low"] = sanitize_temperature(forecast["low"])
 
     _cache.update({location: (time.time(), data)})
     return data
@@ -187,20 +185,20 @@ class WeatherForecast(ConferenceCommandPlugin):
         !weather <location> to specify location which is otherwise taken from
         your Skype public profile."""
         substitutes = {
-            "дс": "Moscow",
-            "dc": "Moscow",
-            "default city": "Moscow",
-            "дс2": "Sankt-Peterburg",
-            "дс 2": "Sankt-Peterburg",
-            "dc2": "Sankt-Peterburg",
-            "dc 2": "Sankt-Peterburg",
-            "spb": "Sankt-Peterburg",
-            "спб": "Sankt-Peterburg",
+            u"дс": u"Moscow",
+            u"dc": u"Moscow",
+            u"default city": u"Moscow",
+            u"дс2": u"Sankt-Peterburg",
+            u"дс 2": u"Sankt-Peterburg",
+            u"dc2": u"Sankt-Peterburg",
+            u"dc 2": u"Sankt-Peterburg",
+            u"spb": u"Sankt-Peterburg",
+            u"спб": u"Sankt-Peterburg",
             }
 
         chat = message.Chat
 
-        match = re.match(r"!weather\s+(\w+)", message.Body, re.UNICODE)
+        match = re.match(r"!weather\s+(.*)", message.Body, re.UNICODE)
 
         if not match:
             # Acquires location from user's Skype public profile.
@@ -218,10 +216,7 @@ class WeatherForecast(ConferenceCommandPlugin):
                     location = v
                     break
 
-        # TODO: this one requires some tweaking.
-        # language = message.Sender.CountryCode or "en"
-
-        language = "en"
+        language = message.Sender.CountryCode or "en"
 
         try:
             forecast = get_google_weather_forecast(location, language)
@@ -236,21 +231,21 @@ class WeatherForecast(ConferenceCommandPlugin):
             return
 
         output = [
-            "Weather forecast for '%s'" %
+            u"Weather forecast for '%s'" %
                 forecast["forecast_information"]["city"],
 
-            "Current conditions: %s °C, %s, %s, %s" % (
+            u"Current conditions: %s °C, %s, %s, %s" % (
                 forecast["current_conditions"]["temp_c"],
                 forecast["current_conditions"]["condition"],
                 forecast["current_conditions"]["humidity"],
                 forecast["current_conditions"]["wind_condition"]),
 
-            "Forecast conditions:",
+            u"Forecast conditions:",
             ]
 
         forecasts = []
         for f in forecast["forecasts"]:
-            day = "%s: High %s °C, Low %s °C, %s" % (
+            day = u"%s: %s °C / %s °C, %s" % (
                 f["day_of_week"], f["high"], f["low"], f["condition"])
             forecasts.append(day)
 
