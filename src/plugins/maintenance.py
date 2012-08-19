@@ -59,7 +59,12 @@ class Maintenance(ConferenceCommandPlugin):
                 continue
 
             for command, callback in pluginobj.commands.iteritems():
-                command_doc = callback.__doc__.strip() or "No help available."
+                command_doc = callback.__doc__
+                if command_doc:
+                    command_doc = command_doc.strip()
+                else:
+                    command_doc = "No help available."
+
                 output.append("%s: %s" % (command, command_doc))
 
         chat.SendMessage("\n".join(output))
