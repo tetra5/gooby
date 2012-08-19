@@ -20,7 +20,6 @@ class ConferenceInformer(ConferenceCommandPlugin):
             "!topic": self.on_topic_command,
             }
 
-    @ConferenceCommandPlugin.log_request
     def on_topic_command(self, message):
         """Displays current chat room topic."""
         chat = message.Chat

@@ -497,19 +497,3 @@ class ConferenceCommandPlugin(Plugin):
                     continue
                 if callable(callback):
                     callback(message)
-
-    @staticmethod
-    def log_request(method):
-        """Class method logger decorator."""
-        def wrapper(*args):
-            try:
-                logger = args[0]._logger
-            except:
-                raise
-            if logger:
-                message = args[1]
-                logger.debug("%s request from %s (%s)" %
-                             (method.__name__, message.FromDisplayName,
-                              message.FromHandle))
-            method(*args)
-        return wrapper

@@ -27,14 +27,12 @@ class Maintenance(ConferenceCommandPlugin):
             "!help": self.on_help_command,
             }
 
-    @ConferenceCommandPlugin.log_request
     def on_help_command(self, message):
         """Displays help information."""
         chat = message.Chat
         output = "Type '!commands' to display a list of supported commands"
         chat.SendMessage(output)
 
-    @ConferenceCommandPlugin.log_request
     def on_plugins_command(self, message):
         """Retrieves list of all registered plugins."""
         chat = message.Chat
@@ -46,7 +44,6 @@ class Maintenance(ConferenceCommandPlugin):
 
         chat.SendMessage("Registered plugins: " + ", ".join(output))
 
-    @ConferenceCommandPlugin.log_request
     def on_commands_command(self, message):
         """Retrieves list of all available commands from all successfully
         registered plugins."""
@@ -59,6 +56,7 @@ class Maintenance(ConferenceCommandPlugin):
                 continue
 
             for command, callback in pluginobj.commands.iteritems():
+                print command, callback
                 command_doc = callback.__doc__
                 if command_doc is not None:
                     command_doc = command_doc.strip()
@@ -69,7 +67,6 @@ class Maintenance(ConferenceCommandPlugin):
 
         chat.SendMessage("\n".join(output))
 
-    @ConferenceCommandPlugin.log_request
     def on_version_command(self, message):
         """Displays bot version."""
         from gooby import __version__ as gooby_version

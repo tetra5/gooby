@@ -102,8 +102,9 @@ def get_google_weather_forecast(location, language="en"):
             return cached[1]
 
     api_url = "http://www.google.com/ig/api?"
-    url = api_url + urllib.urlencode({"weather": unicode(location),
-                                      "hl": language})
+
+    location = location.encode("utf-8")
+    url = api_url + urllib.urlencode({"weather": location, "hl": language})
 
     # Retrieves XML.
     headers = {
@@ -180,7 +181,6 @@ class WeatherForecast(ConferenceCommandPlugin):
             "!weather": self.on_weather_command,
             }
 
-    @ConferenceCommandPlugin.log_request
     def on_weather_command(self, message):
         """Retrieves Google Weather API forecast information. Type
         !weather <location> to specify location which is otherwise taken from
@@ -260,4 +260,3 @@ class WeatherForecast(ConferenceCommandPlugin):
 if __name__ == "__main__":
     import doctest
     doctest.testmod()
-    # print get_google_weather_forecast("moscow")
