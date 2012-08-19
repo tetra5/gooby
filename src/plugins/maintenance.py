@@ -60,7 +60,7 @@ class Maintenance(ConferenceCommandPlugin):
 
             for command, callback in pluginobj.commands.iteritems():
                 command_doc = callback.__doc__
-                if command_doc:
+                if command_doc is not None:
                     command_doc = command_doc.strip()
                 else:
                     command_doc = "No help available."

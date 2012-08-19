@@ -102,7 +102,8 @@ def get_google_weather_forecast(location, language="en"):
             return cached[1]
 
     api_url = "http://www.google.com/ig/api?"
-    url = api_url + urllib.urlencode({"weather": location, "hl": language})
+    url = api_url + urllib.urlencode({"weather": unicode(location),
+                                      "hl": language})
 
     # Retrieves XML.
     headers = {
