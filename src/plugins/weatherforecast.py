@@ -35,7 +35,7 @@ class APIError(Exception):
     pass
 
 
-def retry(exception, tries=2, delay=2, backoff=1):
+def retry(exception, tries=10, delay=2, backoff=1):
     """Retries a function or method until it stops generating specified
     exception.
 
