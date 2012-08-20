@@ -31,7 +31,7 @@ _cache = {}
 _cache_ttl = 1200
 
 
-def retry(exception, tries=5, delay=2, backoff=2):
+def retry(exception, tries=10, delay=2, backoff=1):
     """Retries a function or method until it stops generating specified
     exception.
 
