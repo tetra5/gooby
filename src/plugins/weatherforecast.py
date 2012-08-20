@@ -35,7 +35,7 @@ class APIError(Exception):
     pass
 
 
-def retry(exception, tries=10, delay=2, backoff=1):
+def retry(exception, tries=10, delay=3, backoff=1):
     """Retries a function or method until it stops generating specified
     exception.
 
@@ -67,7 +67,10 @@ def sanitize_temperature(temp):
     >>> sanitize_temperature("-10")
     '-10'
     """
-    temp = int(temp)
+    try:
+        temp = int(temp)
+    except ValueError:
+        return "unknown"
     return "+%s" % temp if temp > 0 else str(temp)
 
 
@@ -143,19 +146,15 @@ def get_google_weather_forecast(location, language="en"):
     opener = urllib2.build_opener()
     opener.addheaders = [(k, v) for k, v in headers.iteritems()]
 
-    @retry(urllib2.HTTPError)
-    def get_response():
-        return opener.open(fullurl=url, timeout=10)
+    @retry((urllib2.URLError, urllib2.HTTPError, etree.XMLSyntaxError))
+    def get_and_process_response():
+        response = opener.open(fullurl=url, timeout=2)
+        element_tree = etree.ElementTree()
+        return element_tree.parse(response)
 
-    response = get_response()
-
-    if response is None:
+    root = get_and_process_response()
+    if root is None:
         raise APIError("Unable to retrieve Google Weather API response.")
-
-    element_tree = etree.ElementTree()
-
-    # Parses XML response.
-    root = element_tree.parse(response)
 
     def element_to_dict(element):
         output = {}
@@ -175,7 +174,11 @@ def get_google_weather_forecast(location, language="en"):
                           "current_date_time", "forecast_date"):
                 continue
 
-            output.update({el.tag: el.get("data")})
+            el_data = el.get("data")
+            if el_data is "":
+                el_data = "unknown"
+
+            output.update({el.tag: el_data})
         return output
 
     forecast_information = element_to_dict("weather/forecast_information")
@@ -258,7 +261,7 @@ class WeatherForecast(ChatCommandPlugin):
             return
 
         for k, v in substitutes.iteritems():
-            if k.lower() in location.lower():
+            if k.lower() == location.lower().strip():
                 location = v
                 break
 
@@ -270,15 +273,16 @@ class WeatherForecast(ChatCommandPlugin):
             chat.SendMessage(e)
             return
 
+        # TODO: refactor this mess.
         output = [
             u"Weather forecast for '%s'" %
                 forecast["forecast_information"]["city"],
 
             u"Current conditions: %s °C, %s, %s, %s" % (
-                forecast["current_conditions"]["temp_c"],
-                forecast["current_conditions"]["condition"],
-                forecast["current_conditions"]["humidity"],
-                forecast["current_conditions"]["wind_condition"]),
+                forecast["current_conditions"].get("temp_c"),
+                forecast["current_conditions"].get("condition"),
+                forecast["current_conditions"].get("humidity"),
+                forecast["current_conditions"].get("wind_condition")),
 
             u"Forecast conditions:",
             ]

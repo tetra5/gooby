@@ -14,6 +14,9 @@ __all__ = ["Application", ]
 
 import os
 import sys
+import socket
+
+socket.setdefaulttimeout(2)
 
 import Skype4Py
 

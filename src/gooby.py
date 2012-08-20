@@ -26,7 +26,7 @@ LOG_LEVEL = logging.DEBUG
 
 PLUGINS_DIR = "./plugins/"
 
-SLEEP_TIME = 5
+SLEEP_TIME = 1
 
 
 class ConsoleApplication(Application):
