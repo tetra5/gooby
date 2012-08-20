@@ -134,7 +134,7 @@ def get_google_weather_forecast(location, language="en"):
 
     # Retrieves XML response.
     headers = {
-        # Completely unnescessary.
+        # Completely unnecessary.
         "User-Agent": "Googlebot/2.1 (+http://www.googlebot.com/bot.html)",
         }
     opener = urllib2.build_opener()
