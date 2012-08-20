@@ -28,7 +28,7 @@ from plugin import ConferenceCommandPlugin
 
 _cache = {}
 # Cache time to live in seconds.
-_cache_ttl = 600
+_cache_ttl = 1200
 
 
 def retry(exception, tries=5, delay=2, backoff=2):
@@ -68,7 +68,7 @@ def sanitize_temperature(temp):
 
 
 def fahrenheit_to_celsius(temp_f):
-    """Converts temperature in degrees from Fahrenheit to Celsius.
+    """Fahrenheit to Celsius degrees conversion.
 
     @param temp_f: Temperature in Fahrenheit degrees.
 
@@ -83,7 +83,7 @@ def fahrenheit_to_celsius(temp_f):
 
 
 def celsius_to_fahrenheit(temp_c):
-    """Converts temperature in degrees from Celsius to Fahrenheit.
+    """Celsius to Fahrenheit degrees conversion.
 
     @param temp_c: Temperature in Celsius degrees.
 
@@ -132,7 +132,7 @@ def get_google_weather_forecast(location, language="en"):
     location = location.encode("utf-8")
     url = api_url + urllib.urlencode({"weather": location, "hl": language})
 
-    # Retrieves XML.
+    # Retrieves XML response.
     headers = {
         # Completely unnescessary.
         "User-Agent": "Googlebot/2.1 (+http://www.googlebot.com/bot.html)",
@@ -148,7 +148,7 @@ def get_google_weather_forecast(location, language="en"):
 
     element_tree = etree.ElementTree()
 
-    # Parses XML reponse.
+    # Parses XML response.
     root = element_tree.parse(response)
 
     def element_to_dict(element):
@@ -186,13 +186,13 @@ def get_google_weather_forecast(location, language="en"):
     data["current_conditions"]["temp_c"] = \
         sanitize_temperature(data["current_conditions"]["temp_c"])
 
-    # Checks if we need to convert Fahrenheit degrees to Celsius.
+    # Checks if Fahrenheit to Celsius conversion is necessary (unit system is
+    # set to US).
     is_si = True
     if data["forecast_information"]["unit_system"] == "US":
         is_si = False
 
     for forecast in data["forecasts"]:
-        # Temperature is set to Fahrenheit degrees. Converts units to Celsius.
         if not is_si:
             forecast["high"] = fahrenheit_to_celsius(forecast["high"])
             forecast["low"] = fahrenheit_to_celsius(forecast["low"])
@@ -216,6 +216,7 @@ class WeatherForecast(ConferenceCommandPlugin):
         """Retrieves Google Weather API forecast information. Type
         !weather <location> to specify location which is otherwise taken from
         your Skype public profile."""
+
         substitutes = {
             u"дс": u"Moscow",
             u"dc": u"Moscow",
@@ -255,12 +256,10 @@ class WeatherForecast(ConferenceCommandPlugin):
         try:
             forecast = get_google_weather_forecast(location, language)
         except urllib2.HTTPError:
-            chat.SendMessage(
-                "Unable to receive response from Google Weather API. Try " \
-                "again later.")
+            chat.SendMessage("Unable to retrieve Google Weather API response.")
             return
         except TypeError:
-            chat.SendMessage("Unable to get weather forecast for '%s'" %
+            chat.SendMessage("Unable to retrieve weather forecast for '%s'" %
                              location)
             return
 
