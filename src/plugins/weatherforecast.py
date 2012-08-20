@@ -31,7 +31,11 @@ _cache = {}
 _cache_ttl = 1200
 
 
-def retry(exception, tries=10, delay=2, backoff=1):
+class APIError(Exception):
+    pass
+
+
+def retry(exception, tries=2, delay=2, backoff=1):
     """Retries a function or method until it stops generating specified
     exception.
 
@@ -107,10 +111,9 @@ def get_google_weather_forecast(location, language="en"):
 
     Returns parsed data dictionary.
 
-    Raises urllib2.HTTPError if input XML has not been loaded successfully.
-
-    Raises TypeError if location has not been set correctly (API response is
-    empty).
+    Raises APIError exception when:
+    a) it was impossible to retrieve API response;
+    b) API has returned empty response (unknown location).
 
     >>> data = get_google_weather_forecast(location="moscow", language="en")
     >>> city = data["forecast_information"]["city"]
@@ -146,6 +149,9 @@ def get_google_weather_forecast(location, language="en"):
 
     response = get_response()
 
+    if response is None:
+        raise APIError("Unable to retrieve Google Weather API response.")
+
     element_tree = etree.ElementTree()
 
     # Parses XML response.
@@ -157,6 +163,11 @@ def get_google_weather_forecast(location, language="en"):
             element = root.find(element)
         except TypeError:
             pass
+
+        if element is None:
+            raise APIError("Unable to retrieve weather forecast for '%s'" %
+                           location)
+
         for el in list(element):
 
             # Skips unnescessary information fields.
@@ -255,12 +266,8 @@ class WeatherForecast(ChatCommandPlugin):
 
         try:
             forecast = get_google_weather_forecast(location, language)
-        except urllib2.HTTPError:
-            chat.SendMessage("Unable to retrieve Google Weather API response.")
-            return
-        except TypeError:
-            chat.SendMessage("Unable to retrieve weather forecast for '%s'" %
-                             location)
+        except APIError, e:
+            chat.SendMessage(e)
             return
 
         output = [
