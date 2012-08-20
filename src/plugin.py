@@ -7,7 +7,7 @@
 """
 
 
-__all__ = ["Plugin", "ConferenceCommandPlugin", ]
+__all__ = ["Plugin", "ChatCommandPlugin", ]
 
 __version__ = "2012.1"
 
@@ -454,7 +454,7 @@ class Plugin(object):
         """
 
 
-class ConferenceCommandPlugin(Plugin):
+class ChatCommandPlugin(Plugin):
     def __init__(self, parent):
         """
         TODO: not sure if name mangling is nescessary here. It's better to
@@ -467,10 +467,10 @@ class ConferenceCommandPlugin(Plugin):
         Check more plugins derived from this class for more explaination.
 
         This class serves as "framework-ish" environment for common tasks
-        regarding receiving and sending Skype conference messages, but you are
+        regarding receiving and sending Skype chat messages, but you are
         free to inherit base Plugin class instead.
         """
-        super(ConferenceCommandPlugin, self).__init__(parent)
+        super(ChatCommandPlugin, self).__init__(parent)
 
         # Example plugin dictionary, where keys are trigger strings and values
         # are callback methods:

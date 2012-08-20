@@ -10,10 +10,10 @@
 __version__ = "2012.1"
 
 
-from plugin import ConferenceCommandPlugin
+from plugin import ChatCommandPlugin
 
 
-class Maintenance(ConferenceCommandPlugin):
+class Maintenance(ChatCommandPlugin):
     """
     Handles bot maintenance commands: "!version", "!help", "!plugins",
     "!commands"

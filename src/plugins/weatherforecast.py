@@ -23,7 +23,7 @@ except ImportError:
     except ImportError:
         from xml.etree import ElementTree as etree
 
-from plugin import ConferenceCommandPlugin
+from plugin import ChatCommandPlugin
 
 
 _cache = {}
@@ -204,7 +204,7 @@ def get_google_weather_forecast(location, language="en"):
     return data
 
 
-class WeatherForecast(ConferenceCommandPlugin):
+class WeatherForecast(ChatCommandPlugin):
     """Google Weather API conference chat informer plugin."""
     def __init__(self, parent):
         super(WeatherForecast, self).__init__(parent)

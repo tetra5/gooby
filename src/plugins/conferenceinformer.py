@@ -10,10 +10,10 @@
 __version__ = "2012.1"
 
 
-from plugin import ConferenceCommandPlugin
+from plugin import ChatCommandPlugin
 
 
-class ConferenceInformer(ConferenceCommandPlugin):
+class ConferenceInformer(ChatCommandPlugin):
     def __init__(self, parent):
         super(ConferenceInformer, self).__init__(parent)
         self._commands = {
