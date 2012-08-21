@@ -133,7 +133,7 @@ def get_google_weather_forecast(location, language="en"):
     opener = urllib2.build_opener()
     opener.addheaders = [(k, v) for k, v in headers.iteritems()]
 
-    @retry((urllib2.URLError, urllib2.HTTPError, etree.XMLSyntaxError))
+    @retry((urllib2.URLError, urllib2.HTTPError, etree.ParseError))
     def retrieve_and_process_response():
         response = opener.open(fullurl=url, timeout=2)
         element_tree = etree.ElementTree()
