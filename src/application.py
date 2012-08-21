@@ -16,7 +16,7 @@ import os
 import sys
 import socket
 
-socket.setdefaulttimeout(2)
+socket.setdefaulttimeout(3)
 
 import Skype4Py
 
