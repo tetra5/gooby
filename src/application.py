@@ -108,7 +108,7 @@ class Application(object):
         # Here we're trying to search and find plugin classes inside a
         # specified module. To do that properly we have exclude base plugins
         # classes first.
-        for entity in set(dir(module)) - set(dir(plugin)):
+        for entity in set(dir(module)).difference(dir(plugin)):
             attr = getattr(module, entity)
             # Checks if current attribute is a class which subclasses base one.
             if isinstance(attr, type) and issubclass(attr, plugin.Plugin):
@@ -116,7 +116,7 @@ class Application(object):
 
         return plugin_classes
 
-    def register_plugin(self, cls):
+    def register_plugin(self, plugincls):
         """
         Complete Skype events list:
 
@@ -138,29 +138,24 @@ class Application(object):
          'UserAuthorizationRequestReceived', 'UserMood', 'UserStatus',
          'VoicemailStatus', 'WallpaperChanged', ]
         """
-        for plugincls in self._plugins:
-            if plugincls is not cls:
-                continue
+        if plugincls not in set(self._plugins):
+            raise Exception("Invalid plugin class %s" % plugincls)
 
-            pluginobj = plugincls(parent=self)
+        pluginobj = plugincls(parent=self)
 
-            # Searches for Skype events, generates callback (event handler)
-            # name, binds valid callbacks to a corresponding events for
-            # each plugin.
-            for skype_event in dir(Skype4Py.skype.SkypeEvents):
-                if skype_event.startswith("__"):
-                    continue
+        # Set of dispensable attributes.
+        s = set(dir(object)).union(["__module__", "__dict__", "__weakref__"])
 
-                callback_name = "on_" + camelcase_to_underscore(skype_event)
+        # TODO: this could use some optimization.
+        for event in set(dir(Skype4Py.skype.SkypeEvents)).difference(s):
+            handler_name = "on_" + camelcase_to_underscore(event)
+            try:
+                handler = getattr(pluginobj, handler_name)
+            except AttributeError:
+                pass
+            else:
+                if callable(handler):
+                    self.skype.RegisterEventHandler(event, handler)
 
-                try:
-                    callback = getattr(pluginobj, callback_name)
-                except AttributeError:
-                    pass
-                else:
-                    if callable(callback):
-                        self.skype.RegisterEventHandler(skype_event, callback)
-
-            self._plugin_objects.append(pluginobj)
-
-            return pluginobj
+        self._plugin_objects.append(pluginobj)
+        return pluginobj
