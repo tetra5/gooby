@@ -7,7 +7,7 @@
 """
 
 
-__version__ = "2012.1"
+__version__ = "2012.2"
 
 __all__ = ["Application", ]
 
@@ -20,7 +20,7 @@ socket.setdefaulttimeout(3)
 
 import Skype4Py
 
-from plugin import Plugin
+import plugin
 from utils import camelcase_to_underscore
 
 
@@ -105,26 +105,14 @@ class Application(object):
     def list_plugin_classes(self, module):
         plugin_classes = list()
 
-        for entity in dir(module):
-
-            attribute = getattr(module, entity)
-
-            # Ensures that entity is of a class object and that class
-            # subclasses base Plugin class.
-            if isinstance(attribute, type) and issubclass(attribute, Plugin):
-                # Really dirty hack here. We have to skip base Plugin classes
-                # from dynamically imported module, so they won't load as
-                # plugins, therefore we will convert class object name to
-                # unicode string like for example "<class 'plugin.Plugin'>",
-                # and see if it contains certain substring in it.
-                # If it does then that class is considered to be a base one
-                # and is getting skipped.
-                # It works but there should be much better way of doing that.
-                # TODO: Think of sane workaround!
-                if unicode(attribute).startswith("<class 'plugin."):
-                    continue
-
-                plugin_classes.append(attribute)
+        # Here we're trying to search and find plugin classes inside a
+        # specified module. To do that properly we have exclude base plugins
+        # classes first.
+        for entity in set(dir(module)) - set(dir(plugin)):
+            attr = getattr(module, entity)
+            # Checks if current attribute is a class which subclasses base one.
+            if isinstance(attr, type) and issubclass(attr, plugin.Plugin):
+                plugin_classes.append(attr)
 
         return plugin_classes
 
