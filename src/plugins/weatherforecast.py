@@ -300,7 +300,7 @@ class WeatherForecast(ChatCommandPlugin):
         if forecasts:
             output.append(u"Forecast conditions:")
             for forecast in forecasts:
-                output.append(u"%s: %s °C / %s °C, %s" % (
+                output.append(u"%s: %s/%s °C, %s" % (
                               forecast.get("day_of_week"),
                               forecast.get("high"),
                               forecast.get("low"),
