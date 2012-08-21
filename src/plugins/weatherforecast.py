@@ -98,7 +98,7 @@ def get_google_weather_forecast(location, language="en"):
     """Google Weather API client.
 
     @param location: ZIP code, city, city + country, latitude/longitude,
-    whatever Google can handle.
+    probably some more. Whatever Google is able to handle.
     @param language: ISO 639-1 Language code.
     http://en.wikipedia.org/wiki/List_of_ISO_639-1_codes
 
@@ -106,7 +106,7 @@ def get_google_weather_forecast(location, language="en"):
 
     Raises APIError exception when:
     a) it was impossible to retrieve API response;
-    b) API has returned empty response (unknown location).
+    b) API has returned empty response (unknown/incorrect location).
 
     >>> data = get_google_weather_forecast(location="moscow", language="en")
     >>> city = data["forecast_information"]["city"]
@@ -159,8 +159,8 @@ def get_google_weather_forecast(location, language="en"):
             "wind_condition": "",
             },
         "forecast_conditions": [
-                # Forecast conditions are repeated for every each day of 4
-                # days ahead.
+                # Forecast conditions are repeated for every each of one 4 days
+                # ahead.
                 {
                     # Low and High temperatures are either of Fahrenheit or
                     # Celsius scale depending on Unit system.
@@ -259,7 +259,6 @@ class WeatherForecast(ChatCommandPlugin):
         chat = message.Chat
 
         match = re.match(r"!weather\s+(.*)", message.Body, re.UNICODE)
-
         if not match:
             # Acquires location from user's Skype public profile.
             location = message.Sender.City
@@ -267,12 +266,15 @@ class WeatherForecast(ChatCommandPlugin):
             location = match.group(1)
 
         if not location:
-            chat.SendMessage(
-                "%s, city of your location has not been set in your " \
-                "Skype profile. Specify the location with !weather " \
-                "<location> command." % message.FromDisplayName)
+            line = (u"%s, city of your location has not been set in your "
+                    "Skype profile. Specify the location with !weather "
+                    "<location> command.") % message.FromDisplayName
+            chat.SendMessage(line)
             return
 
+        # Searches substitutes dictionary for known locations.
+        # TODO: probably move this dictionary to external configuration file
+        # along with other plugin settings.
         loc = location.lower().strip()
         if loc in substitutes:
             location = substitutes.get(loc)
@@ -288,8 +290,8 @@ class WeatherForecast(ChatCommandPlugin):
         # Populates output.
         output = []
 
-        output.append(u"Weather forecast for %(city)s" %
-                      forecast.get("forecast_information"))
+        forecast_information = forecast.get("forecast_information")
+        output.append(u"Weather forecast for %(city)s" % forecast_information)
 
         current_conditions = forecast.get("current_conditions")
         if current_conditions:
