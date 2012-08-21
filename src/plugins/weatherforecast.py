@@ -48,7 +48,7 @@ def retry(exception, tries=10, delay=3, backoff=1):
     def wrapper(f):
         def f_retry(*args, **kwargs):
             mtries, mdelay = tries, delay
-            while mtries > 1:
+            while mtries > 0:
                 try:
                     return f(*args, **kwargs)
                 except exception:
@@ -141,7 +141,7 @@ def get_google_weather_forecast(location, language="en"):
 
     root = retrieve_and_process_response()
     if root is None:
-        raise APIError("Unable to retrieve Google Weather API response.")
+        raise APIError("Unable to retrieve weather forecast.")
 
     """
     Typical weather forecast report structure.
@@ -179,6 +179,11 @@ def get_google_weather_forecast(location, language="en"):
             element = root.find(element)
         except TypeError:
             pass
+
+        if element is None:
+            raise APIError("Unable to retrieve weather forecast for %s" %
+                           location)
+
         for el in list(element):
             # Skips unnecessary information fields.
             if el.tag in ("icon", "latitude_e6", "longitude_e6", "postal_code",
@@ -211,12 +216,11 @@ def get_google_weather_forecast(location, language="en"):
         if None in forecast.values():
             continue
 
-        high = forecast.get("high")
-        low = forecast.get("low")
-
         if unit_system == "US":
-            high = fahrenheit_to_celsius(high)
-            low = fahrenheit_to_celsius(low)
+            high = forecast.get("high")
+            low = forecast.get("low")
+            high, low = map(fahrenheit_to_celsius, (high, low))
+            forecast.update({"high": high, "low": low})
 
         forecasts_list.append(forecast)
 
@@ -269,10 +273,9 @@ class WeatherForecast(ChatCommandPlugin):
                 "<location> command." % message.FromDisplayName)
             return
 
-        for k, v in substitutes.iteritems():
-            if k.lower() == location.lower().strip():
-                location = v
-                break
+        loc = location.lower().strip()
+        if loc in substitutes:
+            location = substitutes.get(loc)
 
         language = message.Sender.CountryCode or "en"
 
@@ -285,28 +288,25 @@ class WeatherForecast(ChatCommandPlugin):
         # Populates output.
         output = []
 
-        output.append(u"Weather forecast for %s" %
-                      forecast.get("forecast_information").get("city"))
+        output.append(u"Weather forecast for %(city)s" %
+                      forecast.get("forecast_information"))
 
         current_conditions = forecast.get("current_conditions")
         if current_conditions:
-            output.append(u"Current conditions: %s °C, %s, %s, %s" % (
-                          current_conditions.get("temp_c"),
-                          current_conditions.get("condition"),
-                          current_conditions.get("humidity"),
-                          current_conditions.get("wind_condition")))
+            line = (u"Current conditions: %(temp_c)s °C, %(condition)s, "
+                    "%(humidity)s, %(wind_condition)s") % current_conditions
+            output.append(line)
 
         forecasts = forecast.get("forecasts")
         if forecasts:
             output.append(u"Forecast conditions:")
             for forecast in forecasts:
-                output.append(u"%s: %s/%s °C, %s" % (
-                              forecast.get("day_of_week"),
-                              forecast.get("high"),
-                              forecast.get("low"),
-                              forecast.get("condition")))
+                line = (u"%(day_of_week)s: %(high)s | %(low)s °C, "
+                        "%(condition)s") % forecast
+                output.append(line)
 
         chat.SendMessage("\n".join(output))
+        return
 
 
 if __name__ == "__main__":
