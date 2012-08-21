@@ -7,7 +7,7 @@
 """
 
 
-__version__ = "2012.1"
+__version__ = "2012.2"
 
 
 import re
@@ -60,20 +60,6 @@ def retry(exception, tries=10, delay=3, backoff=1):
     return wrapper
 
 
-def sanitize_temperature(temp):
-    """
-    >>> sanitize_temperature("10")
-    '+10'
-    >>> sanitize_temperature("-10")
-    '-10'
-    """
-    try:
-        temp = int(temp)
-    except ValueError:
-        return "unknown"
-    return "+%s" % temp if temp > 0 else str(temp)
-
-
 def fahrenheit_to_celsius(temp_f):
     """Fahrenheit to Celsius degrees conversion.
 
@@ -84,6 +70,8 @@ def fahrenheit_to_celsius(temp_f):
     >>> fahrenheit_to_celsius(98.6)
     37
     """
+    if temp_f is None:
+        return
     if not isinstance(temp_f, float):
         temp_f = float(temp_f)
     return int((temp_f - 32) * 5 / 9)
@@ -99,6 +87,8 @@ def celsius_to_fahrenheit(temp_c):
     >>> celsius_to_fahrenheit(37)
     98
     """
+    if temp_c is None:
+        return
     if not isinstance(temp_c, float):
         temp_c = float(temp_c)
     return int(temp_c * 9 / 5 + 32)
@@ -122,39 +112,66 @@ def get_google_weather_forecast(location, language="en"):
     >>> city = data["forecast_information"]["city"]
     >>> city in ("Moscow, Moscow", "Moscow, Moskva")
     True
-    >>> len(data["forecasts"])
-    4
     """
     global _cache
     global _chache_ttl
 
     cached = _cache.get(location)
     if cached:
-        if time.time() - cached[0] <= _cache_ttl:
-            return cached[1]
+        cache_time, data = cached
+        if time.time() - cache_time <= _cache_ttl:
+            return data
 
     api_url = "http://www.google.com/ig/api?"
 
     location = location.encode("utf-8")
     url = api_url + urllib.urlencode({"weather": location, "hl": language})
 
-    # Retrieves XML response.
     headers = {
-        # Completely unnecessary.
         "User-Agent": "Googlebot/2.1 (+http://www.googlebot.com/bot.html)",
         }
     opener = urllib2.build_opener()
     opener.addheaders = [(k, v) for k, v in headers.iteritems()]
 
     @retry((urllib2.URLError, urllib2.HTTPError, etree.XMLSyntaxError))
-    def get_and_process_response():
+    def retrieve_and_process_response():
         response = opener.open(fullurl=url, timeout=2)
         element_tree = etree.ElementTree()
         return element_tree.parse(response)
 
-    root = get_and_process_response()
+    root = retrieve_and_process_response()
     if root is None:
         raise APIError("Unable to retrieve Google Weather API response.")
+
+    """
+    Typical weather forecast report structure.
+
+    structure = {
+        "forecast_information": {
+            # Unit system could be either US or SI.
+            "unit_system": "",
+            "city": "",
+            },
+        "current_conditions": {
+            "condition": "",
+            "temp_c": "",
+            "humidity": "",
+            "wind_condition": "",
+            },
+        "forecast_conditions": [
+                # Forecast conditions are repeated for every each day of 4
+                # days ahead.
+                {
+                    # Low and High temperatures are either of Fahrenheit or
+                    # Celsius scale depending on Unit system.
+                    "low": "",
+                    "high": "",
+                    "day_of_week": "",
+                    "condition": "",
+                 },
+            ],
+        }
+    """
 
     def element_to_dict(element):
         output = {}
@@ -162,57 +179,49 @@ def get_google_weather_forecast(location, language="en"):
             element = root.find(element)
         except TypeError:
             pass
-
-        if element is None:
-            raise APIError("Unable to retrieve weather forecast for '%s'" %
-                           location)
-
         for el in list(element):
-
-            # Skips unnescessary information fields.
+            # Skips unnecessary information fields.
             if el.tag in ("icon", "latitude_e6", "longitude_e6", "postal_code",
-                          "current_date_time", "forecast_date"):
+                          "current_date_time", "forecast_date", "temp_f"):
                 continue
-
-            el_data = el.get("data")
-            if el_data is "":
-                el_data = "unknown"
-
-            output.update({el.tag: el_data})
+            output.update({el.tag: el.get("data") or None})
         return output
 
+    # Parses XML.
     forecast_information = element_to_dict("weather/forecast_information")
-
     current_conditions = element_to_dict("weather/current_conditions")
 
-    forecasts = list()
-
+    forecasts = []
     for element in root.findall("weather/forecast_conditions"):
         forecast = element_to_dict(element)
         forecasts.append(forecast)
 
-    data = {
-        "forecast_information": forecast_information,
-        "current_conditions": current_conditions,
-        "forecasts": forecasts,
-        }
+    # Populates forecast data.
+    data = {}
 
-    data["current_conditions"]["temp_c"] = \
-        sanitize_temperature(data["current_conditions"]["temp_c"])
+    if None not in current_conditions.values():
+        data.update({"current_conditions": current_conditions})
 
-    # Checks if Fahrenheit to Celsius conversion is necessary (unit system is
-    # set to US).
-    is_si = True
-    if data["forecast_information"]["unit_system"] == "US":
-        is_si = False
+    data.update({"forecast_information": forecast_information})
 
-    for forecast in data["forecasts"]:
-        if not is_si:
-            forecast["high"] = fahrenheit_to_celsius(forecast["high"])
-            forecast["low"] = fahrenheit_to_celsius(forecast["low"])
+    unit_system = data.get("forecast_information").get("unit_system")
+    forecasts_list = []
+    for forecast in forecasts:
+        # Skips corrupted forecast data.
+        if None in forecast.values():
+            continue
 
-        forecast["high"] = sanitize_temperature(forecast["high"])
-        forecast["low"] = sanitize_temperature(forecast["low"])
+        high = forecast.get("high")
+        low = forecast.get("low")
+
+        if unit_system == "US":
+            high = fahrenheit_to_celsius(high)
+            low = fahrenheit_to_celsius(low)
+
+        forecasts_list.append(forecast)
+
+    if forecasts_list:
+        data.update({"forecasts": forecasts_list})
 
     _cache.update({location: (time.time(), data)})
     return data
@@ -273,27 +282,29 @@ class WeatherForecast(ChatCommandPlugin):
             chat.SendMessage(e)
             return
 
-        # TODO: refactor this mess.
-        output = [
-            u"Weather forecast for '%s'" %
-                forecast["forecast_information"]["city"],
+        # Populates output.
+        output = []
 
-            u"Current conditions: %s °C, %s, %s, %s" % (
-                forecast["current_conditions"].get("temp_c"),
-                forecast["current_conditions"].get("condition"),
-                forecast["current_conditions"].get("humidity"),
-                forecast["current_conditions"].get("wind_condition")),
+        output.append(u"Weather forecast for %s" %
+                      forecast.get("forecast_information").get("city"))
 
-            u"Forecast conditions:",
-            ]
+        current_conditions = forecast.get("current_conditions")
+        if current_conditions:
+            output.append(u"Current conditions: %s °C, %s, %s, %s" % (
+                          current_conditions.get("temp_c"),
+                          current_conditions.get("condition"),
+                          current_conditions.get("humidity"),
+                          current_conditions.get("wind_condition")))
 
-        forecasts = []
-        for f in forecast["forecasts"]:
-            day = u"%s: %s °C / %s °C, %s" % (
-                f["day_of_week"], f["high"], f["low"], f["condition"])
-            forecasts.append(day)
-
-        output.append(" | ".join(forecasts))
+        forecasts = forecast.get("forecasts")
+        if forecasts:
+            output.append(u"Forecast conditions:")
+            for forecast in forecasts:
+                output.append(u"%s: %s °C / %s °C, %s" % (
+                              forecast.get("day_of_week"),
+                              forecast.get("high"),
+                              forecast.get("low"),
+                              forecast.get("condition")))
 
         chat.SendMessage("\n".join(output))
 
