@@ -7,7 +7,7 @@
 """
 
 
-__version__ = "2012.2"
+__version__ = "2012.3"
 
 
 import re
@@ -33,6 +33,238 @@ _cache_ttl = 1200
 
 class APIError(Exception):
     pass
+
+
+def country_code_to_language_code(country_code):
+    """Converts ISO 3166 Country Code (which is used by Skype) to ISO 639
+    Language Code.
+    Why would anybody need this? Google API supports "hl" (language code)
+    request variable. It's possible to get localized API response granted if
+    language code is provided.
+
+    More on this topic:
+    http://en.wikipedia.org/wiki/ISO_3166-1
+    http://en.wikipedia.org/wiki/List_of_ISO_639-1_codes
+    http://docs.oracle.com/cd/E13214_01/wli/docs92/xref/xqisocodes.html
+    http://msdn.microsoft.com/en-us/library/cc233965.aspx
+    """
+    # Key: Country Code, value: Language Code, sorted by language.
+    codes = {
+        "za": "af", # South African, Afrikaans
+        "al": "sq", # Albania, Albanian
+        # "fr": "gsw", # France, Alsatian
+        "et": "am", # Ethiopia, Amharic
+        "dz": "ar", # Algeria, Arabic
+        "bh": "ar", # Bahrain, Arabic
+        "eg": "ar", # Egypt, Arabic
+        "iq": "ar", # Iraq, Arabic
+        "jo": "ar", # Jordan, Arabic
+        "kw": "ar", # Kuwait, Arabic
+        "lb": "ar", # Lebanon, Arabic
+        "ly": "ar", # Libya, Arabic
+        "ma": "ar", # Morocco, Arabic
+        "om": "ar", # Oman, Arabic
+        "qa": "ar", # Qatar, Arabic
+        "sa": "ar", # Saudi Arabia, Arabic
+        "sy": "ar", # Syria, Arabic
+        "tn": "ar", # Tunisia, Arabic
+        "ae": "ar", # U.A.E., Arabic
+        "ye": "ar", # Yemen, Arabic
+        "am": "hy", # Armenia, Armenian
+        # "in": "as", # India, Assamese
+        "az": "az", # Azerbaijan, Azerbaijani (Cyrillic/Latin)
+        "bd": "bn", # Bangladesh, Bangla
+        # "in": "bn", # India, Bangla
+        # "ru": "ba", # Russia, Bashkir
+        # "es": "eu", # Spain, Basque
+        "by": "be", # Belarus, Belarusian
+        "ba": "bs", # Bosnia and Herzegovina, Bosnian (Cyrillic/Latin)
+        # "fr": "br", # France, Breton
+        "bg": "bg", # Bulgaria, Bulgarian
+        # "es": "ca", # Spain, Catalan
+        # "iq": "ku", # Iraq, Central Kurdish
+        # "us": "chr", # United States, Cherokee
+        "cn": "zh", # People's Republic of China, Chinese (Simplified)
+        "sg": "zh", # Singapore, Chinese (Simplified)
+        "hk": "zh", # Hong Kong S.A.R., Chinese (Traditional)
+        "mo": "zh", # Macao S.A.R., Chinese (Traditional)
+        "tw": "zh", # Taiwan, Chinese (Traditional)
+        # "fr": "co", # France, Corsican
+        "hr": "hr", # Croatia, Croatian
+        # "ba": "hr", # Bosnia and Herzegovina, Croatian (Latin)
+        "cz": "cs", # Czech Republic, Czech
+        "dk": "da", # Denmark, Danish
+        "af": "prs", # Afghanistan, Dari
+        "mv": "dv", # Maldives, Divehi
+        "be": "nl", # Belgium, Dutch
+        "nl": "nl", # Netherlands, Dutch
+        "au": "en", # Australia, English
+        "bz": "en", # Belize, English
+        "da": "en", # Canada, English
+        "029": "en", # Caribbean, English. FIXME: seems legit.
+        # "in": "en", # India, English
+        # "ie": "en", # Ireland, English
+        "jm": "en", # Jamaica, English
+        # "my": "en", # Malaysia, English
+        "nz": "en", # New Zealand, English
+        # "ph": "en", # Republic of the Philippines, English
+        # "sg": "en", # Singapore, English
+        # "za": "en", # South Africa, English
+        "tt": "en", # Trinidad and Tobago, English
+        "gb": "en", # United Kingdom, English
+        "us": "en", # United States, English
+        "zw": "en", # Zimbabwe, English
+        "ee": "et", # Estonia, Estonian
+        "fo": "fo", # Faroe Islands, Faroese
+        "ph": "fil", # Philippines, Filipino
+        "fi": "fi", # Finland, Finnish
+        # "be": "fr", # Belgium, French
+        # "ca": "fr", # Canada, French
+        "fr": "fr", # France, French
+        # "lu": "fr", # Luxembourg, French
+        "mc": "fr", # Principality of Monaco, French
+        # "ch": "fr", # Switzerland, French
+        # "nl": "fy", # Netherlands, Frisian
+        # "sn": "ff", # Senegal, Fulah
+        # "es": "gl", # Spain, Galician
+        "ge": "ka", # Georgia, Georgian
+        "at": "de", # Austria, German
+        "de": "de", # Germany, German
+        "li": "de", # Liechtenstein, German
+        # "lu": "de", # Luxembourg, German
+        "ch": "de", # Switzerland, German
+        "gr": "el", # Greece, Greek
+        "gl": "kl", # Greenland, Greenlandic
+        # "in": "gu", # India, Gujarati
+        "ng": "ha", # Nigeria, Hausa (Latin)
+        # "us": "haw", # United States, Hawaiian
+        "il": "he", # Israel, Hebrew
+        "in": "hi", # India, Hindi
+        "hu": "hu", # Hungary, Hungarian
+        "is": "is", # Iceland, Icelandic
+        #"ng": "ig", # Nigeria, Igbo
+        "id": "id", # Indonesia, Indonesian
+        # "ca": "iu", # Canada, Inuktitut (Latin/Syllabics)
+        "ie": "ga", # Ireland, Irish
+        "it": "it", # Italy, Italian
+        # "ch": "it", # Switzerland, Italian
+        "jp": "ja", # Japan, Japanese
+        # "gt": "qut", # Guatemala, K'iche
+        # "in": "kn", # India, Kannada
+        "kz": "kk", # Kazakhstan, Kazakh
+        "kh": "km", # Cambodia, Khmer
+        "rw": "rw", # Rwanda, Kinyarwanda
+        "ke": "sw", # Kenya, Kiswahili
+        # "in": "kok", # India, Konkani
+        "kr": "ko", # Korea, Korean
+        "kg": "ky", # Kyrgyzstan, Kyrgyz
+        "la": "lo", # Lao P.D.R., Lao
+        "lv": "lv", # Latvia, Latvian
+        "lt": "lt", # Lithuania, Lithuanian
+        # "de": "dsb", # Germany, Lower Sorbian
+        "lu": "lb", # Luxembourg, Luxembourgish
+        "mk": "mk", # Macedonia, Macedonian
+        "bn": "ms", # Brunei Darussalam, Malay
+        "my": "ms", # Malaysia, Malay
+        # "in": "ml", # India, Malayalam
+        "mt": "mt", # Malta, Maltese
+        # "nz": "mi", # New Zealand, Maori
+        # "cl": "arn", # Chile, Mapudungun
+        # "in": "mr", # India, Marathi
+        # "ca": "moh", # Canada, Mohawk
+        "mn": "mn", # Mongolia, Mongolian (Cyrillic)
+        # "cn": "mn", # People's Republic of China, Mongolian (Traditional)
+        "np": "ne", # Nepal, Nepali
+        "no": "nb", # Norway, Norwegian (Borkmal)
+        # "no": "nn", # Norway, Norwegian (Nynorsk)
+        # "fr": "oc", # France, Occitan
+        # "in": "or", # India, Odia
+        # "af": "ps", # Afghanistan, Pashto
+        "ir": "fa", # Iran, Persian
+        "pl": "pl", # Poland, Polish
+        "br": "pt", # Brazil, Portuguese
+        "pt": "pt", # Portugal, Portuguese
+        # "in": "pa", # India, Punjabi
+        # "pk": "pa", # Islamic Republic of Pakistan, Punjabi
+        # "bo": "quz", # Bolivia, Quechua
+        # "ec": "quz", # Ecuador, Quechua
+        # "pe": "quz", # Peru, Quechua
+        "ro": "ro", # Romania, Romanian
+        # "ch": "rm", # Switzerland, Romansh
+        "ru": "ru", # Russia, Russian
+        # "ru": "sah", # Russia, Sakha
+        # "fi": "smn", # Finland, Sami (Inari)
+        # "no": "smj", # Norway, Sami (Lule)
+        # "fi": "se", # Finland, Sami (Northern)
+        # "no": "se", # Norway, Sami (Northern)
+        # "se": "se", # Sweden, Sami (Northern)
+        # "fi": "sms", # Finland, Sami (Skolt)
+        # "no": "sma", # Norway, Sami (Southern)
+        # "se": "sma", # Sweden, Sami (Southern)
+        # "in": "sa", # India, Sanskrit
+        # "gb": "gd", # United Kingdom, Scottish Gaelic
+        # "ba": "sr", # Bosnia and Herzegovina, Serbian (Cyrillic/Latin)
+        "me": "sr", # Montenegro, Serbian (Cyrillic/Latin)
+        "rs": "sr", # Serbia, Serbian (Cyrillic/Latin)
+        "cs": "sr", # Serbia and Montenegro (Former), Serbian (Cyrillic/Latin)
+        # "za": "nso", # South Africa, Sesotho sa Leboa
+        "bw": "tn", # Botswana, Setswana
+        # "za": "tn", # South Africa, Setswana
+        # "pk": "sd", # Islamic Republic of Pakistan, Sindhi
+        "lk": "si", # Sri Lanka, Sinhala
+        "sk": "sk", # Slovakia, Slovak
+        "si": "sl", # Slovenia, Slovenian
+        "ar": "es", # Argentina, Spanish
+        "ve": "es", # Bolivarian Republic of Venezuela, Spanish
+        "bo": "es", # Bolivia, Spanish
+        "cl": "es", # Chile, Spanish
+        "co": "es", # Colombia, Spanish
+        "cr": "es", # Costa Rica, Spanish
+        "do": "es", # Dominican Republic, Spanish
+        "ec": "es", # Ecuador, Spanish
+        "sv": "es", # El Salvador, Spanish
+        "gt": "es", # Guatemala, Spanish
+        "hn": "es", # Honduras, Spanish
+        "mx": "es", # Mexico, Spanish
+        "ni": "es", # Nicaragua, Spanish
+        "pa": "es", # Panama, Spanish
+        "py": "es", # Paraguay, Spanish
+        "pe": "es", # Peru, Spanish
+        "pr": "es", # Puerto Rico, Spanish
+        "es": "es", # Spain, Spanish
+        # "us": "es", # United States, Spanish
+        "uy": "es", # Uruguay, Spanish
+        # "fi": "sv", # Finland, Swedish
+        "se": "sv", # Sweden, Swedish
+        "sy": "syr", # Syria, Syriac
+        "tj": "tg", # Tajikistan, Tajik (Cyrillic)
+        "dz": "tzm", # Algeria, Tamazight (Latin)
+        # "in": "ta", # India, Tamil
+        # "lk": "ta", # Sri Lanka, Tamil
+        # "ru": "tt", # Russia, Tatar
+        # "in": "te", # India, Telugu
+        "th": "th", # Thailand, Thai
+        # "cn": "bo", # People's Republic of China, Tibetan
+        "er": "ti", # Eritrea, Tigrinya
+        "et": "ti", # Ethiopia, Tigrinya
+        "tr": "tr", # Turkey, Turkish
+        "tm": "tk", # Turkmenistan, Turkmen
+        "ua": "uk", # Ukraine, Ukrainian
+        # "de": "hsb", # Germany, Upper Sorbian
+        "pk": "ur", # Islamic Republic of Pakistan, Urdu
+        # "cn": "ug", # People's Republic of China, Uyghur
+        "uz": "uz", # Uzbekistan, Uzbek (Cyrillic/Latin)
+        "valencia": "ca", # Spain, Valencian
+        "vn": "vi", # Vietnam, Vietnamese
+        # "gb": "cy", # United Kingdom, Welsh
+        "sn": "wo", # Senegal, Wolof
+        # "cn": "ii", # People's Republic of China, Yi
+        # "ng": "yo", # Nigeria, Yoruba
+        # "za": "xh", # South Africa, Xhosa
+        # "za": "zu", # South Africa, Zulu
+        }
+
+    return codes.get(country_code)
 
 
 def retry(exception, tries=10, delay=3, backoff=1):
@@ -279,7 +511,8 @@ class WeatherForecast(ChatCommandPlugin):
         if loc in substitutes:
             location = substitutes.get(loc)
 
-        language = message.Sender.CountryCode or "en"
+        country_code = message.Sender.CountryCode
+        language = country_code_to_language_code(country_code) or "en"
 
         try:
             forecast = get_google_weather_forecast(location, language)
