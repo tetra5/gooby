@@ -106,19 +106,19 @@ class Application(object):
         plugin_classes = list()
 
         # Here we're trying to search and find plugin classes inside a
-        # specified module. To do that properly we have exclude base plugins
+        # specified module. To do that properly we have to exclude base plugins
         # classes first.
         for entity in set(dir(module)).difference(dir(plugin)):
             attr = getattr(module, entity)
-            # Checks if current attribute is a class which subclasses base one.
+            # Checks if current attribute is a class which subclasses
+            # the base one.
             if isinstance(attr, type) and issubclass(attr, plugin.Plugin):
                 plugin_classes.append(attr)
 
         return plugin_classes
 
     def register_plugin(self, plugincls):
-        """
-        Complete Skype events list:
+        """Complete Skype events list:
 
         ['ApplicationConnecting', 'ApplicationDatagram',
          'ApplicationReceiving', 'ApplicationSending',
