@@ -24,6 +24,10 @@ class URLDiscoverer(Plugin):
         super(URLDiscoverer, self).__init__(parent)
         self._services = [
             "tinyurl.com",
+            "bit.ly",
+            "t.co",
+            "ls.gd",
+            "goo.gl",
             ]
         self._pattern = re.compile(r"(http://[^ ]+)", re.UNICODE)
 
