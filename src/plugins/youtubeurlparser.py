@@ -70,7 +70,7 @@ class YoutubeURLParser(Plugin):
         if status != cmsReceived:
             return
 
-        match = re.match(self._pattern, message.Body)
+        match = re.search(self._pattern, message.Body)
         if not match:
             return
 
