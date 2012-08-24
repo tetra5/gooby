@@ -14,7 +14,7 @@ __version__ = "2012.1"
 
 import logging
 
-from Skype4Py.enums import cmsReceived
+from Skype4Py.enums import cmsSent
 
 
 """This module contains base Plugin classes."""
@@ -491,7 +491,7 @@ class ChatCommandPlugin(Plugin):
     commands = property(get_commands, set_commands)
 
     def on_message_status(self, message, status):
-        if status == cmsReceived:
+        if status == cmsSent:
             for command, callback in self._commands.iteritems():
                 if not message.Body.startswith(command):
                     continue
