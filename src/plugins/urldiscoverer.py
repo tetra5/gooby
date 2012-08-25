@@ -23,11 +23,11 @@ class URLDiscoverer(Plugin):
     def __init__(self, parent):
         super(URLDiscoverer, self).__init__(parent)
         self._services = [
-            "tinyurl.com",
-            "bit.ly",
-            "t.co",
-            "ls.gd",
-            "goo.gl",
+            "http://tinyurl.com",
+            "http://bit.ly",
+            "http://t.co",
+            "http://ls.gd",
+            "http://goo.gl",
             ]
         self._pattern = re.compile(r"(http://[^ ]+)", re.UNICODE)
 
@@ -39,7 +39,7 @@ class URLDiscoverer(Plugin):
 
         for service in self._services:
             if service in message.Body:
-                match = re.match(self._pattern, message.Body)
+                match = re.search(self._pattern, message.Body)
                 if not match:
                     return
 

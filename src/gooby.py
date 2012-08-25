@@ -13,7 +13,10 @@ __version__ = "2012.1"
 import sys
 import logging
 import time
-import signal
+
+if sys.platform == "win32":
+    import signal
+    signal.signal(signal.SIGBREAK, signal.default_int_handler)
 
 from Skype4Py import SkypeAPIError, SkypeError
 
@@ -91,7 +94,6 @@ def main():
     Main loop.
     """
     logger.info("Entering main loop. Press Ctrl+C or Ctrl+Break to exit")
-    signal.signal(signal.SIGBREAK, signal.default_int_handler)
     try:
         while 1:
             time.sleep(app.sleep_time)
