@@ -348,9 +348,9 @@ def get_google_weather_forecast(location, language="en"):
     global _cache
     global _chache_ttl
 
-    cached = _cache.get(location)
-    if cached:
-        cache_time, data = cached
+    cache = _cache.get(location)
+    if cache:
+        cache_time, data = cache
         if time.time() - cache_time <= _cache_ttl:
             return data
 
