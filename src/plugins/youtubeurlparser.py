@@ -30,6 +30,8 @@ from plugin import Plugin
 _cache = {}
 
 
+# TODO: probaadd video author to output.
+
 def retry(exception, tries=10, delay=3, backoff=1):
     """Retries a function or method until it stops generating specified
     exception.
@@ -102,5 +104,4 @@ class YoutubeURLParser(Plugin):
             _cache.update({video_id: video_title})
 
         video_title = _cache.get(video_id)
-        chat.SendMessage(u"%s -> %s" % (video_id, video_title))
-        return
+        chat.SendMessage(u"[YouTube] %s" % video_title)

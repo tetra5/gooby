@@ -113,6 +113,9 @@ def main():
         logger.exception(e)
         return 1
 
+    except:
+        raise
+
     finally:
         logger.info("Shutting down")
         logging.shutdown()
