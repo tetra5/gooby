@@ -54,7 +54,7 @@ def get_video_id(url):
     True
     """
     if "youtu.be" in url:
-        video_id = [chunk for chunk in url.split("/") if chunk][-1]
+        video_id = [chunk.strip() for chunk in url.split("/") if chunk][-1]
         return video_id if len(video_id) == 11 else None
 
     if "youtube.com" in url:
