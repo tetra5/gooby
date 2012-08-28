@@ -14,7 +14,7 @@ __version__ = "2012.1"
 
 import logging
 
-from Skype4Py.enums import cmsReceived
+from Skype4Py.enums import cmsSent, cmsReceived
 
 
 """This module contains base Plugin classes."""
