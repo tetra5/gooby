@@ -14,10 +14,6 @@ import sys
 import logging
 import time
 
-if sys.platform == "win32":
-    import signal
-    signal.signal(signal.SIGBREAK, signal.default_int_handler)
-
 from Skype4Py import SkypeAPIError, SkypeError
 
 from application import Application
@@ -93,6 +89,9 @@ def main():
     """
     Main loop.
     """
+    if sys.platform == "win32":
+        import signal
+        signal.signal(signal.SIGBREAK, signal.default_int_handler)
     logger.info("Entering main loop. Press Ctrl+C or Ctrl+Break to exit")
     try:
         while 1:
