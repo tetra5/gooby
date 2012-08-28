@@ -117,29 +117,29 @@ class YouTubeURLParser(Plugin):
         self._pattern = re.compile(r"(https?://\S+)")
 
     def on_message_status(self, message, status):
-        if status != cmsReceived:
-            return
+        if status == cmsReceived:
+            global _cache
 
-        global _cache
+            chat = message.Chat
 
-        chat = message.Chat
+            video_ids = []
+            for url in re.findall(self._pattern, message.Body):
+                if "youtu.be" in url or "youtube.com" in url:
+                    video_id = get_video_id(url)
+                    if video_id:
+                        video_ids.append(video_id)
 
-        video_ids = []
-        for url in re.findall(self._pattern, message.Body):
-            if "youtu.be" in url or "youtube.com" in url:
-                video_id = get_video_id(url)
-                if video_id:
-                    video_ids.append(video_id)
+            video_titles = []
+            try:
+                for video_id in video_ids:
+                    video_titles.append(get_video_title(video_id))
+            except APIError, e:
+                chat.SendMessage(e)
+                return
 
-        video_titles = []
-        try:
-            for video_id in video_ids:
-                video_titles.append(get_video_title(video_id))
-        except APIError, e:
-            chat.SendMessage(e)
-            return
+            output = ", ".join(video_titles)
 
-        chat.SendMessage(u"[YouTube] %s" % ", ".join(video_titles))
+            chat.SendMessage(u"[YouTube] %s" % output)
 
 
 if __name__ == "__main__":
