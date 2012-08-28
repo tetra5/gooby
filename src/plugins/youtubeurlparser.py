@@ -116,7 +116,7 @@ class YouTubeURLParser(Plugin):
     """
     def __init__(self, parent):
         super(YouTubeURLParser, self).__init__(parent)
-        self._pattern = re.compile(r"(https?://\S+)")
+        self._pattern = re.compile(r"((?:youtube\.com|youtu\.be)/\S+)")
 
     def on_message_status(self, message, status):
         if status != cmsReceived:
