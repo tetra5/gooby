@@ -44,6 +44,8 @@ def get_video_id(url):
 
     >>> get_video_id("https://www.youtube.com/watch?v=XXXXXXXXXXX")
     'XXXXXXXXXXX'
+    >>> get_video_id("youtube.com/watch?v=XXXXXXXXXXX")
+    'XXXXXXXXXXX'
     >>> get_video_id("http://youtu.be/XXXXXXXXXXX")
     'XXXXXXXXXXX'
     >>> get_video_id("http://www.youtube.com/watch?feature=&v=XXXXXXXXXXX")
