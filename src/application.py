@@ -7,8 +7,6 @@
 """
 
 
-__version__ = "2012.2"
-
 __all__ = ["Application", ]
 
 
@@ -99,6 +97,9 @@ class Application(object):
 
         return self._plugin_modules
 
+    def is_attached(self):
+        return self.skype.AttachmentStatus == 0
+
     def import_plugin_module(self, mod_name):
         return __import__(mod_name)
 
@@ -106,7 +107,7 @@ class Application(object):
         plugin_classes = list()
 
         # Here we're trying to search and find plugin classes inside a
-        # specified module. To do that properly we have to exclude base plugins
+        # specified module. To do that properly we have to exclude base plugin
         # classes first.
         for entity in set(dir(module)).difference(dir(plugin)):
             attr = getattr(module, entity)
@@ -144,9 +145,9 @@ class Application(object):
         pluginobj = plugincls(parent=self)
 
         # Set of dispensable attributes.
-        s = set(dir(object)).union(["__module__", "__dict__", "__weakref__"])
+        s = set(dir(type)).union(["__weakref__"])
 
-        # TODO: this could use some optimization.
+        # TODO: this could probably use some optimization.
         for event in set(dir(Skype4Py.skype.SkypeEvents)).difference(s):
             handler_name = "on_" + camelcase_to_underscore(event)
             try:
