@@ -3,8 +3,8 @@
 
 
 """
-:mod:`exceptions` --- Application exceptions collection
-=======================================================
+:mod:`errors` --- Application exceptions collection
+===================================================
 """
 
 
