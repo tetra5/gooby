@@ -3,191 +3,387 @@
 
 
 """
-@author: tetra5 <tetra5dotorg@gmail.com>
+:mod:`plugin` --- Base plugin classes collection
+================================================
 """
 
 
+__docformat__ = "restructuredtext en"
+
 __all__ = ["Plugin", "ChatCommandPlugin", ]
 
-__version__ = "2012.1"
 
-
+from os import path
 import logging
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
 
 from Skype4Py.enums import cmsReceived
 
-
-"""This module contains base Plugin classes."""
+from config import CACHE_TTL, CACHE_DIRECTORY, PICKLE_PROTOCOL_LEVEL, \
+    ROOT_DIRECTORY
 
 
 class Plugin(object):
     """
-    TODO: rewrite on_* methods docstrings.
-    Right now they're almost entirely copy-pasted from Skype4Py documentation.
+    Base plugin class. Should be inherited by any other plugins. Contains
+    different overloadable methods which are bound to corresponding Skype
+    events, e.g.: :meth:`on_message_status` method binds to
+    **OnMessageStatus** event.
+
+    Complete event list:
+
+    >>> import Skype4Py
+    >>> s = set(dir(type)).union(["__weakref__"])
+    >>> list(set(dir(Skype4Py.skype.SkypeEvents)).difference(s))
+    ['CallSeenStatusChanged', 'ApplicationConnecting', 'VoicemailStatus',
+    'SmsMessageStatusChanged', 'GroupUsers', 'CallDtmfReceived',
+    'UserAuthorizationRequestReceived', 'ChatMembersChanged',
+    'ApplicationSending', 'WallpaperChanged', 'Reply', 'CallStatus',
+    'CallVideoReceiveStatusChanged', 'ApplicationReceiving',
+    'PluginMenuItemClicked', 'ChatWindowState', 'ConnectionStatus',
+    'ApplicationStreams', 'SmsTargetStatusChanged',
+    'CallVideoSendStatusChanged', 'MessageStatus', 'CallVideoStatusChanged',
+    'PluginEventClicked', 'ClientWindowState', 'CallHistory',
+    'CallInputStatusChanged', 'AsyncSearchUsersFinished', 'AttachmentStatus',
+    'UserStatus', 'GroupExpanded', 'Command', 'Error', 'ChatMemberRoleChanged',
+    'AutoAway', 'ContactsFocused', 'Mute', 'OnlineStatus',
+    'CallTransferStatusChanged', 'MessageHistory', 'ApplicationDatagram',
+    'GroupVisible', 'SilentModeStatusChanged', 'Notify', 'GroupDeleted',
+    'UserMood', 'FileTransferStatusChanged']
+
+    .. seealso::
+        ``plugins`` package for plugins derived from this class, e.g.:
+        :class:`~youtubeurlparser.YouTubeURLParser`
+
+    .. todo::
+        Should probably rewrite or adapt docstrings as they are mostly entirely
+        taken from Skype4Py documentation.
     """
-    def __init__(self, parent):
-        self._logger_name = self.__class__.__name__
-        self._log_level = logging.DEBUG
-        self._logger = None
+
+    def __init__(self, parent, cache_ttl=CACHE_TTL):
+        """
+        :param parent: :class:`Application` object.
+        :type parent: `object`
+
+        :param cache_ttl: cache TTL in seconds
+        :type cache_ttl: `int`
+        """
+
         self._parent = parent
 
-    def get_logger_name(self):
+        # Logging related setup.
+        self._logger_name = "Gooby." + self.__class__.__name__
+        self._log_level = logging.DEBUG
+        self._logger = None
+
+        self.init_logging()
+
+        # Cache related setup.
+        self._cache_filename = (self.__class__.__name__ + ".cache").lower()
+        self._cache_path = path.join(CACHE_DIRECTORY, self._cache_filename)
+        if cache_ttl < 0:
+            cache_ttl = 0
+        self._cache_ttl = cache_ttl
+        self._cache = {}
+
+        self.read_cache()
+
+    @property
+    def cache_filename(self):
+        """
+        Read-only accessor.
+
+        :type: `unicode`
+        """
+
+        return self._cache_filename
+
+    @property
+    def cache_path(self):
+        """
+        Read-only accessor.
+
+        :type: `unicode`
+        """
+
+        return self._cache_path
+
+    @property
+    def logger_name(self):
+        """
+        Accessor. Calls :meth:`init_logging` if value has changed.
+
+        :type: `unicode`
+        """
+
         return self._logger_name
 
-    def set_logger_name(self, value):
+    @logger_name.setter
+    def logger_name(self, value):
         self._logger_name = value
         self.init_logging()
 
-    def get_log_level(self):
+    @property
+    def log_level(self):
+        """
+        Accessor. Calls :meth:`init_logging` if value has changed.
+
+        :type: `int`
+        """
+
         return self._log_level
 
-    def set_log_level(self, value):
+    @log_level.setter
+    def log_level(self, value):
         self._log_level = value
         self.init_logging()
 
-    def get_logger(self):
+    @property
+    def logger(self):
+        """
+        Read-only accessor.
+
+        :type: :class:`logging.Logger` object or `None` if not initialized
+        """
+
         return self._logger
 
-    def get_parent(self):
+    @property
+    def parent(self):
+        """
+        Read-only accessor.
+
+        :type: `object`
+        """
+
         return self._parent
 
-    def set_parent(self, value):
-        self._parent = value
+    @property
+    def cache_ttl(self):
+        """
+        Accessor. Cache time to live in seconds.
 
-    parent = property(get_parent, set_parent)
+        :type: `int`
+        """
 
-    logger_name = property(get_logger_name, set_logger_name)
+        return self._cache_ttl
 
-    logger = property(get_logger)
-
-    log_level = property(get_log_level, set_log_level)
+    @cache_ttl.setter
+    def cache_ttl(self, value):
+        if value < 0:
+            value = 0
+        self._cache_ttl = value
 
     def init_logging(self):
+        """
+        Initializes plugin logging facility with specified logger name and
+        log level properties.
+
+        .. seealso::
+
+            :attr:`Plugin.logger_name`
+                Accessing plugin logger name attribute.
+
+            :attr:`Plugin.log_level`
+                Accessing plugin log level attribute.
+        """
+
         self._logger = logging.getLogger(self._logger_name)
         self._logger.setLevel(self._log_level)
         self._logger.debug("Initializing logging facility ...")
+
+    def read_cache(self):
+        self._logger.debug("Trying to read cache ...")
+        try:
+            f = open(self._cache_path, "rb")
+        except (IOError, OSError):
+            self._logger.debug("Cache is not accessible or doesn't exist")
+        else:
+            self._logger.info("Reading cache '{0}' ...".format(
+                path.relpath(self._cache_path, start=ROOT_DIRECTORY)
+            ))
+            self._cache = pickle.load(f)
+
+    def write_cache(self):
+        if not self._cache:
+            return
+        self._logger.info("Writing cache '{0}' ...".format(
+            path.relpath(self._cache_path, start=ROOT_DIRECTORY)
+        ))
+        try:
+            f = open(self._cache_path, "wb")
+        except (IOError, OSError):
+            self._logger.warning("Cache is not accessible")
+            return
+        pickle.dump(self._cache, f, PICKLE_PROTOCOL_LEVEL)
 
     def on_message_status(self, message, status):
         """
         This event is caused by a change in chat message status.
 
-        @param message: Skype4Py.chat.ChatMessage object.
-        @param status: (Skype4Py.enums.cms*) new status of the chat message.
+        :param message: message object
+        :type message: :class:`Skype4Py.chat.ChatMessage` object
+
+        :param status: message status
+        :type status: `string`; one of `Skype4Py.enums.cms*` constants
         """
 
     def on_online_status(self, user, status):
         """
         This event is caused by a change in the online status of a user.
 
-        @param user: Skype4Py.user.User object.
-        @param status: (Skype4Py.enums.ols*) new online status of the user.
+        :param user: user object
+        :type user: :class:`Skype4Py.user.User` object
+
+        :param status: online status
+        :type status: `string`; one of `Skype4Py.enums.ols*` constants
         """
 
     def on_user_mood(self, user, mood_text):
         """
         This event is caused by a change in the mood text of the user.
 
-        @param user: Skype4Py.user.User object
-        @param mood_text: (unicode) new mood text.
+        :param user: user object
+        :type user: :class:`Skype4Py.user.User` object
+
+        :param mood_text: new mood text
+        :type mood_text: `unicode`
         """
 
     def on_user_authorization_request_received(self, user):
         """
         This event occurs when user sends you an authorization request.
 
-        @param user: Skype4Py.user.User object.
+        :param user: user object
+        :type user: :class:`Skype4Py.user.User` object
         """
 
     def on_call_status(self, call, status):
         """
         This event is caused by a change in call status.
 
-        @param call: Skype4Py.call.Call object.
-        @param status: (Skype4Py.enums.cls*) new status of the call.
+        :param call: call object
+        :type call: :class:`Skype4Py.call.Call` object
+
+        :param status: new status of the call
+        :type status: `string`; one of `Skype4Py.enums.cls*` constants
         """
 
     def on_call_seen_status_changed(self, call, seen):
         """
         This event occurs when the seen status of a call changes.
 
-        See Skype4Py.call.Call.Seen.
+        .. seealso::
 
-        @param call: Skype4Py.call.Call object.
-        @param seen: (bool) True if call was seen.
+            :class:`Skype4Py.call.Call.Seen` documentation
+
+        :param call: call object
+        :type call: :class:`Skype4Py.call.Call` object
+
+        :param seen: True if call was seen
+        :type seen: `bool`
         """
 
     def on_call_input_status_changed(self, call, active):
         """
-        This event is caused by a change in the Call voice input status
-        change.
+        This event is caused by a change in the Call voice input status.
 
-        @param call: Skype4Py.call.Call object.
-        @param active: (bool) new voice input status (active when True).
+        :param call: call object
+        :type call: :class:`Skype4Py.call.Call` object
+
+        :param active: new voice input status. Active when `True`
+        :type active: `bool`
         """
 
     def on_call_transfer_status_changed(self, call, status):
         """
         This event occurs when a call transfer status changes.
 
-        @param call: Skype4Py.call.Call object.
-        @param status: (Skype4Py.enums.cls*) new status of the call transfer.
+        :param call: call object
+        :type call: :class:`Skype4Py.call.Call` object
+
+        :param status: new status of the call transfer
+        :type status: `string`; one of `Skype4Py.enums.cls*` constants
         """
 
     def on_call_dtfm_received(self, call, code):
         """
         This event is caused by a call DTMF event.
 
-        @param call: Skype4Py.call.Call object.
-        @param code: received DTMF code.
+        :param call: call object
+        :type call: :class:`Skype4Py.call.Call` object
+
+        :param code: received DTMF code
+        :type code: `unicode`
         """
 
     def on_call_video_status_changed(self, call, status):
         """
         This event occurs when a call video status changes.
 
-        @param call: Skype4Py.call.Call object.
-        @param status: (Skype4Py.enums.cvs*) new video status of the call.
+        :param call: call object
+        :type call: :class:`Skype4Py.call.Call` object
+
+        :param status: new video status of the call
+        :type status: `string`; one of `Skype4Py.enums.cvs*` constants
         """
 
     def on_call_video_send_status_changed(self, call, status):
         """
         This event occurs when a call video send status changes.
 
-        @param call: Skype4Py.call.Call object.
-        @param status: (Skype4Py.enums.vss*) new video send status of the call.
+        :param call: call object
+        :type call: :class:`Skype4Py.call.Call` object
+
+        :param status: new video send status of the call
+        :type status: `string`; one of `Skype4Py.enums.vss*` constants
         """
 
     def on_call_video_receive_status_changed(self, call, status):
         """
         This event occurs when a call video receive status changes.
 
-        @param call: Skype4Py.call.Call object.
-        @param status: (Skype4Py.enums.vss*) new video receive status of the
-            call.
+        :param call: call object
+        :type call: :class:`Skype4Py.call.Call` object
+
+        :param status: new video receive status of the call
+        :type status: `string`; one of `Skype4Py.enums.vss*` constants
         """
 
     def on_chat_members_changed(self, chat, members):
         """
         This event occurs when a list of chat members change.
 
-        @param chat: Skype4Py.chat.Chat object.
-        @param members: Skype4Py.user.UserCollection object - chat members.
+        :param chat: chat object
+        :type chat: :class:`Skype4Py.chat.Chat` object
+
+        :param members: chat members object
+        :type members: :class:`Skype4Py.user.UserCollection` object
         """
 
     def on_chat_window_state(self, chat, state):
         """
         This event occurs when chat window is opened or closed.
 
-        @param chat: Skype4Py.chat.Chat object
-        @param state: (bool) True if the window was opened or False if closed.
+        :param chat: chat object
+        :type chat: :class:`Skype4Py.chat.Chat` object
+
+        :param state: True or False whether the window was opened or closed
+        :type state: `bool`
         """
 
     def on_chat_member_role_changed(self, member, role):
         """
         This event occurs when a chat member role changes.
 
-        @param member: Skype4Py.chat.ChatMember object
-        @param role: (Skype4Py.enums.chatMemberRole*) new member role.
+        :param member: chat member object
+        :type member: :class:`Skype4Py.chat.ChatMember` object
+
+        :param role: new member role
+        :type role: `string`; one of `Skype4Py.enums.chatMemberRole*` constants
         """
 
     def on_application_connecting(self, app, users):
@@ -195,27 +391,37 @@ class Plugin(object):
         This event is triggered when list of users connecting to an
         application changes.
 
-        @param app: Skype4Py.application.Application object.
-        @param users: Skype4Py.user.UserCollection object.
+        :param app: application object
+        :type app: :class:`Skype4Py.application.Application` object
+
+        :param users: user collection object
+        :type users: :class:`Skype4Py.user.UserCollection` object
         """
 
     def on_application_streams(self, app, streams):
         """
         This event is triggered when list of application streams changes.
 
-        @param app: Skype4Py.application.Application object.
-        @param streams: Skype4Py.application.ApplicationStreamCollection:
-            stream colleciton.
+        :param app: application object
+        :type app: :class:`Skype4Py.application.Application` object
+
+        :param streams: stream collection object
+        :type streams:
+            :class:`Skype4Py.application.ApplicationStreamCollection` object
         """
 
     def on_application_datagram(self, app, stream, text):
         """
         This event is caused by the arrival of an application datagram.
 
-        @param app: Skype4Py.application.Application object.
-        @param stream: Skype4Py.application.ApplicationStream object that
-            received the datagram.
-        @param text: (unicode) datagram text.
+        :param app: application object
+        :type app: :class:`Skype4Py.application.Application` object
+
+        :param stream: stream object that received the datagram
+        :type stream: :class:`Skype4Py.application.ApplicationStream` object
+
+        :param text: datagram text
+        :type text: `unicode`
         """
 
     def on_application_sending(self, app, streams):
@@ -223,9 +429,12 @@ class Plugin(object):
         This event is triggered when list of application sending streams
         changes.
 
-        @param app: Skype4Py.application.Application object.
-        @param streams: Skype4Py.application.ApplicationStreamCollection:
-            stream collection.
+        :param app: application object
+        :type app: :class:`Skype4Py.application.Application` object
+
+        :param streams: stream collection object
+        :type streams:
+            :class:`Skype4Py.application.ApplicationStreamCollection` object
         """
 
     def on_application_receiving(self, app, streams):
@@ -233,9 +442,12 @@ class Plugin(object):
         This event is triggered when list of application receiving streams
         changes.
 
-        @param app: Skype4Py.application.Application object.
-        @param streams: Skype4Py.application.ApplicationStreamCollection:
-            stream collection.
+        :param app: application object
+        :type app: :class:`Skype4Py.application.Application` object
+
+        :param streams: stream collection object
+        :type streams:
+            :class:`Skype4Py.application.ApplicationStreamCollection` object
         """
 
     def on_group_visible(self, group, visible):
@@ -243,8 +455,11 @@ class Plugin(object):
         This event is caused by a user hiding/showing a group in the
         contacts tab.
 
-        @param group: Skype4Py.group.Group object.
-        @param visible: (bool) tells if group is visible or not.
+        :param group: group object
+        :type group: :class:`Skype4Py.group.Group` object
+
+        :param visible: tells if group is visible or not
+        :type visible: `bool`
         """
 
     def on_group_expanded(self, group, expanded):
@@ -252,49 +467,66 @@ class Plugin(object):
         This event is caused by a user expanding or collapsing a group in
         the contacts tab.
 
-        @param group: Skype4Py.group.Group object.
-        @param expanded: (bool) tells if group is expanded (True) or collapsed
-            (False).
+        :param group: group object
+        :type group: :class:`Skype4Py.group.Group` object
+
+        :param expanded: Tells if group is expanded or collapsed.
+            ``True`` if group is expanded. ``False`` if group is collapsed.
+        :type expanded: `bool`
         """
 
     def on_group_users(self, group, count):
         """
         This event is caused by a change in a contact group members.
 
-        @param group: Skype4Py.group.Group object.
-        @param count: (int) number of group members.
+        .. note::
 
-        This event is different from its Skype4COM equivalent in that the
-        second parameter is number of users instead of
-        Skype4Py.user.UserCollection object. This object may be obtained using
-        Skype4Py.group.Group.Users property.
+            This event is different from its Skype4COM equivalent in that the
+            second parameter is number of users instead of
+            `Skype4Py.user.UserCollection` object. This object may be obtained
+            using `Skype4Py.group.Group.Users` property.
+
+        :param group: group object
+        :type group: :class:`Skype4Py.group.Group` object
+
+        :param count: number of group members
+        :type count: `int`
         """
 
     def on_sms_message_status_changed(self, message, status):
         """
         This event is caused by a change in the SMS message status.
 
-        @param message: Skype4Py.sms.SmsMessage object.
-        @param status: (Skype4Py.enums.smsMessageStatus*) new status of the
-            SMS message.
+        :param message: SMS message object
+        :type message: :class:`Skype4Py.sms.SmsMessage` object
+
+        :param status: new status of the SMS message
+        :type status: `string`; one of `Skype4Py.enums.smsMessageStatus*`
+            constants
         """
 
     def on_file_transfer_status_changed(self, transfer, status):
         """
         This event occurs when a file transfer status changes.
 
-        @param transfer: Skype4Py.filetransfer.FileTransfer object.
-        @param status: (Skype4Py.enums.fileTransferStatus*) new status of the
-            file transfer.
+        :param transfer: file transfer object
+        :type transfer: :class:`Skype4Py.filetransfer.FileTransfer` object
+
+        :param status: new status of the file transfer
+        :type status: `string`; one of `Skype4Py.enums.fileTransferStatus*`
+            constants
         """
 
     def on_async_search_users_finished(self, cookie, users):
         """
         This event occurs when an asynchronous search is completed.
 
-        @param cookie: (int) Search identifier as returned by
-            Skype4Py.skype.Skype.AsyncSearchUsers.
-        @param users: Skype4Py.user.UserCollection object.
+        :param cookie: search identifier as returned by
+            :meth:`Skype4Py.skype.Skype.AsyncSearchUsers()`
+        :type cookie: `int`
+
+        :param users: user collection object
+        :type users: :class:`Skype4Py.user.UserCollection` object
         """
 
     def on_attachment_status(self, status):
@@ -302,14 +534,16 @@ class Plugin(object):
         This event is caused by a change in the status of an
         attachment to the Skype API.
 
-        @param status: (Skype4Py.enums.apiAttach) new status.
+        :param status: new attachment status
+        :type status: `string`; one of `Skype4Py.enums.apiAttach*` constants
         """
 
     def on_auto_away(self, automatic):
         """
         This event is caused by a change of auto away status.
 
-        @param automatic: (bool) new auto away status.
+        :param automatic: new auto away status
+        :type automatic: `bool`
         """
 
     def on_call_history(self):
@@ -321,76 +555,92 @@ class Plugin(object):
         """
         This event occurs when the state of the client window changes.
 
-        @param state: (Skype4Py.enums.wnd*) new window state.
+        :param state: new window state
+        :type state: `string`; one of `Skype4Py.enums.wnd*` constants
         """
 
     def on_command(self, command):
         """
         This event is triggered when a command is sent to the Skype API.
 
-        @param command: Skype4Py.api.Command object.
+        :param command: command object
+        :type command: :class:`Skype4Py.api.Command` object
         """
 
     def on_connection_status(self, status):
         """
         This event is caused by a connection status change.
 
-        @param status: (Skype4Py.enums.con*) new connection status.
+        :param status: new connection status
+        :type status: `string`; one of `Skype4Py.enums.con*` constants
         """
 
     def on_contacts_focused(self, username):
         """
         This event is caused by a change in contacts focus.
 
-        @param username: (str) Name of the user that was focused or empty
-            string if focus was lost.
+        :param username: name of the user that was focused or empty string if
+            focus was lost
+        :type username: `str`
         """
 
-    def error(self, command, number, description):
+    def on_error(self, command, number, description):
         """
         This event is triggered when an error occurs during execution
         of an API command.
 
-        @param command: Skype4Py.api.Command object that caused the error.
-        @param number: (int) error number returned by Skype API.
-        @param description: (unicode) description of the error.
+        :param command: object that caused the error
+        :type command: :class:`Skype4Py.api.Command` object
+
+        :param number: error number returned by Skype API
+        :type number: `int`
+
+        :param description: description of the error
+        :type description: `unicode`
         """
 
     def on_group_deleted(self, group_id):
         """
         This event is caused by a user deleting a custom contact group.
 
-        @param group_id: (int) ID of the deleted group.
+        :param group_id: ID of the deleted group
+        :type group_id: `int`
         """
 
     def on_message_history(self, username):
         """
         This event is caused by a change in message history.
 
-        @param username: (str) name of the user whose message history changed.
+        :param username: name of the user whose message history changed
+        :type username: `str`
         """
 
     def on_mute(self, mute):
         """
         This event is caused by a change in mute status.
 
-        @param mute: (bool) new mute status.
+        :param mute: new mute status
+        :type mute: `bool`
         """
 
     def on_notify(self, notification):
         """
         This event is triggered whenever Skype client sends a notification.
 
-        Use this even only if there is no dedicated one.
+        .. note::
 
-        @param notification: (unicode) notification string.
+            Use this only if there is no dedicated one.
+
+        :param notification: notification string
+        :type notification: `unicode`
         """
 
     def on_plugin_event_clicked(self, event):
         """
         This event occurs when a user clicks on a plug-in event.
 
-        @param event: Skype4Py.client.PluginEvent object.
+        :param event: plugin event object
+        :type event: :class:`Skype4Py.client.PluginEvent` object
         """
 
     def on_plugin_menu_item_clicked(self, menu_item, users, plugin_context,
@@ -398,102 +648,145 @@ class Plugin(object):
         """
         This event occurs when a user clicks on a plug-in menu item.
 
-        See Skype4Py.client.PluginMenuItem.
+        .. seealso::
 
-        @param menu_item: Skype4Py.PluginMenuItem object.
-        @param users: Skype4Py.user.UserCollection object. Users this item
-            refers to.
-        @param plugin_context: (unicode) plugin context.
-        @param context_id: (str or int) context ID. Chat name for chat context
-            or Call ID for call context.
+            :class:`Skype4Py.client.PluginMenuItem` documentation.
+
+        :param menu_item: plugin menu item object
+        :type menu_item: :class:`Skype4Py.PluginMenuItem` object
+
+        :param users: users collection object. Users this item refers to
+        :type users: :class:`Skype4Py.user.UserCollection` object
+
+        :param plugin_context: plugin context
+        :type plugin_context: `unicode`
+
+        :param context_id: context ID. Chat name for chat context or Call ID
+            for call context.
+        :type context_id: `str` or `int`
         """
 
     def on_reply(self, command):
         """
         This event is triggered when the API replies to a command object.
 
-        @param command: Skype4Py.api.Command object.
+        :param command: command object
+        :type command: :class:`Skype4Py.api.Command` object
         """
 
     def on_silent_mode_status_changed(self, silent):
         """
         This event occurs when a silent mode is switched off.
 
-        @param silent: (bool) Skype client silent status.
+        :param silent: Skype client silent status
+        :type silent: `bool`
         """
 
     def on_sms_target_status_changed(self, target, status):
         """
         This event is caused by a change in the SMS target status.
 
-        @param target: Skype4Py.sms.SmsTarget object
-        @param status: (Skype4Py.enums.smsTargetStatus*) new status of the SMS
-            target.
+        :param target: SMS target object
+        :type target: :class:`Skype4Py.sms.SmsTarget` object
+
+        :param status: new status of the SMS target
+        :type status: `string`; one of `Skype4Py.enums.smsTargetStatus*`
+            constants
         """
 
     def on_user_status(self, status):
         """
         This event is caused by a user status change.
 
-        @param status: (Skype4Py.enums.cus*) new user status.
+        :param status: new user status
+        :type status: `string`; one of `Skype4Py.enums.cus*` constants
         """
 
     def on_voicemail_status(self, mail, status):
         """
         This event is caused by a change in voicemail status.
 
-        @param mail: Skype4Py.voicemail.VoiceMail object.
-        @param status: (Skype4Py.enums.vms*) new status of the voicemail.
+        :param mail: voice mail object
+        :type mail: :class:`Skype4Py.voicemail.VoiceMail` object
+
+        :param status: new status of the voice mail
+        :type status: `string`; one of `Skype4Py.enums.vms*` constants
         """
 
     def on_wallpaper_changed(self, path):
         """
         This event occurs when client wallpaper changes.
 
-        @param path: (str) path to new wallpaper bitmap.
+        :param path: path to new wallpaper bitmap
+        :type path: `str`
         """
 
 
 class ChatCommandPlugin(Plugin):
+    """
+    This class serves as "framework-ish" environment for common tasks regarding
+    receiving and sending Skype chat messages, but you are free to inherit base
+    :class:`Plugin` class instead.
+
+    While being as simple as possible, this class servers one purpose ---
+    simplify the plugin development process, particulary those kinds which are
+    to work with chat messages.
+
+    Now, what it does: imagine someone types ``!mycommand`` message in chat,
+    and you want to execute some kind of a function in response to that message.
+
+    So basically everything you'll want to do is to write the following code:
+
+    ::
+
+        from plugin import ChatCommandPlugin
+
+        class MyPlugin(ChatCommandPlugin):
+            def __init__(self, parent):
+                super(MyPlugin, self).__init__(parent)
+
+                self._commands = {
+                    "!mycommand": self.on_my_command,
+                    }
+
+            def on_my_command(self, message):
+                chat = message.Chat
+                chat.SendMessage("Message received.")
+
+    The code above is pretty much self-explainatory:
+
+    * inherit a base class
+    * assign a ``self._commands`` `dict`, where keys are chat command triggers
+      and values are callback methods
+    * implement a callback method
+    """
+
     def __init__(self, parent):
-        """
-        TODO: not sure if name mangling is nescessary here. It's better to
-        just stick to manual callback assignments. Probably in future but
-        oh well.
-
-        Please keep in mind that if your plugin is triggered by a chat
-        command, it's better to use "self._commands" dictionary.
-        Note that you are free to modify this behaviour in the way you like.
-        Check more plugins derived from this class for more explaination.
-
-        This class serves as "framework-ish" environment for common tasks
-        regarding receiving and sending Skype chat messages, but you are
-        free to inherit base Plugin class instead.
-        """
         super(ChatCommandPlugin, self).__init__(parent)
+        self._commands = {}
 
-        # Example plugin dictionary, where keys are trigger strings and values
-        # are callback methods:
-        # self._commands = {
-        #     "!foo": self.on_foo_command,
-        #     "!bar": self.on_bar_command,
-        #     }
-        # Every callback methods accepts 1 argument which is
-        # Skype4Py.chat.ChatMessage object.
-        self._commands = dict()
+    @property
+    def commands(self):
+        """
+        Accessor.
 
-    def get_commands(self):
+        :type: `dict`
+        """
+
         return self._commands
 
-    def set_commands(self, value):
+    @commands.setter
+    def commands(self, value):
         self._commands = value
 
-    commands = property(get_commands, set_commands)
-
     def on_message_status(self, message, status):
+        """
+        Overloaded :meth:`Plugin.on_message_status` method. There's no need to
+        modify it.
+        """
+
         if status == cmsReceived:
             for command, callback in self._commands.iteritems():
-                if not message.Body.startswith(command):
-                    continue
-                if callable(callback):
+                if message.Body.lstrip().lower().startswith(command.lower()) \
+                and callable(callback):
                     callback(message)
