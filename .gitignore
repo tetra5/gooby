@@ -13,6 +13,14 @@
 *~
 *.sass-cache
 
+# build and dist folders
+build
+dist
+
+# special dirs
+src/cache
+src/logs
+
 # OS or Editor folders
 .pydevproject
 .DS_Store
@@ -27,6 +35,9 @@ nbproject
 *.sublime-project
 *.sublime-workspace
 
+# IntelliJ IDEA
+.idea
+
 # Komodo
 *.komodoproject
 .komodotools
@@ -35,5 +46,4 @@ nbproject
 .hg
 .svn
 .CVS
-.idea
 node_modules
