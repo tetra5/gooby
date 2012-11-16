@@ -3,11 +3,9 @@
 
 
 """
-@author: tetra5 <tetra5dotorg@gmail.com>
+:mod:`gooby` --- Gooby application
+==================================
 """
-
-
-__version__ = "2012.1"
 
 
 import sys
@@ -17,15 +15,25 @@ import time
 from Skype4Py import SkypeAPIError, SkypeError
 
 from application import Application
+from config import PLUGINS_DIRECTORY
 
 
 LOGGER_NAME = "Gooby"
 LOG_FORMAT = "%(asctime)-15s %(levelname)s %(name)s: %(message)s"
+#LOG_FORMAT = "%(levelname)s %(name)s: %(message)s"
 LOG_LEVEL = logging.DEBUG
 
-PLUGINS_DIR = "./plugins/"
-
 SLEEP_TIME = 1
+
+
+# Known issues:
+# - Application isn't able to receive Skype messages for some reason sometimes.
+
+
+# TODO: Cache auto-save feature.
+
+
+# TODO: Accept friend list requests automatically?
 
 
 class ConsoleApplication(Application):
@@ -34,7 +42,7 @@ class ConsoleApplication(Application):
     """
     def __init__(self):
         super(ConsoleApplication, self).__init__()
-        self._plugins_dir = PLUGINS_DIR
+        self._plugins_dir = PLUGINS_DIRECTORY
         self._sleep_time = SLEEP_TIME
 
     def set_sleep_time(self, value):
@@ -78,23 +86,23 @@ def main():
             logger.info("Registering plugin %s (%d/%d) ...", plugin_name,
                         i + 1, plugins_count)
             try:
-                pluginobj = app.register_plugin(plugin)
-                pluginobj.set_logger_name("%s.%s" % (LOGGER_NAME, plugin_name))
+                app.register_plugin(plugin)
             except:
                 logger.error("Failed to register %s", plugin_name)
                 raise
             else:
                 logger.info("Registered plugin %s", plugin_name)
 
-    """
-    Main loop.
-    """
     if sys.platform == "win32":
         import signal
         signal.signal(signal.SIGBREAK, signal.default_int_handler)
+
     logger.info("Entering main loop. Press Ctrl+C or Ctrl+Break to exit")
+
+    # Main loop.
     try:
-        while 1:
+        # TODO: optimizations?
+        while app.is_attached():
             time.sleep(app.sleep_time)
 
     except KeyboardInterrupt:
@@ -103,12 +111,13 @@ def main():
 
     except SkypeAPIError, e:
         logger.exception(e)
+        return 1
 
     except SkypeError, e:
         logger.exception(e)
+        return 1
 
     except Exception, e:
-        # Unexpected error has occured. Terminating application.
         logger.exception(e)
         return 1
 
@@ -116,6 +125,9 @@ def main():
         raise
 
     finally:
+        logger.info("Writing plugin cache ...")
+        for pluginobj in app.plugin_objects:
+            pluginobj.write_cache()
         logger.info("Shutting down")
         logging.shutdown()
 
