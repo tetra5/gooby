@@ -3,11 +3,9 @@
 
 
 """
-@author: tetra5 <tetra5dotorg@gmail.com>
+:mod:`urlunshortener` --- URL unshortener plugin
+================================================
 """
-
-
-__version__ = "2012.1"
 
 
 import httplib
@@ -19,35 +17,39 @@ from Skype4Py.enums import cmsReceived
 from plugin import Plugin
 
 
-class URLDiscoverer(Plugin):
+class URLUnshortener(Plugin):
     def __init__(self, parent):
-        super(URLDiscoverer, self).__init__(parent)
-        self._services = [
+        super(URLUnshortener, self).__init__(parent)
+        self._shorteners = [
             "http://tinyurl.com",
             "http://bit.ly",
             "http://t.co",
             "http://ls.gd",
             "http://goo.gl",
+            "http://bitly.com",
+            "http://ow.ly",
             ]
         self._pattern = re.compile(r"(http://[^ ]+)", re.UNICODE)
 
     def on_message_status(self, message, status):
-        chat = message.Chat
-
         if status != cmsReceived:
             return
 
-        for service in self._services:
-            if service in message.Body:
-                match = re.search(self._pattern, message.Body)
-                if not match:
-                    return
+        chat = message.Chat
 
-                url = urlparse.urlparse(match.group(1))
-
-                connection = httplib.HTTPConnection(url.netloc)
-                connection.request("GET", url.path)
-                response = connection.getresponse()
-                location = response.getheader("Location")
-                chat.SendMessage(u"%s -> %s" % (match.group(1), location))
+        source = None
+        destination = message.Body
+        while any(s in destination for s in self._shorteners):
+            match = re.search(self._pattern, destination)
+            if not match:
                 return
+            if not source:
+                source = match.group(1)
+            url = urlparse.urlparse(match.group(1))
+            connection = httplib.HTTPConnection(url.netloc)
+            connection.request("GET", url.path)
+            response = connection.getresponse()
+            destination = response.getheader("Location")
+
+        if source:
+            chat.SendMessage(u"{0} -> {1}".format(source, destination))
