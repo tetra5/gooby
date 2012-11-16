@@ -28,6 +28,7 @@ class URLDiscoverer(Plugin):
             "http://goo.gl",
             "http://bitly.com",
             "http://ow.ly",
+            "http://fb.me",
             ]
         self._pattern = re.compile(r"(http://[^ ]+)", re.UNICODE)
 
