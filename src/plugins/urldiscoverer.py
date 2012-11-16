@@ -17,9 +17,9 @@ from Skype4Py.enums import cmsReceived
 from plugin import Plugin
 
 
-class URLUnshortener(Plugin):
+class URLDiscoverer(Plugin):
     def __init__(self, parent):
-        super(URLUnshortener, self).__init__(parent)
+        super(URLDiscoverer, self).__init__(parent)
         self._shorteners = [
             "http://tinyurl.com",
             "http://bit.ly",
