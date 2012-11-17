@@ -17,9 +17,9 @@
 build
 dist
 
-# special dirs
-src/cache
-src/logs
+# Cache and log files
+*.cache
+*.log
 
 # OS or Editor folders
 .pydevproject
