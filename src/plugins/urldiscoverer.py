@@ -3,8 +3,8 @@
 
 
 """
-:mod:`urlunshortener` --- URL unshortener plugin
-================================================
+:mod:`urldiscoverer` --- URL unshortener plugin
+===============================================
 """
 
 
@@ -29,6 +29,11 @@ class URLDiscoverer(Plugin):
             "http://bitly.com",
             "http://ow.ly",
             "http://fb.me",
+            "http://is.gd",
+            "http://tr.im",
+            "http://cli.gs",
+            "http://tiny.cc",
+            "http://short.to",
             ]
         self._pattern = re.compile(r"(http://[^ ]+)", re.UNICODE)
 
@@ -51,6 +56,8 @@ class URLDiscoverer(Plugin):
             connection.request("GET", url.path)
             response = connection.getresponse()
             destination = response.getheader("Location")
+            if destination is None:
+                return
 
         if source:
             chat.SendMessage(u"{0} -> {1}".format(source, destination))
