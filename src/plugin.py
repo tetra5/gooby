@@ -13,6 +13,7 @@ __docformat__ = "restructuredtext en"
 __all__ = ["Plugin", "ChatCommandPlugin", ]
 
 
+import weakref
 from os import path
 import logging
 try:
@@ -22,8 +23,8 @@ except ImportError:
 
 from Skype4Py.enums import cmsReceived
 
-from config import CACHE_TTL, CACHE_DIRECTORY, PICKLE_PROTOCOL_LEVEL, \
-    ROOT_DIRECTORY
+from config import CACHE_DIRECTORY, PICKLE_PROTOCOL_LEVEL, \
+    ROOT_DIRECTORY, CACHE_FILE_EXT
 
 
 class Plugin(object):
@@ -63,7 +64,7 @@ class Plugin(object):
         taken from Skype4Py documentation.
     """
 
-    def __init__(self, parent, cache_ttl=CACHE_TTL):
+    def __init__(self, parent):
         """
         Initializes plugin logging facility.
 
@@ -76,29 +77,23 @@ class Plugin(object):
 
         .. seealso::
 
-            :attr:`cache_filename`
+            :attr:`cache_fname`
                 Cache file name.
 
             :attr:`cache_path`
                 Cache file path.
 
-            :attr:`cache_ttl`
-                Cache TTL in seconds.
-
-            :meth:`read_cache`
+            :meth:`_read_cache`
                 Reading plugin cache.
 
-            :meth:`write_cache`
+            :meth:`_write_cache`
                 Writing plugin cache.
 
-        :param parent: :class:`Application` object.
+        :param parent: :class:`~application.Application` object.
         :type parent: `object`
-
-        :param cache_ttl: cache TTL in seconds
-        :type cache_ttl: `int`
         """
 
-        self._parent = parent
+        self._parent = weakref.ref(parent)
 
         # Logging related setup.
         self._logger_name = "Gooby." + self.__class__.__name__
@@ -107,22 +102,32 @@ class Plugin(object):
 
         # Cache related setup.
         self._cache = {}
-        self._cache_filename = (self.__class__.__name__ + ".cache").lower()
-        self._cache_path = path.join(CACHE_DIRECTORY, self._cache_filename)
-        if cache_ttl < 0:
-            cache_ttl = 0
-        self._cache_ttl = cache_ttl
-        self.read_cache()
+        self._cache_fname = (self.__class__.__name__ + CACHE_FILE_EXT).lower()
+        self._cache_path = path.join(CACHE_DIRECTORY, self._cache_fname)
+        self._read_cache()
+
+    def __del__(self):
+        self._write_cache()
 
     @property
-    def cache_filename(self):
+    def cache(self):
+        """
+        Read-only accessor.
+
+        :type: `dict`
+        """
+
+        return self._cache
+
+    @property
+    def cache_fname(self):
         """
         Read-only accessor.
 
         :type: `unicode`
         """
 
-        return self._cache_filename
+        return self._cache_fname
 
     @property
     def cache_path(self):
@@ -144,7 +149,6 @@ class Plugin(object):
 
         return self._logger
 
-    @property
     def parent(self):
         """
         Read-only accessor.
@@ -154,23 +158,7 @@ class Plugin(object):
 
         return self._parent
 
-    @property
-    def cache_ttl(self):
-        """
-        Accessor. Cache time to live in seconds.
-
-        :type: `int`
-        """
-
-        return self._cache_ttl
-
-    @cache_ttl.setter
-    def cache_ttl(self, value):
-        if value < 0:
-            value = 0
-        self._cache_ttl = value
-
-    def read_cache(self):
+    def _read_cache(self):
         """
         Reads plugin cache.
         """
@@ -188,7 +176,7 @@ class Plugin(object):
             self._logger.error("Unpickling error")
             self._logger.exception(e)
 
-    def write_cache(self):
+    def _write_cache(self):
         """
         Writes plugin cache.
         """
@@ -721,7 +709,8 @@ class ChatCommandPlugin(Plugin):
     to work with chat messages.
 
     Now, what it does: imagine someone types ``!mycommand`` message in chat,
-    and you want to execute some kind of a function in response to that message.
+    and you want to execute some kind of a function in response to that
+    message.
 
     So basically everything you'll want to do is to write the following code:
 
@@ -775,6 +764,6 @@ class ChatCommandPlugin(Plugin):
 
         if status == cmsReceived:
             for command, callback in self._commands.iteritems():
-                if message.Body.lstrip().lower().startswith(command.lower()) \
-                and callable(callback):
-                    callback(message)
+                if message.Body.lstrip().lower().startswith(command.lower()):
+                    if callable(callback):
+                        callback(message)
