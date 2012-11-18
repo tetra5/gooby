@@ -9,19 +9,16 @@
 
 
 import sys
-import logging
 import time
+import logging
+import logging.config
 
 from Skype4Py import SkypeAPIError, SkypeError
 
 from application import Application
-from config import PLUGINS_DIRECTORY
+from config import PLUGINS_DIRECTORY, CACHE_DIRECTORY, LOGS_DIRECTORY, \
+    LOGGER_CONFIG
 
-
-LOGGER_NAME = "Gooby"
-LOG_FORMAT = "%(asctime)-15s %(levelname)s %(name)s: %(message)s"
-#LOG_FORMAT = "%(levelname)s %(name)s: %(message)s"
-LOG_LEVEL = logging.DEBUG
 
 SLEEP_TIME = 1
 
@@ -58,11 +55,13 @@ def main():
     """
     Gooby pls.
     """
-    logging.basicConfig(format=LOG_FORMAT)
-    logger = logging.getLogger(LOGGER_NAME)
-    logger.setLevel(LOG_LEVEL)
+    logging.config.dictConfig(LOGGER_CONFIG)
+    logger = logging.getLogger("Gooby")
 
     logger.info("Initializing application ...")
+    logger.debug("Cache directory is set to '{0}'".format(CACHE_DIRECTORY))
+    logger.debug("Logs directory is set to '{0}'".format(LOGS_DIRECTORY))
+
     app = ConsoleApplication()
 
     logger.info("Attaching to Skype window ...")
@@ -133,4 +132,7 @@ def main():
 
 
 if __name__ == "__main__":
+    if sys.version_info < (2, 7):
+        raise SystemExit("This program requires Python 2.7 or greater.")
+
     sys.exit(main())
