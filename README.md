@@ -7,7 +7,7 @@ wrapper written completely in Python.
 Requirements
 ------------
 
-* Python 2.6 or greater
+* Python 2.7 or greater
 
 * Skype4Py library http://sourceforge.net/projects/skype4py/
 
