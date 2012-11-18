@@ -8,6 +8,9 @@
 """
 
 
+__docformat__ = "restructuredtext en"
+
+
 import sys
 import time
 import logging
@@ -17,10 +20,7 @@ from Skype4Py import SkypeAPIError, SkypeError
 
 from application import Application
 from config import PLUGINS_DIRECTORY, CACHE_DIRECTORY, LOGS_DIRECTORY, \
-    LOGGER_CONFIG
-
-
-SLEEP_TIME = 1
+    LOGGER_CONFIG, SLEEP_TIME
 
 
 # Known issues:
@@ -51,7 +51,7 @@ class ConsoleApplication(Application):
     sleep_time = property(get_sleep_time, set_sleep_time)
 
 
-def main():
+def main(argv=sys.argv):
     """
     Gooby pls.
     """
@@ -96,11 +96,10 @@ def main():
         import signal
         signal.signal(signal.SIGBREAK, signal.default_int_handler)
 
-    logger.info("Entering main loop. Press Ctrl+C or Ctrl+Break to exit")
+    logger.info("Entering main loop. Press Ctrl+C to exit")
 
     # Main loop.
     try:
-        # TODO: optimizations?
         while app.is_attached():
             time.sleep(app.sleep_time)
 
@@ -120,13 +119,9 @@ def main():
         logger.exception(e)
         return 1
 
-    except:
-        raise
-
     finally:
-        logger.info("Writing plugin cache ...")
-        for pluginobj in app.plugin_objects:
-            pluginobj.write_cache()
+        logger.info("Saving plugin cache ...")
+        del app
         logger.info("Shutting down")
         logging.shutdown()
 
