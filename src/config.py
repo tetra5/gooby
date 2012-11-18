@@ -19,8 +19,11 @@ CACHE_DIRECTORY = path.normpath(path.join(ROOT_DIRECTORY, "./cache"))
 PLUGINS_DIRECTORY = path.normpath(path.join(ROOT_DIRECTORY, "./plugins"))
 LOGS_DIRECTORY = path.normpath(path.join(ROOT_DIRECTORY, "./logs"))
 
+CACHE_FILE_EXT = ".cache"
 CACHE_TTL = 0
 PICKLE_PROTOCOL_LEVEL = 0
+
+SLEEP_TIME = 1
 
 LOGGER_CONFIG = {
     "version": 1,
