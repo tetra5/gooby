@@ -65,6 +65,32 @@ class Plugin(object):
 
     def __init__(self, parent, cache_ttl=CACHE_TTL):
         """
+        Initializes plugin logging facility.
+
+        .. seealso::
+
+            :attr:`logger`
+                Accessing plugin logger.
+
+        Initializes and reads plugin cache.
+
+        .. seealso::
+
+            :attr:`cache_filename`
+                Cache file name.
+
+            :attr:`cache_path`
+                Cache file path.
+
+            :attr:`cache_ttl`
+                Cache TTL in seconds.
+
+            :meth:`read_cache`
+                Reading plugin cache.
+
+            :meth:`write_cache`
+                Writing plugin cache.
+
         :param parent: :class:`Application` object.
         :type parent: `object`
 
@@ -76,19 +102,16 @@ class Plugin(object):
 
         # Logging related setup.
         self._logger_name = "Gooby." + self.__class__.__name__
-        self._log_level = logging.DEBUG
-        self._logger = None
-
-        self.init_logging()
+        self._logger = logging.getLogger(self._logger_name)
+        self._logger.debug("Initializing logging facility ...")
 
         # Cache related setup.
+        self._cache = {}
         self._cache_filename = (self.__class__.__name__ + ".cache").lower()
         self._cache_path = path.join(CACHE_DIRECTORY, self._cache_filename)
         if cache_ttl < 0:
             cache_ttl = 0
         self._cache_ttl = cache_ttl
-        self._cache = {}
-
         self.read_cache()
 
     @property
@@ -110,36 +133,6 @@ class Plugin(object):
         """
 
         return self._cache_path
-
-    @property
-    def logger_name(self):
-        """
-        Accessor. Calls :meth:`init_logging` if value has changed.
-
-        :type: `unicode`
-        """
-
-        return self._logger_name
-
-    @logger_name.setter
-    def logger_name(self, value):
-        self._logger_name = value
-        self.init_logging()
-
-    @property
-    def log_level(self):
-        """
-        Accessor. Calls :meth:`init_logging` if value has changed.
-
-        :type: `int`
-        """
-
-        return self._log_level
-
-    @log_level.setter
-    def log_level(self, value):
-        self._log_level = value
-        self.init_logging()
 
     @property
     def logger(self):
@@ -177,48 +170,43 @@ class Plugin(object):
             value = 0
         self._cache_ttl = value
 
-    def init_logging(self):
-        """
-        Initializes plugin logging facility with specified logger name and
-        log level properties.
-
-        .. seealso::
-
-            :attr:`Plugin.logger_name`
-                Accessing plugin logger name attribute.
-
-            :attr:`Plugin.log_level`
-                Accessing plugin log level attribute.
-        """
-
-        self._logger = logging.getLogger(self._logger_name)
-        self._logger.setLevel(self._log_level)
-        self._logger.debug("Initializing logging facility ...")
-
     def read_cache(self):
-        self._logger.debug("Trying to read cache ...")
+        """
+        Reads plugin cache.
+        """
+
+        self._logger.debug("Reading cache '{0}' ...".format(
+            path.relpath(self._cache_path, start=ROOT_DIRECTORY)
+        ))
         try:
-            f = open(self._cache_path, "rb")
-        except (IOError, OSError):
-            self._logger.debug("Cache is not accessible or doesn't exist")
-        else:
-            self._logger.info("Reading cache '{0}' ...".format(
-                path.relpath(self._cache_path, start=ROOT_DIRECTORY)
-            ))
-            self._cache = pickle.load(f)
+            with open(self._cache_path, "rb") as f:
+                self._cache = pickle.load(f)
+        except (IOError, OSError), e:
+            self._logger.warning("Cache is not accessible or doesn't exist")
+        except (pickle.UnpicklingError, AttributeError, EOFError,
+                IndexError), e:
+            self._logger.error("Unpickling error")
+            self._logger.exception(e)
 
     def write_cache(self):
+        """
+        Writes plugin cache.
+        """
+
         if not self._cache:
             return
         self._logger.info("Writing cache '{0}' ...".format(
             path.relpath(self._cache_path, start=ROOT_DIRECTORY)
         ))
         try:
-            f = open(self._cache_path, "wb")
-        except (IOError, OSError):
+            with open(self._cache_path, "wb") as f:
+                pickle.dump(self._cache, f, PICKLE_PROTOCOL_LEVEL)
+        except (IOError, OSError), e:
             self._logger.warning("Cache is not accessible")
-            return
-        pickle.dump(self._cache, f, PICKLE_PROTOCOL_LEVEL)
+            self._logger.exception(e)
+        except pickle.PicklingError, e:
+            self._logger.error("Pickling error")
+            self._logger.exception(e)
 
     def on_message_status(self, message, status):
         """
