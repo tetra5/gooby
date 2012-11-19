@@ -65,7 +65,6 @@ class URLDiscoverer(Plugin):
                 if not source:
                     source = destination
                 url = urlparse.urlparse(destination)
-                print url
                 connection = httplib.HTTPConnection(url.netloc, timeout=5)
                 connection.request("GET", url.path)
                 response = connection.getresponse()
