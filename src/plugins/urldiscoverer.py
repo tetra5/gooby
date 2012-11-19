@@ -17,6 +17,11 @@ from Skype4Py.enums import cmsReceived
 from plugin import Plugin
 
 
+def truncate_url(url, start=7, length=20):
+    url = url[start:]
+    return url if len(url) <= length else url[:length] + "..."
+
+
 class URLDiscoverer(Plugin):
     def __init__(self, parent):
         super(URLDiscoverer, self).__init__(parent)
@@ -43,21 +48,34 @@ class URLDiscoverer(Plugin):
 
         chat = message.Chat
 
-        source = None
-        destination = message.Body
-        while any(s in destination for s in self._shorteners):
-            match = re.search(self._pattern, destination)
-            if not match:
-                return
-            if not source:
-                source = match.group(1)
-            url = urlparse.urlparse(match.group(1))
-            connection = httplib.HTTPConnection(url.netloc)
-            connection.request("GET", url.path)
-            response = connection.getresponse()
-            destination = response.getheader("Location")
-            if destination is None:
-                return
+        output = []
+        for destination in re.findall(self._pattern, message.Body):
+            source = None
+            valid = True
+            while any(s in destination for s in self._shorteners):
+                match = re.search(self._pattern, destination)
+                if not match:
+                    break
+                if not source:
+                    source = match.group(1)
+                url = urlparse.urlparse(source)
+                connection = httplib.HTTPConnection(url.netloc)
+                connection.request("GET", url.path)
+                response = connection.getresponse()
+                destination = response.getheader("Location")
+                if destination is None:
+                    msg = u"{0} -> unable to resolve".format(
+                        truncate_url(source)
+                    )
+                    valid = False
+                    output.append(msg)
+                    log_msg = u"Unable to resolve {0}".format(source)
+                    self._logger.error(log_msg)
+                    break
+            if source and valid:
+                output.append(u"{0} -> {1}".format(
+                    truncate_url(source), destination
+                ))
 
-        if source:
-            chat.SendMessage(u"{0} -> {1}".format(source, destination))
+        if output:
+            chat.SendMessage(", ".join(output))
