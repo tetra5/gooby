@@ -57,15 +57,16 @@ class URLDiscoverer(Plugin):
                 destinations.append(chunk)
 
         for destination in destinations:
-            if not destination.startswith("http://"):
-                destination = "http://" + destination
             valid = True
             source = None
+            if not destination.startswith("http://"):
+                destination = "http://" + destination
             while any(s in destination for s in self._shorteners):
                 if not source:
                     source = destination
-                url = urlparse.urlparse(source)
-                connection = httplib.HTTPConnection(url.netloc)
+                url = urlparse.urlparse(destination)
+                print url
+                connection = httplib.HTTPConnection(url.netloc, timeout=5)
                 connection.request("GET", url.path)
                 response = connection.getresponse()
                 destination = response.getheader("Location")
