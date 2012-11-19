@@ -26,21 +26,20 @@ class URLDiscoverer(Plugin):
     def __init__(self, parent):
         super(URLDiscoverer, self).__init__(parent)
         self._shorteners = [
-            "http://tinyurl.com",
-            "http://bit.ly",
-            "http://t.co",
-            "http://ls.gd",
-            "http://goo.gl",
-            "http://bitly.com",
-            "http://ow.ly",
-            "http://fb.me",
-            "http://is.gd",
-            "http://tr.im",
-            "http://cli.gs",
-            "http://tiny.cc",
-            "http://short.to",
+            "tinyurl.com",
+            "bit.ly",
+            "t.co",
+            "ls.gd",
+            "goo.gl",
+            "bitly.com",
+            "ow.ly",
+            "fb.me",
+            "is.gd",
+            "tr.im",
+            "cli.gs",
+            "tiny.cc",
+            "short.to",
             ]
-        self._pattern = re.compile(r"(http://[^ ]+)", re.UNICODE)
 
     def on_message_status(self, message, status):
         if status != cmsReceived:
@@ -48,16 +47,23 @@ class URLDiscoverer(Plugin):
 
         chat = message.Chat
 
+        if not any(s in message.Body for s in self._shorteners):
+            return
+
         output = []
-        for destination in re.findall(self._pattern, message.Body):
-            source = None
+        destinations = []
+        for chunk in message.Body.split():
+            if any(s in chunk.lower() for s in self._shorteners):
+                destinations.append(chunk)
+
+        for destination in destinations:
+            if not destination.startswith("http://"):
+                destination = "http://" + destination
             valid = True
+            source = None
             while any(s in destination for s in self._shorteners):
-                match = re.search(self._pattern, destination)
-                if not match:
-                    break
                 if not source:
-                    source = match.group(1)
+                    source = destination
                 url = urlparse.urlparse(source)
                 connection = httplib.HTTPConnection(url.netloc)
                 connection.request("GET", url.path)
