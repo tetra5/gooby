@@ -13,6 +13,9 @@
 *~
 *.sass-cache
 
+# herpderp
+leprosorium.*
+
 # build and dist folders
 build
 dist
