@@ -39,16 +39,17 @@ class URLDiscoverer(Plugin):
             "cli.gs",
             "tiny.cc",
             "short.to",
+            "trib.al",
             ]
 
     def on_message_status(self, message, status):
         if status != cmsReceived:
             return
 
-        chat = message.Chat
-
         if not any(s in message.Body for s in self._shorteners):
             return
+
+        chat = message.Chat
 
         output = []
         destinations = []
