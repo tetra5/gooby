@@ -71,11 +71,11 @@ class URLDiscoverer(Plugin):
                 response = connection.getresponse()
                 destination = response.getheader("Location")
                 if destination is None:
-                    msg = u"{0} -> unable to resolve".format(
-                        truncate_url(source)
-                    )
                     valid = False
-                    output.append(msg)
+#                    msg = u"{0} -> unable to resolve".format(
+#                        truncate_url(source)
+#                    )
+#                    output.append(msg)
                     log_msg = u"Unable to resolve {0}".format(source)
                     self._logger.error(log_msg)
                     break
