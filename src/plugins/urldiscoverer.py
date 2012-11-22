@@ -10,7 +10,6 @@
 
 import httplib
 import urlparse
-import re
 
 from Skype4Py.enums import cmsReceived
 
