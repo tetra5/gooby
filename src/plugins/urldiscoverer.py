@@ -39,6 +39,7 @@ class URLDiscoverer(Plugin):
             "tiny.cc",
             "short.to",
             "trib.al",
+            "nblo.gs",
             ]
 
     def on_message_status(self, message, status):
