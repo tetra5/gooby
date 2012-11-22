@@ -16,9 +16,10 @@
 # herpderp
 leprosorium.*
 
-# build and dist folders
+# build and dist folders, doc folders
 build
 dist
+doc/build/*
 
 # Cache and log files
 *.cache
