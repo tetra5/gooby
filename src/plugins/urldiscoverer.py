@@ -62,7 +62,7 @@ class URLDiscoverer(Plugin):
             source = None
             if not destination.startswith("http://"):
                 destination = "http://" + destination
-            while any(s in destination for s in self._shorteners):
+            while any("http://" + s in destination for s in self._shorteners):
                 if not source:
                     source = destination
                 url = urlparse.urlparse(destination)
@@ -72,10 +72,10 @@ class URLDiscoverer(Plugin):
                 destination = response.getheader("Location")
                 if destination is None:
                     valid = False
-#                    msg = u"{0} -> unable to resolve".format(
-#                        truncate_url(source)
-#                    )
-#                    output.append(msg)
+                    msg = u"{0} -> unable to resolve".format(
+                        truncate_url(source)
+                    )
+                    output.append(msg)
                     log_msg = u"Unable to resolve {0}".format(source)
                     self._logger.error(log_msg)
                     break
