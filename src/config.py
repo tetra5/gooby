@@ -67,5 +67,9 @@ LOGGER_CONFIG = {
             "handlers": ["console", "file", "file_errors", "file_session"],
             "level": "DEBUG",
         },
+        "Skype4Py": {
+            "handlers": ["console", "file", "file_errors", "file_session"],
+            "level": "DEBUG",
+        },
     },
 }
