@@ -128,6 +128,6 @@ def main(argv=sys.argv):
 
 if __name__ == "__main__":
     if sys.version_info < (2, 7):
-        raise SystemExit("This program requires Python 2.7 or greater.")
+        raise SystemExit("This program requires Python 2.7")
 
     sys.exit(main())
