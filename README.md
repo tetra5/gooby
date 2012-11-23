@@ -9,7 +9,7 @@ Requirements
 
 * Python 2.7
 
-* Skype4Py library http://sourceforge.net/projects/skype4py/
+* Skype4Py library https://github.com/awahlig/skype4py
 
 Copyright and license
 ---------------------
