@@ -68,7 +68,10 @@ class Application(object):
 
     def attach_to_skype(self):
         try:
-            self._skype = Skype4Py.Skype()
+            if sys.platform == "linux2":
+                self._skype = Skype4Py.Skype(Transport="x11")
+            else:
+                self._skype = Skype4Py.Skype()
             self._skype.FriendlyName = "Gooby"
             self._skype.Attach(Protocol=8)
         except:
