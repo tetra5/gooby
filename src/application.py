@@ -69,7 +69,8 @@ class Application(object):
     def attach_to_skype(self):
         try:
             self._skype = Skype4Py.Skype()
-            self._skype.Attach()
+            self._skype.FriendlyName = "Gooby"
+            self._skype.Attach(Protocol=8)
         except:
             raise
 
