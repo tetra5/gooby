@@ -52,7 +52,10 @@ def truncate_url(url, max_path_length=20):
     url = urlparse.urlparse(url)
     if not url.netloc:
         raise ValueError, "Invalid URL: {0}".format(url)
-    quoted_path = urllib2.quote(url.path.encode("utf-8"))
+    try:
+        quoted_path = urllib2.quote(url.path.encode("utf-8"))
+    except UnicodeDecodeError:
+        quoted_path = urllib2.quote(url.path)
     if len(quoted_path) < max_path_length:
         return url.netloc + quoted_path
     return url.netloc + quoted_path[:max_path_length + 1] + "..."
