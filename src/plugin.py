@@ -23,8 +23,7 @@ except ImportError:
 
 from Skype4Py.enums import cmsReceived
 
-from config import CACHE_DIRECTORY, PICKLE_PROTOCOL_LEVEL, \
-    ROOT_DIRECTORY, CACHE_FILE_EXT
+from config import CACHE_DIR, PICKLE_PROTOCOL_LEVEL, ROOT_DIR, CACHE_FILE_EXT
 
 
 class Plugin(object):
@@ -103,7 +102,7 @@ class Plugin(object):
         # Cache related setup.
         self._cache = {}
         self._cache_fname = (self.__class__.__name__ + CACHE_FILE_EXT).lower()
-        self._cache_path = path.join(CACHE_DIRECTORY, self._cache_fname)
+        self._cache_path = path.join(CACHE_DIR, self._cache_fname)
         self._read_cache()
 
     def __del__(self):
@@ -164,7 +163,7 @@ class Plugin(object):
         """
 
         self._logger.debug("Reading cache '{0}' ...".format(
-            path.relpath(self._cache_path, start=ROOT_DIRECTORY)
+            path.relpath(self._cache_path, start=ROOT_DIR)
         ))
         try:
             with open(self._cache_path, "rb") as f:
@@ -184,7 +183,7 @@ class Plugin(object):
         if not self._cache:
             return
         self._logger.info("Writing cache '{0}' ...".format(
-            path.relpath(self._cache_path, start=ROOT_DIRECTORY)
+            path.relpath(self._cache_path, start=ROOT_DIR)
         ))
         try:
             with open(self._cache_path, "wb") as f:
