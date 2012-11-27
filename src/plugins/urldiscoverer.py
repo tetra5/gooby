@@ -107,7 +107,7 @@ class URLDiscoverer(Plugin):
             source = None
 
             for r in ("http://", "https://"):
-                destination.replace(r, "")
+                destination = destination.replace(r, "")
 
             destination = "http://" + destination
             while any("http://" + s in destination for s in self._shorteners):
@@ -115,7 +115,10 @@ class URLDiscoverer(Plugin):
                     source = destination
                 url = urlparse.urlparse(destination)
                 connection = httplib.HTTPConnection(url.netloc, timeout=5)
+
+                # FIXME: Cyrillic URLs. (KeyError in quote)
                 connection.request("GET", urllib2.quote(url.path))
+
                 response = connection.getresponse()
                 destination = response.getheader("Location")
                 if destination is None:
