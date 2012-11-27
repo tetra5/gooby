@@ -14,10 +14,10 @@ __docformat__ = "restructuredtext en"
 from os import path
 
 
-ROOT_DIRECTORY = path.abspath(path.dirname(__file__))
-CACHE_DIRECTORY = path.normpath(path.join(ROOT_DIRECTORY, "./cache"))
-PLUGINS_DIRECTORY = path.normpath(path.join(ROOT_DIRECTORY, "./plugins"))
-LOGS_DIRECTORY = path.normpath(path.join(ROOT_DIRECTORY, "./logs"))
+ROOT_DIR = path.abspath(path.dirname(__file__))
+CACHE_DIR = path.normpath(path.join(ROOT_DIR, "./cache"))
+PLUGINS_DIR = path.normpath(path.join(ROOT_DIR, "./plugins"))
+LOGS_DIR = path.normpath(path.join(ROOT_DIR, "./logs"))
 
 CACHE_FILE_EXT = ".cache"
 CACHE_TTL = 0
@@ -25,7 +25,7 @@ PICKLE_PROTOCOL_LEVEL = 0
 
 SLEEP_TIME = 1
 
-LOGGER_CONFIG = {
+LOGGING_CONFIG = {
     "version": 1,
     "disable_existing_loggers": True,
     "formatters": {
@@ -37,8 +37,12 @@ LOGGER_CONFIG = {
         },
     },
     "handlers": {
-        "console": {
+        "null": {
             "level": "DEBUG",
+            "class": "logging.NullHandler",
+        },
+        "console": {
+            "level": "INFO",
             "class": "logging.StreamHandler",
             "formatter": "brief",
         },
@@ -46,19 +50,19 @@ LOGGER_CONFIG = {
             "level": "DEBUG",
             "class": "logging.FileHandler",
             "formatter": "verbose",
-            "filename": path.join(LOGS_DIRECTORY, "gooby.log"),
+            "filename": path.join(LOGS_DIR, "gooby.log"),
         },
         "file_errors": {
             "level": "WARNING",
             "class": "logging.FileHandler",
             "formatter": "verbose",
-            "filename": path.join(LOGS_DIRECTORY, "errors.log"),
+            "filename": path.join(LOGS_DIR, "errors.log"),
         },
         "file_session": {
             "level": "DEBUG",
             "class": "logging.FileHandler",
             "formatter": "verbose",
-            "filename": path.join(LOGS_DIRECTORY, "session.log"),
+            "filename": path.join(LOGS_DIR, "session.log"),
             "mode": "w",
         },
     },
@@ -69,7 +73,7 @@ LOGGER_CONFIG = {
         },
         "Skype4Py": {
             "handlers": ["console", "file", "file_errors", "file_session"],
-            "level": "DEBUG",
+            "level": "WARNING",
         },
     },
 }
