@@ -19,18 +19,27 @@ import logging.config
 from Skype4Py import SkypeAPIError, SkypeError
 
 from application import Application
-from config import PLUGINS_DIRECTORY, CACHE_DIRECTORY, LOGS_DIRECTORY, \
-    LOGGER_CONFIG, SLEEP_TIME
+from config import PLUGINS_DIR, CACHE_DIR, LOGS_DIR, LOGGING_CONFIG, SLEEP_TIME
 
 
-# Known issues:
-# - Application isn't able to receive Skype messages for some reason sometimes.
+# TODO: Move Gooby application to separate class.
 
-
-# TODO: Cache auto-save feature.
-
+# TODO: argparse.
 
 # TODO: Accept friend list requests automatically?
+# Having a dedicated plugin should be sufficient.
+
+# TODO: Caching dict class instead of plugin cache for more versatility.
+# It's also going to be much more easier to implement database caching if
+# necessary.
+
+# TODO: Move API clients to separate packages (YouTube, Google, etc).
+
+# TODO: Some kind of plugin manager to make use of chained plugins.
+# i.e. situation when shortened URL contains YouTube video URL, and unshortener
+# plugin triggers YouTube URL parser plugin as soon as it's done with
+# unshortening. It will be a long-term task and won't be here in near future.
+# Should probably utilize decorators or something like that.
 
 
 class ConsoleApplication(Application):
@@ -39,7 +48,7 @@ class ConsoleApplication(Application):
     """
     def __init__(self):
         super(ConsoleApplication, self).__init__()
-        self._plugins_dir = PLUGINS_DIRECTORY
+        self._plugins_dir = PLUGINS_DIR
         self._sleep_time = SLEEP_TIME
 
     def set_sleep_time(self, value):
@@ -55,12 +64,13 @@ def main(argv=sys.argv):
     """
     Gooby pls.
     """
-    logging.config.dictConfig(LOGGER_CONFIG)
+
+    logging.config.dictConfig(LOGGING_CONFIG)
     logger = logging.getLogger("Gooby")
 
     logger.info("Initializing application ...")
-    logger.debug("Cache directory is set to '{0}'".format(CACHE_DIRECTORY))
-    logger.debug("Logs directory is set to '{0}'".format(LOGS_DIRECTORY))
+    logger.debug("Cache directory is set to '{0}'".format(CACHE_DIR))
+    logger.debug("Logs directory is set to '{0}'".format(LOGS_DIR))
 
     app = ConsoleApplication()
 
