@@ -26,7 +26,7 @@ class Application(object):
     """
     Skype bot application wireframe.
     """
-    def __init__(self):
+    def __init__(self, **options):
         self._skype = None
         self._plugins_dir = str()
         self._plugin_modules = list()
@@ -68,7 +68,7 @@ class Application(object):
 
     def attach_to_skype(self):
         try:
-            if sys.platform == "linux2":
+            if any(p in sys.platform for p in ("linux", "darwin")):
                 self._skype = Skype4Py.Skype(Transport="x11")
             else:
                 self._skype = Skype4Py.Skype()
@@ -76,6 +76,13 @@ class Application(object):
             self._skype.Attach(Protocol=8)
         except:
             raise
+
+    def start_skype_client(self):
+        if self._skype:
+            try:
+                self._skype.Client.Start()
+            except:
+                raise
 
     def init_plugins(self):
         self._plugins = list()
