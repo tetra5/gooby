@@ -26,6 +26,7 @@ Plugins
    :numbered:
 
    youtubeurlparser.rst
+   urldiscoverer.rst
 
 Indices and tables
 ==================
