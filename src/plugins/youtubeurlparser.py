@@ -140,17 +140,24 @@ class YouTubeURLParser(Plugin):
         chat = message.Chat
 
         titles = []
+        video_ids = []
         for url in re.findall(self._pattern, message.Body):
             video_id = get_video_id(url)
             if video_id:
+                video_ids.append(video_id)
                 try:
                     titles.append(self.get_video_title(video_id))
                 except APIError, e:
                     chat.SendMessage(e)
+                    self._logger.error("{0} for {1}".format(e, video_id))
                     return
 
         if titles:
             chat.SendMessage(u"[YouTube] %s" % ", ".join(titles))
+            self._logger.info("Retrieving {0} for {1} ({2})".format(
+                " ,".join(video_ids), message.FromDisplayName,
+                message.FromHandle
+            ))
 
 
 if __name__ == "__main__":
