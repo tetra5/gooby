@@ -52,7 +52,7 @@ def truncate_url(url, max_path_length=20):
     url = urlparse.urlparse(url)
     if not url.netloc:
         raise ValueError, "Invalid URL: {0}".format(url)
-    quoted_path = urllib2.quote(url.path)
+    quoted_path = urllib2.quote(url.path.encode("utf-8"))
     if len(quoted_path) < max_path_length:
         return url.netloc + quoted_path
     return url.netloc + quoted_path[:max_path_length + 1] + "..."
@@ -115,10 +115,8 @@ class URLDiscoverer(Plugin):
                     source = destination
                 url = urlparse.urlparse(destination)
                 connection = httplib.HTTPConnection(url.netloc, timeout=5)
-
-                # FIXME: Cyrillic URLs. (KeyError in quote)
-                connection.request("GET", urllib2.quote(url.path))
-
+                path = url.path.encode("utf-8")
+                connection.request("GET", urllib2.quote(path))
                 response = connection.getresponse()
                 destination = response.getheader("Location")
                 if destination is None:
@@ -135,7 +133,7 @@ class URLDiscoverer(Plugin):
                 output.append(u"{0} -> {1}".format(
                     truncate_url(source), destination
                 ))
-                self._logger.info("Resolving URL {0} for {1} ({2})".format(
+                self._logger.info("Resolving {0} for {1} ({2})".format(
                     truncate_url(source), message.FromDisplayName,
                     message.FromHandle
                 ))
