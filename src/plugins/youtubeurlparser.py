@@ -5,6 +5,11 @@
 """
 :mod:`youtubeurlparser` --- YouTube URL parser plugin
 =====================================================
+
+.. note::
+    This module optionally uses `lxml library <http://lxml.de/>`_ if it's
+    available, otherwise falls back to default (and much slower) xml.etree
+    parser.
 """
 
 
@@ -23,7 +28,7 @@ except ImportError:
     except ImportError:
         from xml.etree import ElementTree as etree
 
-from Skype4Py.enums import cmsReceived, cmsSent
+from Skype4Py.enums import cmsReceived
 
 from plugin import Plugin
 from utils import retry_on_exception
