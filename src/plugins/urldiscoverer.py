@@ -109,15 +109,12 @@ class URLDiscoverer(Plugin):
         for destination in destinations:
             valid = True
             source = None
-            scheme = ""
+            scheme = "http://"
 
-            if destination.startswith("http://"):
-                scheme = "http://"
-            elif destination.startswith("https://"):
+            if destination.startswith("https://"):
                 scheme = "https://"
 
-            if scheme:
-                destination = destination.replace(scheme, "")
+            destination = destination.replace(scheme, "")
 
             destination = scheme + destination
             while any(scheme + s in destination for s in self._shorteners):
