@@ -86,7 +86,8 @@ class URLDiscoverer(Plugin):
             "short.to",
             "trib.al",
             "nblo.gs",
-            "go.ign.com"
+            "go.ign.com",
+            "kck.st",
             ]
 
     def on_message_status(self, message, status):
@@ -108,17 +109,26 @@ class URLDiscoverer(Plugin):
         for destination in destinations:
             valid = True
             source = None
+            scheme = ""
 
-            for r in ("http://", "https://"):
-                destination = destination.replace(r, "")
+            if destination.startswith("http://"):
+                scheme = "http://"
+            elif destination.startswith("https://"):
+                scheme = "https://"
 
-            destination = "http://" + destination
-            while any("http://" + s in destination for s in self._shorteners):
+            if scheme:
+                destination = destination.replace(scheme, "")
+
+            destination = scheme + destination
+            while any(scheme + s in destination for s in self._shorteners):
                 if not source:
                     source = destination
                 url = urlparse.urlparse(destination)
                 connection = httplib.HTTPConnection(url.netloc, timeout=5)
-                path = url.path.encode("utf-8")
+                try:
+                    path = url.path.encode("utf-8")
+                except UnicodeError:
+                    path = url.path
                 connection.request("GET", urllib2.quote(path))
                 response = connection.getresponse()
                 destination = response.getheader("Location")
@@ -128,7 +138,9 @@ class URLDiscoverer(Plugin):
                         truncate_url(source)
                     )
                     output.append(msg)
-                    log_msg = u"Unable to resolve {0}".format(source)
+                    log_msg = u"Unable to resolve {0} for {1} ({2})".format(
+                        source, message.FromHandle, message.FromDisplayName
+                    )
                     self._logger.error(log_msg)
                     break
 
