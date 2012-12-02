@@ -3,8 +3,8 @@
 
 
 """
-:mod:`config` --- Global application settings
-=============================================
+:mod:`config` --- Default application settings
+==============================================
 """
 
 
@@ -13,8 +13,10 @@ __docformat__ = "restructuredtext en"
 
 from os import path
 
+from utils import get_current_file_path
 
-ROOT_DIR = path.abspath(path.dirname(__file__))
+
+ROOT_DIR = path.abspath(path.dirname(get_current_file_path()))
 CACHE_DIR = path.normpath(path.join(ROOT_DIR, "./cache"))
 PLUGINS_DIR = path.normpath(path.join(ROOT_DIR, "./plugins"))
 LOGS_DIR = path.normpath(path.join(ROOT_DIR, "./logs"))
