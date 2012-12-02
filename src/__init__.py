@@ -5,4 +5,4 @@
 __docformat__ = "restructuredtext en"
 
 
-__version__ = "2012.2"
+__version__ = "2012.3"
