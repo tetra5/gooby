@@ -14,9 +14,12 @@ Core modules
    :maxdepth: 2
    :numbered:
 
+   application.rst
+   gooby.rst
    plugin.rst
    config.rst
    errors.rst
+   utils.rst
 
 Plugins
 -------
