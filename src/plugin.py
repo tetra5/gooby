@@ -57,10 +57,6 @@ class Plugin(object):
     .. seealso::
         ``plugins`` package for plugins derived from this class, e.g.:
         :class:`~youtubeurlparser.YouTubeURLParser`
-
-    .. todo::
-        Should probably rewrite or adapt docstrings as they are mostly entirely
-        taken from Skype4Py documentation.
     """
 
     def __init__(self, parent):
@@ -105,8 +101,8 @@ class Plugin(object):
         self._cache_path = path.join(CACHE_DIR, self._cache_fname)
         self._read_cache()
 
-    def __del__(self):
-        self._write_cache()
+#    def __del__(self):
+#        self._write_cache()
 
     @property
     def cache(self):
@@ -169,7 +165,7 @@ class Plugin(object):
             with open(self._cache_path, "rb") as f:
                 self._cache = pickle.load(f)
         except (IOError, OSError), e:
-            self._logger.warning("Cache is not accessible or doesn't exist")
+            self._logger.debug("Cache is not accessible or doesn't exist")
         except (pickle.UnpicklingError, AttributeError, EOFError,
                 IndexError), e:
             self._logger.error("Unpickling error")
