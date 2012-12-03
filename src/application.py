@@ -22,7 +22,7 @@ class Application(object):
     client window, attaching to it, and so on. Essentially it behaves like
     a Skype plugin. Which is what it is.
 
-    ..seealso::
+    .. seealso::
         :mod:`gooby` - Gooby module for more advanced usage.
     """
 
@@ -30,7 +30,7 @@ class Application(object):
         """
         Initializes Skype4Py library.
 
-        ..note::
+        .. note::
             Skype4Py uses X11 transport for inter-process communication
             instead of default D-Bus one, as the D-Bus IPC is really unstable
             and causes frequent segmentation faults.
