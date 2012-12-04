@@ -32,6 +32,8 @@ class HerpDerper(Plugin):
             u"пщщин",
             u"губе",
             u"ue,t",
+            u"губан",
+            u"ue,fy",
         ]
 
         if not any(s in message.Body.lower() for s in strings):
@@ -50,6 +52,7 @@ class HerpDerper(Plugin):
         random.shuffle(output)
 
         chat.SendMessage(" ".join(output))
+
 
 if __name__ == "__main__":
     import doctest
