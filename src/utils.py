@@ -58,14 +58,14 @@ def retry_on_exception(exception, tries=10, delay=3, backoff=1):
     Usage:
 
     >>> # This useless function will be retried 2 times.
-    >>> @retry_on_exception((Exception, IOError), 2)
+    >>> @retry_on_exception((Exception, IOError), tries=2, delay=1, backoff=0)
     ... def useless_function():
     ...     print "derp"
     ...     raise Exception
     ...
     >>> useless_function()
-    'derp'
-    'derp'
+    derp
+    derp
     """
 
     def wrapper(f):
