@@ -100,7 +100,7 @@ class Gooby(Application):
         :param plugincls: plugin class
         :type plugincls: :class:`~plugin.Plugin`
 
-        ..seealso::
+        .. seealso::
             :class:`plugin.Plugin` - base plugin class for more information
             on handling Skype events.
         """
