@@ -43,15 +43,13 @@ class HerpDerper(Plugin):
 
         max_words_count = 5
 
-        words_count = random.randint(1, max_words_count)
+        herps = ["herp"] * random.randint(1, max_words_count - 1)
+        derps = ["derp"] * (max_words_count - len(herps))
 
-        derps = ("derp " * words_count).split()
-        herps = ("herp " * (max_words_count - words_count)).split()
+        herpsderps = herps + derps
+        random.shuffle(herpsderps)
 
-        output = derps + herps
-        random.shuffle(output)
-
-        chat.SendMessage(" ".join(output))
+        chat.SendMessage(" ".join(herpsderps))
 
 
 if __name__ == "__main__":
