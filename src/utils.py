@@ -57,8 +57,8 @@ def retry_on_exception(exception, tries=10, delay=3, backoff=1):
 
     Usage:
 
-    >>> # This useless function will be retried 2 times.
-    >>> @retry_on_exception((Exception, IOError), tries=2, delay=1, backoff=0)
+    >>> # The following useless function will be consecutively called 2 times.
+    >>> @retry_on_exception((Exception, IOError), tries=2, delay=0, backoff=0)
     ... def useless_function():
     ...     print "derp"
     ...     raise Exception
@@ -85,8 +85,8 @@ def retry_on_exception(exception, tries=10, delay=3, backoff=1):
 
 def get_current_file_path():
     """
-    py2exe / py2app workaround. Returns current file path based on script
-    frozen state, platform and current system encoding.
+    py2exe / py2app workaround. Returns current file path based on script's
+    frozen state, current system platform and encoding.
 
     :return: current file path
     :rtype: `unicode`
