@@ -105,8 +105,7 @@ class Gooby(Application):
             on handling Skype events.
         """
 
-        assert not isinstance(plugincls, plugin.Plugin), \
-            "Incompatible plugin type"
+        assert not isinstance(plugincls, plugin.Plugin), "Invalid plugin class"
 
         pluginobj = plugincls(parent=self)
 
@@ -188,8 +187,10 @@ class Gooby(Application):
 
 def main():
     import socket
+    import traceback
     import logging.config
     import argparse
+    import datetime
 
     from config import CACHE_DIR, LOGS_DIR, PLUGINS_DIR, SLEEP_TIME, \
         LOGGING_CONFIG
@@ -197,9 +198,9 @@ def main():
     if sys.version_info < (2, 7):
         raise SystemExit("Gooby requires Python 2.7")
 
-    logging.config.dictConfig(LOGGING_CONFIG)
-
     socket.setdefaulttimeout(3)
+
+    logging.config.dictConfig(LOGGING_CONFIG)
 
     __version__ = "unknown"
 
@@ -216,22 +217,26 @@ def main():
     )
 
     argparser.add_argument(
-        "-c", "--cache_dir",
+        "-C", "--cache-dir",
+        dest="cache_dir",
         help="cache directory path (default: '%(default)s')",
     )
 
     argparser.add_argument(
-        "-l", "--logs_dir",
+        "-L", "--logs-dir",
+        dest="logs_dir",
         help="logs directory path (default: '%(default)s')",
     )
 
     argparser.add_argument(
-        "-p", "--plugins_dir",
+        "-P", "--plugins-dir",
+        dest="plugins_dir",
         help="plugins directory path (default: '%(default)s')",
     )
 
     argparser.add_argument(
-        "-s", "--sleep_time",
+        "-s", "--sleep",
+        dest="sleep_time",
         type=int,
         choices=range(1, 6),
         help="main thread sleep time in seconds (default: %(default)s)",
@@ -252,15 +257,34 @@ def main():
         gooby.run()
 
     # Regular application exit.
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, SystemExit):
         return 0
 
+    # Unhandled exception handler. Those kind of exceptions are considered
+    # to be critical, leading to program termination.
+    # Keeping that in mind, traceback is being logged to separate file or
+    # console if log file is inaccessible for writing.
     except:
-        print >> sys.stderr, sys.exc_info()
-        return 1
+        dt = datetime.date.today().isoformat()
+        fpath = os.path.join(LOGS_DIR, "traceback-{0}.log".format(dt))
+        msg = "Unexpected error has occurred. Terminating application"
+        print >> sys.stderr, msg
+        try:
+            with open(fpath, "w") as f:
+                print >> sys.stderr, "See '{0}' for more details".format(
+                    fpath
+                )
+                traceback.print_exc(file=f)
+        except (IOError, OSError):
+            # Log file is inaccessible for writing. Output traceback to
+            # console.
+            traceback.print_exc(file=sys.stderr)
+        finally:
+            return 1
 
     finally:
         gooby.stop()
+
 
 if __name__ == "__main__":
     sys.exit(main())
