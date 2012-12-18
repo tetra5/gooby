@@ -42,7 +42,6 @@ class HerpDerper(Plugin):
             s = unicode(s)
             p = re.compile(ur"{0}\b".format(s), re.IGNORECASE | re.UNICODE)
             matches = re.findall(p, message.Body)
-            print matches
             if matches:
                 found = True
                 break
