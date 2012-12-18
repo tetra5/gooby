@@ -7,10 +7,13 @@
 =================================================
 """
 
+
 __docformat__ = "restructuredtext en"
 
 
 import random
+from collections import Counter
+import re
 
 from Skype4Py.enums import cmsReceived
 
@@ -24,32 +27,45 @@ class HerpDerper(Plugin):
     def on_message_status(self, message, status):
         if status != cmsReceived:
             return
-
         strings = [
             u"губи",
+            u"ue,b",
             u"gooby",
-            u"uemb",
             u"пщщин",
-            u"губе",
-            u"ue,t",
-            u"губан",
-            u"ue,fy",
-        ]
+            ]
 
-        if not any(s in message.Body.lower() for s in strings):
+        if not any(s.lower() in message.Body.lower() for s in strings):
             return
 
-        chat = message.Chat
+        found = False
+        for s in strings:
+            s = unicode(s)
+            p = re.compile(ur"{0}\b".format(s), re.IGNORECASE | re.UNICODE)
+            matches = re.findall(p, message.Body)
+            print matches
+            if matches:
+                found = True
+                break
+        if not found:
+            return
 
-        max_words_count = 5
+        output = []
+        max_words_count = 6
+        words_count = random.randint(1, max_words_count)
 
-        herps = ["herp"] * random.randint(1, max_words_count - 1)
-        derps = ["derp"] * (max_words_count - len(herps))
-
-        herpsderps = herps + derps
+        herps = ["herp"] * random.randint(1, words_count)
+        herpsderps = herps + ["derp"] * (words_count - len(herps))
         random.shuffle(herpsderps)
 
-        chat.SendMessage(" ".join(herpsderps))
+        output.append(" ".join(herpsderps))
+
+        c = Counter(herpsderps)
+        if c.get(herpsderps[0]) is max_words_count:
+            output.append("{0} wins the jackpot!".format(
+                message.FromDisplayName
+            ))
+
+        message.Chat.SendMessage("\n".join(output))
 
 
 if __name__ == "__main__":
