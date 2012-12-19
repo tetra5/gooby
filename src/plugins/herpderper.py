@@ -5,6 +5,10 @@
 """
 :mod:`herpderper` --- Derping the herp since 1895
 =================================================
+
+A very simple and "fun" plugin which reacts on certain keywords by replying
+messages with random amount of "herp"'s and "derp"'s while maintaining
+meaningless statistics.
 """
 
 
@@ -12,12 +16,29 @@ __docformat__ = "restructuredtext en"
 
 
 import random
-from collections import Counter
 import re
 
 from Skype4Py.enums import cmsReceived
 
 from plugin import Plugin
+
+
+def all_same(myiter):
+    """
+    Check whether all elements in iterable are the same.
+
+    :return: True or False
+    :rtype: `bool`
+
+    >>> all_same([1, 1, 1, 1])
+    True
+    >>> all_same([0, 1, 1])
+    False
+    >>> all_same("aaa")
+    True
+    """
+
+    return all([myiter[0] == item for item in myiter])
 
 
 class HerpDerper(Plugin):
@@ -39,7 +60,6 @@ class HerpDerper(Plugin):
 
         found = False
         for s in strings:
-            s = unicode(s)
             p = re.compile(ur"{0}\b".format(s), re.IGNORECASE | re.UNICODE)
             matches = re.findall(p, message.Body)
             if matches:
@@ -58,8 +78,7 @@ class HerpDerper(Plugin):
 
         output.append(" ".join(herpsderps))
 
-        c = Counter(herpsderps)
-        if c.get(herpsderps[0]) is max_words_count:
+        if len(herpsderps) is 6 and all_same(herpsderps):
             output.append("{0} wins the jackpot!".format(
                 message.FromDisplayName
             ))
