@@ -45,33 +45,35 @@ def get_video_id(url):
     :returns: YouTube video ID
     :rtype: `unicode` or `None`
 
-    ::
-
-        >>> get_video_id("https://www.youtube.com/watch?v=XXXXXXXXXXX")
-        'XXXXXXXXXXX'
-        >>> get_video_id("youtube.com/watch?v=XXXXXXXXXXX")
-        'XXXXXXXXXXX'
-        >>> get_video_id("http://youtu.be/XXXXXXXXXXX")
-        'XXXXXXXXXXX'
-        >>> get_video_id("http://www.youtube.com/watch?feature=&v=XXXXXXXXXXX")
-        'XXXXXXXXXXX'
-        >>> get_video_id("http://youtu.be/YYYYYYYYYY") is None
-        True
-        >>> get_video_id("https://www.youtube.com/watch?v=") is None
-        True
-        >>> get_video_id("http://youtu.be/XXXXXXXXXXX?t=0m00s")
-        'XXXXXXXXXXX'
-        >>> get_video_id("http://www.youtube.com") is None
-        True
-        >>> get_video_id("youtube.com/watch?v=XXXXXXXXXXX&feature=youtu.be")
-        'XXXXXXXXXXX'
+    >>> get_video_id("https://www.youtube.com/watch?v=XXXXXXXXXXX")
+    'XXXXXXXXXXX'
+    >>> get_video_id("https://www.youtube.com///watch?v=XXXXXXXXXXX///")
+    'XXXXXXXXXXX'
+    >>> get_video_id("youtube.com/watch?v=XXXXXXXXXXX")
+    'XXXXXXXXXXX'
+    >>> get_video_id("http://youtu.be/XXXXXXXXXXX")
+    'XXXXXXXXXXX'
+    >>> get_video_id("http://www.youtube.com/watch?feature=&v=XXXXXXXXXXX")
+    'XXXXXXXXXXX'
+    >>> get_video_id("http://youtu.be/YYYYYYYYYY") is None
+    True
+    >>> get_video_id("https://www.youtube.com/watch?v=") is None
+    True
+    >>> get_video_id("http://youtu.be/XXXXXXXXXXX?t=0m00s")
+    'XXXXXXXXXXX'
+    >>> get_video_id("http://youtu.be///XXXXXXXXXXX///")
+    'XXXXXXXXXXX'
+    >>> get_video_id("http://www.youtube.com") is None
+    True
+    >>> get_video_id("youtube.com/watch?v=XXXXXXXXXXX&feature=youtu.be")
+    'XXXXXXXXXXX'
     """
 
     if "youtube.com" in url:
         queries = urlparse.parse_qs(urlparse.urlparse(url).query)
         v = queries.get("v")
         try:
-            vid_id = v[0]
+            vid_id = v[0].strip("/")
         except:
             return None
         if len(vid_id) != 11:
@@ -95,7 +97,7 @@ class YouTubeURLParser(Plugin):
     def get_video_title(self, video_id):
         """Retrieves YouTube video title by its ID.
 
-        :raises: :class:`errors.APIError` on connection or parse error
+        :raise: :class:`errors.APIError` on connection or parse error
 
         :param video_id: YouTube video ID
         :type video_id: `unicode`
@@ -137,8 +139,6 @@ class YouTubeURLParser(Plugin):
         if not any(s in message.Body for s in ("youtu.be", "youtube.com")):
             return
 
-        chat = message.Chat
-
         titles = []
         video_ids = []
         for url in re.findall(self._pattern, message.Body):
@@ -148,12 +148,12 @@ class YouTubeURLParser(Plugin):
                 try:
                     titles.append(self.get_video_title(video_id))
                 except APIError, e:
-                    chat.SendMessage(e)
+                    message.Chat.SendMessage(e)
                     self._logger.error("{0} for {1}".format(e, video_id))
                     return
 
         if titles:
-            chat.SendMessage(u"[YouTube] %s" % ", ".join(titles))
+            message.Chat.SendMessage(u"[YouTube] %s" % ", ".join(titles))
             self._logger.info("Retrieving {0} for {1} ({2})".format(
                 " ,".join(video_ids), message.FromDisplayName,
                 message.FromHandle
