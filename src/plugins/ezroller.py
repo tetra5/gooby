@@ -29,8 +29,8 @@ class EzRoller(ChatCommandPlugin):
     def on_roll_command(self, message):
         max_value = message.Body.strip().split()[1]
         try:
-            max_value = int(max_value)
-        except ValueError:
+            max_value = abs(int(max_value))
+        except (ValueError, IndexError):
             max_value = 100
 
         value = random.randint(1, max_value)
