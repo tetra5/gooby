@@ -70,14 +70,13 @@ def retry_on_exception(exception, tries=10, delay=3, backoff=1):
 
     def wrapper(f):
         def f_retry(*args, **kwargs):
-            mtries, mdelay = tries, delay
-            while mtries > 0:
+            while tries > 0:
                 try:
                     return f(*args, **kwargs)
                 except exception:
-                    time.sleep(mdelay)
-                    mtries -= 1
-                    mdelay *= backoff
+                    time.sleep(delay)
+                    tries -= 1
+                    delay *= backoff
             return
         return f_retry
     return wrapper
