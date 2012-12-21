@@ -14,6 +14,7 @@ __docformat__ = "restructuredtext en"
 import sys
 
 import Skype4Py
+from Skype4Py.enums import apiAttachSuccess
 
 
 class Application(object):
@@ -50,17 +51,30 @@ class Application(object):
 
         self._skype.FriendlyName = self._app_name
 
-    def attach_to_skype(self):
+    def attach_to_skype(self, protocol=8, wait=True):
+        """
+        Attach to Skype window.
+
+        :param protocol: Skype protocol version (8 is the highest one)
+        :type protocol: `int`. **Default:** 8
+
+        :param wait: If set to False, blocks forever until the connection is
+            established. Otherwise, timeouts after the `Timeout`
+        :type wait: `bool`
+
+        :raises: :class:`Skype4Py.skype.SkypeAPIError`
+        """
+
         try:
-            self._skype.Attach(Protocol=8)
+            self._skype.Attach(Protocol=protocol, Wait=wait)
         except:
             raise
 
-    def start_skype(self):
+    def start_skype(self, minimized=True, nosplash=True):
         try:
-            self._skype.Client.Start(Minimized=True, Nosplash=True)
+            self._skype.Client.Start(Minimized=minimized, Nosplash=nosplash)
         except:
             raise
 
     def is_attached(self):
-        return self._skype.AttachmentStatus == 0
+        return self._skype.AttachmentStatus == apiAttachSuccess
