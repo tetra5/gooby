@@ -36,6 +36,8 @@ def all_same(myiter):
     False
     >>> all_same("aaa")
     True
+    >>> all_same("aab")
+    False
     """
 
     return all([myiter[0] == item for item in myiter])
@@ -78,7 +80,7 @@ class HerpDerper(Plugin):
 
         output.append(" ".join(herpsderps))
 
-        if len(herpsderps) is 6 and all_same(herpsderps):
+        if len(herpsderps) is max_words_count and all_same(herpsderps):
             output.append("{0} wins the jackpot!".format(
                 message.FromDisplayName
             ))
