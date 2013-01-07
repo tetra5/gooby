@@ -49,7 +49,7 @@ LOGGING_CONFIG = {
             "formatter": "brief",
         },
         "file": {
-            "level": "DEBUG",
+            "level": "INFO",
             "class": "logging.FileHandler",
             "formatter": "verbose",
             "filename": path.join(LOGS_DIR, "gooby.log"),
