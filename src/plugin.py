@@ -91,9 +91,9 @@ class Plugin(object):
         self._parent = weakref.ref(parent)
 
         # Logging related setup.
-        self._logger_name = "Gooby." + self.__class__.__name__
+        self._logger_name = "Gooby.Plugin." + self.__class__.__name__
         self._logger = logging.getLogger(self._logger_name)
-        self._logger.debug("Initializing logging facility ...")
+        self._logger.debug("Object initialized")
 
         # Cache related setup.
         self._cache = {}
