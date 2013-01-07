@@ -24,6 +24,8 @@ class EzRoller(ChatCommandPlugin):
         super(EzRoller, self).__init__(parent)
         self._commands = {
             "!roll": self.on_roll_command,
+            u"!кщдд": self.on_roll_command,
+            u"!ролл": self.on_roll_command,
         }
 
     def on_roll_command(self, message):
