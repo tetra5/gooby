@@ -35,7 +35,7 @@ from utils import camelcase_to_underscore
 # necessary.
 
 # TODO: Move API clients to separate packages (YouTube, Google, etc).
-# Common tasks should be as reusable as possible.
+# Common tasks should be as much reusable as possible.
 
 # TODO: Some kind of plugin manager to make use of chained plugins.
 # i.e. situation when shortened URL contains YouTube video URL, and unshortener
