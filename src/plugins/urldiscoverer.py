@@ -71,23 +71,24 @@ class URLDiscoverer(Plugin):
     def __init__(self, parent):
         super(URLDiscoverer, self).__init__(parent)
         self._shorteners = [
-            "tinyurl.com",
             "bit.ly",
-            "t.co",
-            "ls.gd",
-            "goo.gl",
             "bitly.com",
-            "ow.ly",
-            "fb.me",
-            "is.gd",
-            "tr.im",
             "cli.gs",
-            "tiny.cc",
-            "short.to",
-            "trib.al",
-            "nblo.gs",
+            "fb.me",
             "go.ign.com",
+            "goo.gl",
+            "is.gd",
             "kck.st",
+            "ls.gd",
+            "nblo.gs",
+            "ow.ly",
+            "puu.sh",
+            "short.to",
+            "t.co",
+            "tiny.cc",
+            "tinyurl.com",
+            "tr.im",
+            "trib.al",
             ]
 
     def on_message_status(self, message, status):
