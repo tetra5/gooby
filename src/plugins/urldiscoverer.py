@@ -82,7 +82,6 @@ class URLDiscoverer(Plugin):
             "ls.gd",
             "nblo.gs",
             "ow.ly",
-            "puu.sh",
             "short.to",
             "t.co",
             "tiny.cc",
