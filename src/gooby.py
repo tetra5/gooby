@@ -111,7 +111,6 @@ class Gooby(Application):
         pobj = plugincls(None)
         pref = weakref.ref(pobj)
         pluginobj = pref()
-        print pobj, pref, pluginobj
 
         # Set of object attributes to be excluded.
         s = set(dir(type)).union("__weakref__")
