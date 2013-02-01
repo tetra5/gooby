@@ -15,6 +15,7 @@ import os
 import sys
 import time
 import logging
+import weakref
 
 import Skype4Py
 from Skype4Py.errors import SkypeAPIError, SkypeError
@@ -107,7 +108,10 @@ class Gooby(Application):
 
         assert not isinstance(plugincls, plugin.Plugin), "Invalid plugin class"
 
-        pluginobj = plugincls(parent=self)
+        pobj = plugincls(None)
+        pref = weakref.ref(pobj)
+        pluginobj = pref()
+        print pobj, pref, pluginobj
 
         # Set of object attributes to be excluded.
         s = set(dir(type)).union("__weakref__")
