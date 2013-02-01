@@ -12,8 +12,8 @@ __docformat__ = "restructuredtext en"
 
 __all__ = ["Plugin", "ChatCommandPlugin", ]
 
-
-import weakref
+# FIXME: weakref
+#import weakref
 from os import path
 import logging
 try:
@@ -59,6 +59,7 @@ class Plugin(object):
         :class:`~youtubeurlparser.YouTubeURLParser`
     """
 
+    # FIXME: parent
     def __init__(self, parent):
         """
         Initializes plugin logging facility.
@@ -88,7 +89,8 @@ class Plugin(object):
         :type parent: `object`
         """
 
-        self._parent = weakref.ref(parent)
+        # FIXME: weakref + parent
+        #self._parent = weakref.ref(parent)
 
         # Logging related setup.
         self._logger_name = "Gooby.Plugin." + self.__class__.__name__
@@ -144,14 +146,14 @@ class Plugin(object):
 
         return self._logger
 
-    def parent(self):
-        """
-        Read-only accessor.
-
-        :type: `object`
-        """
-
-        return self._parent
+#    def parent(self):
+#        """
+#        Read-only accessor.
+#
+#        :type: `object`
+#        """
+#
+#        return self._parent
 
     def _read_cache(self):
         """
@@ -164,7 +166,7 @@ class Plugin(object):
         try:
             with open(self._cache_path, "rb") as f:
                 self._cache = pickle.load(f)
-        except (IOError, OSError), e:
+        except (IOError, OSError):
             self._logger.debug("Cache is not accessible or doesn't exist")
         except (pickle.UnpicklingError, AttributeError, EOFError,
                 IndexError), e:
