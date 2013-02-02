@@ -19,6 +19,7 @@ import lxml.html
 from Skype4Py.enums import cmsReceived
 
 from plugin import Plugin
+from utils import retry_on_exception
 
 
 class IMDbURLParser(Plugin):
@@ -43,6 +44,7 @@ class IMDbURLParser(Plugin):
 
         headers = {
             "User-Agent": "Googlebot/2.1 (+http://www.googlebot.com/bot.html)",
+            "Accept-Language": "en-US,en;q=0.5",
         }
         opener = urllib2.build_opener()
         opener.addheaders = [(k, v) for k, v in headers.iteritems()]
@@ -52,13 +54,29 @@ class IMDbURLParser(Plugin):
         for url in found:
             url = "http://www.{0}/".format(url.rstrip("/"))
 
-            response = opener.open(url)
-            buf = response.read(1024)
-            opener.close()
+            @retry_on_exception((urllib2.URLError, urllib2.HTTPError))
+            def retrieve_html():
+                response = opener.open(url)
+                buf = response.read(1024)
+                opener.close()
+                try:
+                    return lxml.html.fromstring(buf)
+                except:
+                    return
 
-            html = lxml.html.fromstring(buf)
-            titles.append(html.find("head/title").text[:-7])
+            html = retrieve_html()
 
+            if html is None:
+                titles.append("Unable to retrieve movie title for {0}".format(
+                    url
+                ))
+            else:
+                titles.append(html.find("head/title").text[:-7])
+
+        ids = [url.split("/")[-1] for url in found]
+        self._logger.info("Retrieving {0} for {1} ({2})".format(
+            ", ".join(ids), message.FromDisplayName, message.FromHandle
+        ))
         message.Chat.SendMessage(u"[IMDb] {0}".format(", ".join(titles)))
 
 
