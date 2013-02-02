@@ -56,7 +56,8 @@ class Gooby(Application):
         self._cache_dir = cache_dir
         self._logs_dir = logs_dir
         self._plugin_classes = []
-        self._plugins = []
+        self._plugin_refs = []
+        self._plugin_objs = []
 
         # Check if essential directories are present and try to create them
         # otherwise.
@@ -110,7 +111,6 @@ class Gooby(Application):
 
         pobj = plugincls(None)
         pref = weakref.ref(pobj)
-        pluginobj = pref()
 
         # Set of object attributes to be excluded.
         s = set(dir(type)).union("__weakref__")
@@ -118,7 +118,7 @@ class Gooby(Application):
         for event in set(dir(Skype4Py.skype.SkypeEvents)).difference(s):
             meth = "on_{0}".format(camelcase_to_underscore(event))
             try:
-                handler = getattr(pluginobj, meth)
+                handler = getattr(pref(), meth)
             except AttributeError:
                 # Skip method if it hasn't been overridden.
                 pass
@@ -126,7 +126,9 @@ class Gooby(Application):
                 if callable(handler):
                     self._skype.RegisterEventHandler(event, handler)
 
-        self._plugins.append(pluginobj)
+        self._plugin_objs.append(pobj)
+        self._plugin_refs.append(pref)
+        del pobj, pref
 
     def run(self):
         self._logger.info("Starting up")
@@ -182,8 +184,8 @@ class Gooby(Application):
         self._logger.info("Shutting down")
 
         # FIXME: Temporary work-around until the new cache system is done.
-        for plugin in self._plugins:
-            plugin._write_cache()
+        for plugin in self._plugin_refs:
+            plugin()._write_cache()
 
         logging.shutdown()
 
