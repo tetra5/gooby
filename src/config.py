@@ -39,10 +39,6 @@ LOGGING_CONFIG = {
         },
     },
     "handlers": {
-        "null": {
-            "level": "DEBUG",
-            "class": "logging.NullHandler",
-        },
         "console": {
             "level": "INFO",
             "class": "logging.StreamHandler",
