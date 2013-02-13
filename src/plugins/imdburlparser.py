@@ -15,7 +15,6 @@ import urllib2
 import re
 
 import lxml.html
-
 from Skype4Py.enums import cmsReceived
 
 from plugin import Plugin
@@ -28,6 +27,8 @@ class IMDbURLParser(Plugin):
     message contains a valid IMDb movie URL(s).
     """
 
+    api_url = "http://www.imdb.com/title/{0}"
+
     def on_message_status(self, message, status):
         if status != cmsReceived:
             return
@@ -35,8 +36,7 @@ class IMDbURLParser(Plugin):
         if "imdb.com/title/tt" not in message.Body:
             return
 
-        p = ur"(imdb\.com/title/tt\d{7,})"
-        pattern = re.compile(p, re.IGNORECASE)
+        pattern = re.compile(ur"imdb\.com/title/(tt\d{7,})", re.IGNORECASE)
 
         found = re.findall(pattern, message.Body)
         if not found:
@@ -51,32 +51,34 @@ class IMDbURLParser(Plugin):
 
         titles = []
 
-        for url in found:
-            url = "http://www.{0}/".format(url.rstrip("/"))
+        for movie_id in found:
+            url = self.api_url.format(movie_id)
 
-            @retry_on_exception((urllib2.URLError, urllib2.HTTPError))
+            @retry_on_exception((urllib2.URLError, urllib2.HTTPError), tries=2,
+                                backoff=0, delay=1)
             def retrieve_html():
                 response = opener.open(url)
                 buf = response.read(1024)
-                opener.close()
-                try:
-                    return lxml.html.fromstring(buf)
-                except:
-                    return
+                return lxml.html.fromstring(buf)
 
             html = retrieve_html()
 
-            if html is None:
-                titles.append("Unable to retrieve movie title for {0}".format(
-                    url
-                ))
-            else:
+            try:
                 titles.append(html.find("head/title").text[:-7])
 
-        ids = [url.split("/")[-1] for url in found]
-        self._logger.info("Retrieving {0} for {1} ({2})".format(
-            ", ".join(ids), message.FromDisplayName, message.FromHandle
-        ))
+                self._logger.info("Retrieving {0} for {1} ({2})".format(
+                    movie_id, message.FromDisplayName, message.FromHandle
+                ))
+            except AttributeError:
+                titles.append("Unable to retrieve movie title for {0}".format(
+                    movie_id
+                ))
+
+                msg = "Unable to retrieve {0} for {1} ({2})".format(
+                    movie_id, message.FromDisplayName, message.FromHandle
+                )
+                self._logger.error(msg)
+
         message.Chat.SendMessage(u"[IMDb] {0}".format(", ".join(titles)))
 
 
