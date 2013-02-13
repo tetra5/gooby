@@ -125,7 +125,7 @@ class YouTubeURLParser(Plugin):
 
         root = retrieve_and_process_response()
         if root is None:
-            raise APIError("Unable to retrieve video title.")
+            raise APIError("Unable to retrieve video title")
 
         video_title = root.find("{http://www.w3.org/2005/Atom}title").text
 
