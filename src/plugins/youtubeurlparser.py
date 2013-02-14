@@ -32,7 +32,6 @@ from Skype4Py.enums import cmsReceived
 
 from plugin import Plugin
 from utils import retry_on_exception
-from errors import APIError
 
 
 def get_video_id(url):
@@ -100,45 +99,44 @@ class YouTubeURLParser(Plugin):
     message contains a valid YouTube video URL.
     """
 
-    _pattern = re.compile(r"((?:youtube\.com|youtu\.be)/\S+)")
+    _api_url = "http://gdata.youtube.com/feeds/api/videos/{0}"
+    _pattern = re.compile(ur"((?:youtube\.com|youtu\.be)/\S+)")
 
     def get_video_title(self, video_id):
         """Retrieves YouTube video title by its ID.
 
-        :raise: :class:`errors.APIError` on connection or parse error
-
         :param video_id: YouTube video ID
-        :type video_id: `unicode`
+        :type video_id: `unicode` or None
         """
 
         cached = self._cache.get(video_id)
         if cached:
             return cached
 
-        api_url = "http://gdata.youtube.com/feeds/api/videos/"
-        url = api_url + video_id
-
         headers = {
             "User-Agent": "Googlebot/2.1 (+http://www.googlebot.com/bot.html)",
-            }
+            "Accept-Language": "en-US,en;q=0.5",
+        }
         opener = urllib2.build_opener()
         opener.addheaders = [(k, v) for k, v in headers.iteritems()]
+        url = self._api_url.format(video_id)
 
-        @retry_on_exception((urllib2.URLError, urllib2.HTTPError,
-                             etree.ParseError))
-        def retrieve_and_process_response():
-            response = opener.open(fullurl=url, timeout=2)
-            element_tree = etree.ElementTree()
-            return element_tree.parse(response)
+        @retry_on_exception((urllib2.URLError, urllib2.HTTPError), tries=2,
+                            backoff=0, delay=1)
+        def retrieve_xml():
+            response = opener.open(url)
+            buf = response.read()
+            return etree.fromstring(buf)
 
-        root = retrieve_and_process_response()
-        if root is None:
-            raise APIError("Unable to retrieve video title")
+        xml = retrieve_xml()
 
-        video_title = root.find("{http://www.w3.org/2005/Atom}title").text
+        try:
+            title = xml.find("{http://www.w3.org/2005/Atom}title").text
+            self._cache.update({video_id: title})
+        except (AttributeError, etree.ParseError):
+            return
 
-        self._cache.update({video_id: video_title})
-        return video_title
+        return title
 
     def on_message_status(self, message, status):
         if status != cmsReceived:
@@ -147,25 +145,36 @@ class YouTubeURLParser(Plugin):
         if not any(s in message.Body for s in ("youtu.be", "youtube.com")):
             return
 
-        titles = []
-        video_ids = []
-        for url in re.findall(self._pattern, message.Body):
-            video_id = get_video_id(url)
-            if video_id:
-                video_ids.append(video_id)
-                try:
-                    titles.append(self.get_video_title(video_id))
-                except APIError, e:
-                    message.Chat.SendMessage(e)
-                    self._logger.error("{0} for {1}".format(e, video_id))
-                    return
+        found = re.findall(self._pattern, message.Body)
+        if not found:
+            return
 
-        if titles:
-            message.Chat.SendMessage(u"[YouTube] %s" % ", ".join(titles))
+        titles = []
+
+        for url in found:
+            video_id = get_video_id(url)
+
+            if video_id is None:
+                continue
+
             self._logger.info("Retrieving {0} for {1} ({2})".format(
-                " ,".join(video_ids), message.FromDisplayName,
-                message.FromHandle
+                video_id, message.FromDisplayName, message.FromHandle
             ))
+
+            title = self.get_video_title(video_id)
+
+            if title is not None:
+                titles.append(title)
+            else:
+                msg = "Unable to retrieve video title for {0}".format(video_id)
+                titles.append(msg)
+
+                msg = "Unable to retrieve {0} for {1} ({2})".format(
+                    msg, message.FromDisplayName, message.FromHandle
+                )
+                self._logger.error(msg)
+
+        message.Chat.SendMessage(u"[YouTube] {0}".format(", ".join(titles)))
 
 
 if __name__ == "__main__":
