@@ -170,7 +170,7 @@ class YouTubeURLParser(Plugin):
                 titles.append(msg)
 
                 msg = "Unable to retrieve {0} for {1} ({2})".format(
-                    msg, message.FromDisplayName, message.FromHandle
+                    video_id, message.FromDisplayName, message.FromHandle
                 )
                 self._logger.error(msg)
 
