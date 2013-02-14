@@ -28,7 +28,8 @@ class VimeoURLParser(Plugin):
     message contains a valid Vimeo video URL(s).
     """
 
-    api_url = "http://vimeo.com/api/v2/video/{0}.xml"
+    _api_url = "http://vimeo.com/api/v2/video/{0}.xml"
+    _pattern = re.compile(ur"vimeo\.com/(\d+)", re.IGNORECASE)
 
     def on_message_status(self, message, status):
         if status != cmsReceived:
@@ -37,9 +38,7 @@ class VimeoURLParser(Plugin):
         if "vimeo.com/" not in message.Body:
             return
 
-        pattern = re.compile(ur"vimeo\.com/(\d+)", re.IGNORECASE)
-
-        found = re.findall(pattern, message.Body)
+        found = re.findall(self._pattern, message.Body)
         if not found:
             return
 
@@ -54,7 +53,7 @@ class VimeoURLParser(Plugin):
         titles = []
 
         for video_id in found:
-            url = self.api_url.format(video_id)
+            url = self._api_url.format(video_id)
 
             @retry_on_exception((urllib2.URLError, urllib2.HTTPError), tries=2,
                                 backoff=0, delay=1)

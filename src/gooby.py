@@ -25,6 +25,10 @@ import plugin
 from utils import camelcase_to_underscore
 
 
+if sys.version_info < (2, 7):
+    raise SystemExit("Gooby requires Python 2.7")
+
+
 # TODO: ConfigParser + external configuration file(s) support.
 
 # TODO: Accept friend list requests automatically?
@@ -199,9 +203,6 @@ def main():
 
     from config import CACHE_DIR, LOGS_DIR, PLUGINS_DIR, SLEEP_TIME, \
         LOGGING_CONFIG
-
-    if sys.version_info < (2, 7):
-        raise SystemExit("Gooby requires Python 2.7")
 
     socket.setdefaulttimeout(3)
 

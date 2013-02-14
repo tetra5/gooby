@@ -27,7 +27,8 @@ class IMDbURLParser(Plugin):
     message contains a valid IMDb movie URL(s).
     """
 
-    api_url = "http://www.imdb.com/title/{0}"
+    _api_url = "http://www.imdb.com/title/{0}"
+    _pattern = re.compile(ur"imdb\.com/title/(tt\d{7,})", re.IGNORECASE)
 
     def on_message_status(self, message, status):
         if status != cmsReceived:
@@ -36,9 +37,7 @@ class IMDbURLParser(Plugin):
         if "imdb.com/title/tt" not in message.Body:
             return
 
-        pattern = re.compile(ur"imdb\.com/title/(tt\d{7,})", re.IGNORECASE)
-
-        found = re.findall(pattern, message.Body)
+        found = re.findall(self._pattern, message.Body)
         if not found:
             return
 
@@ -52,7 +51,7 @@ class IMDbURLParser(Plugin):
         titles = []
 
         for movie_id in found:
-            url = self.api_url.format(movie_id)
+            url = self._api_url.format(movie_id)
 
             @retry_on_exception((urllib2.URLError, urllib2.HTTPError), tries=2,
                                 backoff=0, delay=1)
