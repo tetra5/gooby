@@ -47,6 +47,8 @@ def get_video_id(url):
 
     >>> get_video_id("https://www.youtube.com/watch?v=XXXXXXXXXXX")
     'XXXXXXXXXXX'
+    >>> get_video_id("https://www.youtube.com/watch?v=XXXXXXXXXXXZ")
+    'XXXXXXXXXXX'
     >>> get_video_id("https://www.youtube.com///watch?v=XXXXXXXXXXX///")
     'XXXXXXXXXXX'
     >>> get_video_id("youtube.com/watch?v=XXXXXXXXXXX")
@@ -59,30 +61,38 @@ def get_video_id(url):
     True
     >>> get_video_id("https://www.youtube.com/watch?v=") is None
     True
+    >>> get_video_id("https://www.youtube.com/watch?v=X") is None
+    True
     >>> get_video_id("http://youtu.be/XXXXXXXXXXX?t=0m00s")
     'XXXXXXXXXXX'
+    >>> get_video_id("http://youtu.be///X///") is None
+    True
     >>> get_video_id("http://youtu.be///XXXXXXXXXXX///")
+    'XXXXXXXXXXX'
+    >>> get_video_id("http://youtu.be///XXXXXXXXXXXZ///")
     'XXXXXXXXXXX'
     >>> get_video_id("http://www.youtube.com") is None
     True
     >>> get_video_id("youtube.com/watch?v=XXXXXXXXXXX&feature=youtu.be")
     'XXXXXXXXXXX'
+    >>> get_video_id("youtube.com/watch?feature=youtu.be&v=XXXXXXXXXXX")
+    'XXXXXXXXXXX'
     """
+
+    vid_id = ""
 
     if "youtube.com" in url:
         queries = urlparse.parse_qs(urlparse.urlparse(url).query)
         v = queries.get("v")
         try:
-            vid_id = v[0].strip("/")
-        except:
-            return None
-        if len(vid_id) != 11:
-            return None
-        return vid_id
+            vid_id = v[0].strip("/")[:11]
+        except (IndexError, TypeError):
+            return
 
-    if "youtu.be" in url:
+    elif "youtu.be" in url:
         vid_id = [chunk.strip() for chunk in url.split("/") if chunk][-1][:11]
-        return vid_id if len(vid_id) == 11 else None
+
+    return vid_id if len(vid_id) is 11 else None
 
 
 class YouTubeURLParser(Plugin):
@@ -90,9 +100,7 @@ class YouTubeURLParser(Plugin):
     message contains a valid YouTube video URL.
     """
 
-    def __init__(self, parent):
-        super(YouTubeURLParser, self).__init__(parent)
-        self._pattern = re.compile(r"((?:youtube\.com|youtu\.be)/\S+)")
+    _pattern = re.compile(r"((?:youtube\.com|youtu\.be)/\S+)")
 
     def get_video_title(self, video_id):
         """Retrieves YouTube video title by its ID.
