@@ -88,7 +88,8 @@ class URLDiscoverer(Plugin):
             "tinyurl.com",
             "tr.im",
             "trib.al",
-            ]
+            "vk.cc",
+        ]
 
     def on_message_status(self, message, status):
         if status != cmsReceived:
