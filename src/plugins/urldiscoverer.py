@@ -57,14 +57,14 @@ class URLDiscoverer(Plugin):
 
         # Build a list of clean URLs for every non-overlapping shortened URL
         # found in a message.
-        # Domain part search is case-sensitive, whereas extra slashes are
+        # Domain part search is case-insensitive, whereas extra slashes are
         # being stripped. The resulting URL consists of URL scheme, domain
         # and path parts, i.e. "http://domain.com/SH0Rt".
         urls = []
         for s in self._shorteners:
-            f = map(lambda x: filter(None, x[x.find(s):].split("/")),
+            f = map(lambda x: filter(None, x[x.lower().find(s):].split("/")),
                     message.Body.split())
-            for pair in filter(lambda x: len(x) >= 2, f):
+            for pair in filter(lambda x: len(x) is 2, f):
                 urls.append("http://{0}".format("/".join(pair)))
 
         resolved = []
