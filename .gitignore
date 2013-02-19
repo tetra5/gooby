@@ -15,6 +15,7 @@
 
 # herpderp
 leprosorium.*
+config_local.*
 
 # build and dist folders, doc folders
 build
