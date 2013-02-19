@@ -100,7 +100,15 @@ class YouTubeURLParser(Plugin):
     """
 
     _api_url = "http://gdata.youtube.com/feeds/api/videos/{0}"
+
     _pattern = re.compile(ur"((?:youtube\.com|youtu\.be)/\S+)")
+
+    _headers = {
+        "User-Agent": "Googlebot/2.1 (+http://www.googlebot.com/bot.html)",
+        "Accept-Language": "en-US,en;q=0.5",
+    }
+    _opener = urllib2.build_opener()
+    _opener.addheaders = [(k, v) for k, v in _headers.iteritems()]
 
     def get_video_title(self, video_id):
         """Retrieves YouTube video title by its ID.
@@ -113,18 +121,12 @@ class YouTubeURLParser(Plugin):
         if cached:
             return cached
 
-        headers = {
-            "User-Agent": "Googlebot/2.1 (+http://www.googlebot.com/bot.html)",
-            "Accept-Language": "en-US,en;q=0.5",
-        }
-        opener = urllib2.build_opener()
-        opener.addheaders = [(k, v) for k, v in headers.iteritems()]
         url = self._api_url.format(video_id)
 
         @retry_on_exception((urllib2.URLError, urllib2.HTTPError), tries=2,
                             backoff=0, delay=1)
         def retrieve_xml():
-            response = opener.open(url)
+            response = self._opener.open(url)
             buf = response.read()
             return etree.fromstring(buf)
 
@@ -173,6 +175,9 @@ class YouTubeURLParser(Plugin):
                     video_id, message.FromDisplayName, message.FromHandle
                 )
                 self._logger.error(msg)
+
+        if not titles:
+            return
 
         message.Chat.SendMessage(u"[YouTube] {0}".format(", ".join(titles)))
 
