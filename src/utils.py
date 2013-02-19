@@ -35,7 +35,7 @@ def camelcase_to_underscore(string):
     return re.sub(pattern, "_\\1", string).lower().strip("_")
 
 
-def retry_on_exception(exception, tries=10, delay=3, backoff=1):
+class retry_on_exception(object):
     """
     Decorator.
 
@@ -68,19 +68,24 @@ def retry_on_exception(exception, tries=10, delay=3, backoff=1):
     derp
     """
 
-    def wrapper(f):
-        def f_retry(*args, **kwargs):
-            mtries, mdelay = tries, delay
+    def __init__(self, exception, tries=10, delay=3, backoff=1):
+        self._exception = exception
+        self._tries = tries
+        self._delay = delay
+        self._backoff = backoff
+
+    def __call__(self, func):
+        def wrapper(*args, **kwargs):
+            mtries, mdelay = self._tries, self._delay
             while mtries > 0:
                 try:
-                    return f(*args, **kwargs)
-                except exception:
-                    time.sleep(delay)
+                    return func(*args, **kwargs)
+                except self._exception:
+                    time.sleep(self._delay)
                     mtries -= 1
-                    mdelay *= backoff
+                    mdelay *= self._backoff
             return
-        return f_retry
-    return wrapper
+        return wrapper
 
 
 def get_current_file_path():
