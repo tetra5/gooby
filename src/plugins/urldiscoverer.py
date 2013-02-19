@@ -11,54 +11,11 @@
 __docformat__ = "restructuredtext en"
 
 
-import httplib
-import urlparse
 import urllib2
 
 from Skype4Py.enums import cmsReceived
 
 from plugin import Plugin
-
-
-def truncate_url(url, max_path_length=20):
-    """
-    Truncates URL path component to `max_path_length` characters.
-
-    :param url: URL
-    :type url: `unicode`
-
-    :param max_path_length: maximum URL path length
-    :type max_path_length: `int`
-
-    :return: truncated URL
-    :rtype: `unicode`
-
-    :raise: ValueError if URL isn't a valid one.
-
-    .. note::
-        There's a limited Cyrillic URLs support (currently limited to URL
-        path only). Skype won't recognize Cyrillic domain name parts anyway.
-
-    ::
-
-        >>> truncate_url("http://test.me/XXXXX", 3)
-        'test.me/XXX...'
-        >>> truncate_url("http://test.me/XXXXX")
-        'test.me/XXXXX'
-        >>> truncate_url("http://test.me/ссылка", 12)
-        'test.me/%D1%81%D1%81...'
-    """
-
-    url = urlparse.urlparse(url)
-    if not url.netloc:
-        raise ValueError, "Invalid URL: {0}".format(url)
-    try:
-        quoted_path = urllib2.quote(url.path.encode("utf-8"))
-    except UnicodeDecodeError:
-        quoted_path = urllib2.quote(url.path)
-    if len(quoted_path) < max_path_length:
-        return url.netloc + quoted_path
-    return url.netloc + quoted_path[:max_path_length + 1] + "..."
 
 
 class URLDiscoverer(Plugin):
@@ -68,91 +25,72 @@ class URLDiscoverer(Plugin):
     suppress potentially excessive output.
     """
 
-    def __init__(self, parent):
-        super(URLDiscoverer, self).__init__(parent)
-        self._shorteners = [
-            "bit.ly",
-            "bitly.com",
-            "cli.gs",
-            "fb.me",
-            "go.ign.com",
-            "goo.gl",
-            "is.gd",
-            "kck.st",
-            "ls.gd",
-            "nblo.gs",
-            "ow.ly",
-            "short.to",
-            "t.co",
-            "tiny.cc",
-            "tinyurl.com",
-            "tr.im",
-            "trib.al",
-            "vk.cc",
-        ]
+    _shorteners = [
+        "bit.ly",
+        "bitly.com",
+        "cli.gs",
+        "fb.me",
+        "go.ign.com",
+        "goo.gl",
+        "is.gd",
+        "kck.st",
+        "ls.gd",
+        "nblo.gs",
+        "ow.ly",
+        "short.to",
+        "t.co",
+        "tiny.cc",
+        "tinyurl.com",
+        "tr.im",
+        "trib.al",
+        "vk.cc",
+    ]
+
+    _opener = urllib2.build_opener(urllib2.HTTPRedirectHandler)
 
     def on_message_status(self, message, status):
         if status != cmsReceived:
             return
 
-        if not any(s in message.Body for s in self._shorteners):
+        if not any(s in message.Body.lower() for s in self._shorteners):
             return
 
-        chat = message.Chat
+        # Build a list of clean URLs for every non-overlapping shortened URL
+        # found in a message.
+        # Domain part search is case-insensitive, whereas extra slashes are
+        # being stripped. The resulting URL consists of URL scheme, domain
+        # and path parts, i.e. "http://domain.com/SH0Rt".
+        urls = []
+        for s in self._shorteners:
+            f = map(lambda x: filter(None,
+                                     x.lower()[x.lower().find(s):].split("/")),
+                    message.Body.split())
+            for pair in filter(lambda x: len(x) >= 2, f):
+                urls.append("http://{0}".format("/".join(pair)))
 
-        output = []
+        resolved = []
 
-        destinations = []
-        for chunk in message.Body.split():
-            if any(s in chunk.lower() for s in self._shorteners):
-                destinations.append(chunk)
-
-        for destination in destinations:
-            valid = True
-            source = None
-            scheme = "http://"
-
-            if destination.startswith("https://"):
-                scheme = "https://"
-
-            destination = destination.replace(scheme, "")
-
-            destination = scheme + destination
-            while any(scheme + s in destination for s in self._shorteners):
-                if not source:
-                    source = destination
-                url = urlparse.urlparse(destination)
-                connection = httplib.HTTPConnection(url.netloc, timeout=5)
-                try:
-                    path = url.path.encode("utf-8")
-                except UnicodeError:
-                    path = url.path
-                connection.request("GET", urllib2.quote(path))
-                response = connection.getresponse()
-                destination = response.getheader("Location")
-                if destination is None:
-                    valid = False
-                    msg = u"{0} -> unable to resolve".format(
-                        truncate_url(source)
-                    )
-                    output.append(msg)
-                    log_msg = u"Unable to resolve {0} for {1} ({2})".format(
-                        source, message.FromHandle, message.FromDisplayName
-                    )
-                    self._logger.error(log_msg)
-                    break
-
-            if source and valid:
-                output.append(u"{0} -> {1}".format(
-                    truncate_url(source), destination
+        for url in urls:
+            u = url.split("http://")[-1]
+            try:
+                self._logger.info(u"Resolving {0} for {1} ({2})".format(
+                    u, message.FromDisplayName, message.FromHandle
                 ))
-                self._logger.info("Resolving {0} for {1} ({2})".format(
-                    truncate_url(source), message.FromDisplayName,
-                    message.FromHandle
+                destination = self._opener.open(url).url
+                resolved.append(u"{0} -> {1}".format(
+                    u, destination
+                ))
+            except (urllib2.HTTPError, urllib2.URLError) as e:
+                m = u"Unable to resolve {0} for {1} ({2}): {3}".format(
+                    u, message.FromDisplayName, message.FromHandle, str(e)
+                )
+                self._logger.error(m)
+                resolved.append(u"{0} -> unable to resolve ({1})".format(
+                    u, str(e)
                 ))
 
-        if output:
-            chat.SendMessage(", ".join(output))
+        if resolved:
+            message.Chat.SendMessage(", ".join(resolved))
 
 
 if __name__ == "__main__":
