@@ -22,7 +22,7 @@ from plugin import Plugin
 _p = re.compile(ur"[\W_]+")
 
 
-def find_shortened_urls(shorteners=[], haystack=""):
+def find_shortened_urls(shorteners, haystack=""):
     """
     Generator.
     Yields every valid shortened URL found in haystack string. Does not append
