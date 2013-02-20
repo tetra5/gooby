@@ -12,10 +12,37 @@ __docformat__ = "restructuredtext en"
 
 
 import urllib2
+import re
 
 from Skype4Py.enums import cmsReceived
 
 from plugin import Plugin
+
+
+_p = re.compile(ur"[\W_]+")
+
+
+def find_shortened_urls(shorteners=[], haystack=""):
+    """
+    Generator.
+    Yields every valid shortened URL found in haystack string. Does not append
+    "http://" part to result. Strips all non-letters from URL path.
+
+    >>> shorteners = ["t.co", "tinyurl.com", "bit.ly", "goo.gl"]
+    >>> haystack = '''t.co/derp,     BiT.Ly/HerP http://tinyURL.com/TEST
+    ... www.goo.gl/herpDERP/derpwww.bit.ly/herpderp'''
+    >>> found = list(find_shortened_urls(shorteners, haystack))
+    >>> expected = ['bit.ly/herpderp', 't.co/derp', 'BiT.Ly/HerP',
+    ... 'tinyURL.com/TEST']
+    >>> sorted(found) == sorted(expected)
+    True
+    """
+
+    for s in shorteners:
+        f = map(lambda x: filter(None, x[x.lower().find(s):].split("/")),
+                haystack.split())
+        for host, path in filter(lambda x: len(x) is 2, f):
+            yield "{0}/{1}".format(host, re.sub(_p, "_", path).strip("_"))
 
 
 class URLDiscoverer(Plugin):
@@ -46,7 +73,12 @@ class URLDiscoverer(Plugin):
         "vk.cc",
     ]
 
+    _headers = {
+        "User-Agent": "Googlebot/2.1 (+http://www.googlebot.com/bot.html)",
+        "Accept-Language": "en-US,en;q=0.5",
+    }
     _opener = urllib2.build_opener(urllib2.HTTPRedirectHandler)
+    _opener.addheaders = [(k, v) for k, v in _headers.iteritems()]
 
     def on_message_status(self, message, status):
         if status != cmsReceived:
@@ -55,41 +87,34 @@ class URLDiscoverer(Plugin):
         if not any(s in message.Body.lower() for s in self._shorteners):
             return
 
-        # Build a list of clean URLs for every non-overlapping shortened URL
-        # found in a message.
-        # Domain part search is case-insensitive, whereas extra slashes are
-        # being stripped. The resulting URL consists of URL scheme, domain
-        # and path parts, i.e. "http://domain.com/SH0Rt".
-        urls = []
-        for s in self._shorteners:
-            f = map(lambda x: filter(None, x[x.lower().find(s):].split("/")),
-                    message.Body.split())
-            for pair in filter(lambda x: len(x) is 2, f):
-                urls.append("http://{0}".format("/".join(pair)))
+        found = list(find_shortened_urls(self._shorteners, message.Body))
+
+        if not found:
+            return
 
         resolved = []
 
-        for url in urls:
-            u = url.split("http://")[-1]
+        for url in found:
             try:
                 self._logger.info(u"Resolving {0} for {1} ({2})".format(
-                    u, message.FromDisplayName, message.FromHandle
+                    url, message.FromDisplayName, message.FromHandle
                 ))
-                destination = self._opener.open(url).url
-                resolved.append(u"{0} -> {1}".format(
-                    u, destination
-                ))
+                location = self._opener.open("http://{0}".format(url)).url
+                resolved.append(u"{0} -> {1}".format(url, location))
+
             except (urllib2.HTTPError, urllib2.URLError) as e:
                 m = u"Unable to resolve {0} for {1} ({2}): {3}".format(
-                    u, message.FromDisplayName, message.FromHandle, str(e)
+                    url, message.FromDisplayName, message.FromHandle, str(e)
                 )
                 self._logger.error(m)
                 resolved.append(u"{0} -> unable to resolve ({1})".format(
-                    u, str(e)
+                    url, str(e)
                 ))
 
-        if resolved:
-            message.Chat.SendMessage(", ".join(resolved))
+        if not resolved:
+            return
+
+        message.Chat.SendMessage(u"[Redirect] {0}".format("\n".join(resolved)))
 
 
 if __name__ == "__main__":
