@@ -29,7 +29,15 @@ class VimeoURLParser(Plugin):
     """
 
     _api_url = "http://vimeo.com/api/v2/video/{0}.xml"
+
     _pattern = re.compile(ur"vimeo\.com/(\d+)", re.IGNORECASE)
+
+    _headers = {
+        "User-Agent": "Googlebot/2.1 (+http://www.googlebot.com/bot.html)",
+        "Accept-Language": "en-US,en;q=0.5",
+    }
+    _opener = urllib2.build_opener()
+    _opener.addheaders = [(k, v) for k, v in _headers.iteritems()]
 
     def on_message_status(self, message, status):
         if status != cmsReceived:
@@ -42,14 +50,6 @@ class VimeoURLParser(Plugin):
         if not found:
             return
 
-        headers = {
-            "User-Agent": "Googlebot/2.1 (+http://www.googlebot.com/bot.html)",
-            "Accept-Language": "en-US,en;q=0.5",
-        }
-
-        opener = urllib2.build_opener()
-        opener.addheaders = [(k, v) for k, v in headers.iteritems()]
-
         titles = []
 
         for video_id in found:
@@ -58,7 +58,7 @@ class VimeoURLParser(Plugin):
             @retry_on_exception((urllib2.URLError, urllib2.HTTPError), tries=2,
                                 backoff=0, delay=1)
             def retrieve_xml():
-                response = opener.open(url)
+                response = self._opener.open(url)
                 buf = response.read()
                 try:
                     return etree.fromstring(buf)
