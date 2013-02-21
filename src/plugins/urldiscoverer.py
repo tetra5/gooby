@@ -25,7 +25,7 @@ _p = re.compile(ur"[\W_]+")
 def find_shortened_urls(shorteners, haystack=""):
     """
     Generator.
-    Yields every valid shortened URL found in haystack string. Does not append
+    Yields every valid shortened URL found in haystack string. Does not prepend
     "http://" part to result. Strips all non-letters from URL path.
 
     >>> shorteners = ["t.co", "tinyurl.com", "bit.ly", "goo.gl"]
