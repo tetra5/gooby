@@ -25,31 +25,36 @@ _p = re.compile(ur"[\W_]+")
 def find_shortened_urls(shorteners, haystack=""):
     """
     Generator.
+
     Yields every valid shortened URL found in haystack string. Does not prepend
-    "http://" part to result. Strips all non-letters from URL path.
+    "http://" part to result. Converts all non-letter characters to
+    underscores.
+
+    .. note::
+        URL path part is case-sensitive.
 
     >>> shorteners = ["t.co", "tinyurl.com", "bit.ly", "goo.gl"]
     >>> haystack = '''t.co/derp,     BiT.Ly/HerP http://tinyURL.com/TEST
-    ... www.goo.gl/herpDERP/derpwww.bit.ly/herpderp'''
+    ... www.goo.gl/herpDERP/derpwww.bit.ly/herpDERP goo.gl/Test/WoNtWoRk'''
     >>> found = list(find_shortened_urls(shorteners, haystack))
-    >>> expected = ['bit.ly/herpderp', 't.co/derp', 'BiT.Ly/HerP',
-    ... 'tinyURL.com/TEST']
+    >>> expected = ['bit.ly/herpDERP', 't.co/derp', 'bit.ly/HerP',
+    ... 'tinyurl.com/TEST']
     >>> sorted(found) == sorted(expected)
     True
     """
 
     for s in shorteners:
-        f = map(lambda x: filter(None, x[x.lower().find(s):].split("/")),
-                haystack.split())
-        for host, path in filter(lambda x: len(x) is 2, f):
-            yield "{0}/{1}".format(host, re.sub(_p, "_", path).strip("_"))
+        func = map(lambda x: filter(None, x[x.lower().find(s):].split("/")),
+                   haystack.split())
+        for host, path in filter(lambda x: len(x) is 2, func):
+            path = re.sub(_p, "_", path).strip("_")
+            yield "{0}/{1}".format(host.lower(), path)
 
 
 class URLDiscoverer(Plugin):
     """
-    This plugin monitors incoming chat messages and recursively "unshortens"
-    common URL shortener services. Long source URLs are being truncated to
-    suppress potentially excessive output.
+    This plugin monitors incoming chat messages for common short URLs,
+    handling their redirection, and then outputs resolved results to the chat.
     """
 
     _shorteners = [
