@@ -5,10 +5,6 @@
 """
 :mod:`herpderper` --- Derping the herp since 1895
 =================================================
-
-A very simple and "fun" plugin which reacts on certain keywords by replying
-messages with random amount of "herp"'s and "derp"'s while maintaining
-meaningless statistics.
 """
 
 
@@ -44,43 +40,45 @@ def all_same(myiter):
 
 
 class HerpDerper(Plugin):
-    def __init__(self, parent):
-        super(HerpDerper, self).__init__(parent)
+    """
+    A very simple and "fun" plugin which reacts on certain keywords by replying
+    messages with random amount of "herp"'s and "derp"'s while maintaining
+    meaningless statistics.
+    """
+
+    _triggers = [
+        u"губи",
+        u"ue,b",
+        u"gooby",
+        u"пщщин",
+    ]
 
     def on_message_status(self, message, status):
         if status != cmsReceived:
             return
-        strings = [
-            u"губи",
-            u"ue,b",
-            u"gooby",
-            u"пщщин",
-            ]
 
-        if not any(s.lower() in message.Body.lower() for s in strings):
-            return
-
-        found = False
-        for s in strings:
-            p = re.compile(ur"{0}\b".format(s), re.IGNORECASE | re.UNICODE)
-            matches = re.findall(p, message.Body)
-            if matches:
-                found = True
+        match = None
+        for t in self._triggers:
+            p = re.compile(ur"{0}\b".format(t), re.IGNORECASE | re.UNICODE)
+            match = re.search(p, message.Body)
+            if match:
                 break
-        if not found:
+
+        if not match:
             return
 
         output = []
-        max_words_count = 6
-        words_count = random.randint(1, max_words_count)
 
+        max_herpderps = 6
+        words_count = random.randint(1, max_herpderps)
         herps = ["herp"] * random.randint(1, words_count)
         herpsderps = herps + ["derp"] * (words_count - len(herps))
+
         random.shuffle(herpsderps)
 
         output.append(" ".join(herpsderps))
 
-        if len(herpsderps) is max_words_count and all_same(herpsderps):
+        if len(herpsderps) is max_herpderps and all_same(herpsderps):
             output.append("{0} wins the jackpot!".format(
                 message.FromDisplayName
             ))
