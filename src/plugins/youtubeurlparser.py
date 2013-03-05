@@ -95,8 +95,8 @@ def get_video_id(url):
 
 
 class YouTubeURLParser(Plugin):
-    """This plugin monitors received messages and outputs video title if that
-    message contains a valid YouTube video URL.
+    """This plugin monitors received messages and outputs video title and its
+    duration if that message contains a valid YouTube video URL.
     """
 
     _api_url = "http://gdata.youtube.com/feeds/api/videos/{0}"
@@ -115,6 +115,10 @@ class YouTubeURLParser(Plugin):
 
         :param video_id: YouTube video ID
         :type video_id: `unicode` or None
+
+        >>> plugin = YouTubeURLParser(parent=None)
+        >>> plugin.get_video_title("dQw4w9WgXcQ")
+        'Rick Astley - Never Gonna Give You Up [00:03:33]'
         """
 
         cached = self._cache.get(video_id)
@@ -133,12 +137,25 @@ class YouTubeURLParser(Plugin):
         xml = retrieve_xml()
 
         try:
-            title = xml.find("{http://www.w3.org/2005/Atom}title").text
-            self._cache.update({video_id: title})
+            ns = "http://www.w3.org/2005/Atom"
+            title = xml.xpath("//ns:title", namespaces={"ns": ns})[0].text
+
+            ns = "http://gdata.youtube.com/schemas/2007"
+            duration = xml.xpath("//ns:duration/@seconds",
+                                 namespaces={"ns": ns})[0]
+
         except (AttributeError, etree.ParseError):
             return
 
-        return title
+        else:
+            # Convert duration from seconds to h:m:s
+            minutes, seconds = divmod(int(duration), 60)
+            hours, minutes = divmod(minutes, 60)
+            duration = "{0:02d}:{1:02d}:{2:02d}".format(hours, minutes, seconds)
+
+            title = "{0} [{1}]".format(title, duration)
+            self._cache.update({video_id: title})
+            return title
 
     def on_message_status(self, message, status):
         if status != cmsReceived:
