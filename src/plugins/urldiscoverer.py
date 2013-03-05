@@ -76,6 +76,7 @@ class URLDiscoverer(Plugin):
         "tr.im",
         "trib.al",
         "vk.cc",
+        "whrt.it",
     ]
 
     _headers = {
