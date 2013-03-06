@@ -118,7 +118,7 @@ class YouTubeURLParser(Plugin):
 
         >>> plugin = YouTubeURLParser(parent=None)
         >>> plugin.get_video_title("dQw4w9WgXcQ")
-        'Rick Astley - Never Gonna Give You Up [00:03:33]'
+        u'Rick Astley - Never Gonna Give You Up [00:03:33]'
         """
 
         cached = self._cache.get(video_id)
@@ -153,7 +153,7 @@ class YouTubeURLParser(Plugin):
             hours, minutes = divmod(minutes, 60)
             duration = "{0:02d}:{1:02d}:{2:02d}".format(hours, minutes, seconds)
 
-            title = "{0} [{1}]".format(title, duration)
+            title = u"{0} [{1}]".format(title, duration)
             self._cache.update({video_id: title})
             return title
 
