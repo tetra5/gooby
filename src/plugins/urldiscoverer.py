@@ -35,7 +35,8 @@ def find_shortened_urls(shorteners, haystack=""):
 
     >>> shorteners = ["t.co", "tinyurl.com", "bit.ly", "goo.gl"]
     >>> haystack = '''t.co/derp,     BiT.Ly/HerP http://tinyURL.com/TEST
-    ... www.goo.gl/herpDERP/derpwww.bit.ly/herpDERP goo.gl/Test/WoNtWoRk'''
+    ... www.goo.gl/herpDERP/derpwww.bit.ly/herpDERP goo.gl/Test/WoNtWoRk
+    ... testbit.ly/123.jpg'''
     >>> found = list(find_shortened_urls(shorteners, haystack))
     >>> expected = ['bit.ly/herpDERP', 't.co/derp', 'bit.ly/HerP',
     ... 'tinyurl.com/TEST']
@@ -47,8 +48,9 @@ def find_shortened_urls(shorteners, haystack=""):
         func = map(lambda x: filter(None, x[x.lower().find(s):].split("/")),
                    haystack.split())
         for host, path in filter(lambda x: len(x) is 2, func):
-            path = re.sub(_p, "_", path).strip("_")
-            yield "{0}/{1}".format(host.lower(), path)
+            if "." not in path:
+                path = re.sub(_p, "_", path).strip("_")
+                yield "{0}/{1}".format(host.lower(), path)
 
 
 class URLDiscoverer(Plugin):
