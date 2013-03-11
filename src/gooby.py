@@ -16,6 +16,7 @@ import sys
 import time
 import logging
 import weakref
+import importlib
 
 import Skype4Py
 from Skype4Py.errors import SkypeAPIError, SkypeError
@@ -63,17 +64,10 @@ class Gooby(Application):
         self._plugin_refs = []
         self._plugin_objs = []
 
-        # Check if essential directories are present and try to create them
-        # otherwise.
         for d in (self._plugins_dir, self._cache_dir, self._logs_dir):
             if not os.path.exists(d):
-                try:
-                    os.mkdir(d)
-                except OSError:
-                    self._logger.critical(
-                        "Unable to create directory '{0}'".format(d)
-                    )
-                    raise
+                msg = "Directory '{0}' does not exist".format(d)
+                raise Exception(msg)
 
         if not self._plugins_dir in sys.path:
             sys.path.insert(0, self._plugins_dir)
@@ -86,7 +80,7 @@ class Gooby(Application):
 
         # Build a list of plugin classes.
         for mod in modules:
-            imported = __import__(mod)
+            imported = importlib.import_module(mod)
 
             # Here we're trying to search and find plugin classes inside a
             # module. To do that properly we have to exclude base ones first.
@@ -132,7 +126,6 @@ class Gooby(Application):
 
         self._plugin_objs.append(pobj)
         self._plugin_refs.append(pref)
-        del pobj, pref
 
     def run(self):
         self._logger.info("Starting up")
@@ -200,11 +193,23 @@ def main():
     import logging.config
     import argparse
     import datetime
+    import codecs
 
     from config import CACHE_DIR, LOGS_DIR, PLUGINS_DIR, SLEEP_TIME, \
-        LOGGING_CONFIG
+        LOGGING_CONFIG, HOME_DIR
 
     socket.setdefaulttimeout(3)
+
+    if sys.platform == "win32":
+        codecs.getwriter("utf-8")(sys.stdout)
+
+    for p in HOME_DIR, CACHE_DIR, LOGS_DIR:
+        if not os.path.exists(p):
+            try:
+                os.mkdir(p)
+            except (OSError, IOError) as e:
+                msg = "Unable to create directory {0} ({1})".format(p, e)
+                raise Exception(msg)
 
     logging.config.dictConfig(LOGGING_CONFIG)
 
@@ -249,9 +254,9 @@ def main():
     )
 
     default_args = {
-        "cache_dir": os.path.relpath(CACHE_DIR),
-        "logs_dir": os.path.relpath(LOGS_DIR),
-        "plugins_dir": os.path.relpath(PLUGINS_DIR),
+        "cache_dir": CACHE_DIR,
+        "logs_dir": LOGS_DIR,
+        "plugins_dir": PLUGINS_DIR,
         "sleep_time": SLEEP_TIME,
     }
 
