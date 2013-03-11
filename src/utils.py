@@ -10,6 +10,9 @@
 
 __docformat__ = "restructuredtext en"
 
+__all__ = ["camelcase_to_underscore", "retry_on_exception",
+           "get_current_file_path", ]
+
 
 import os
 import sys
@@ -103,7 +106,7 @@ def get_current_file_path():
         return unicode(__file__, encoding)
     if frozen in ("dll", "console_exe", "windows_exe"):
         return unicode(sys.executable, encoding)
-    if frozen in ("macosx_app"):
+    if frozen == "macosx_app":
         return unicode(os.environ["RESOURCEPATH"], encoding)
 
 
