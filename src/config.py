@@ -17,9 +17,13 @@ from utils import get_current_file_path
 
 
 ROOT_DIR = path.abspath(path.dirname(get_current_file_path()))
-CACHE_DIR = path.normpath(path.join(ROOT_DIR, "./cache"))
 PLUGINS_DIR = path.normpath(path.join(ROOT_DIR, "./plugins"))
-LOGS_DIR = path.normpath(path.join(ROOT_DIR, "./logs"))
+
+# CACHE_DIR = path.normpath(path.join(ROOT_DIR, "./cache"))
+# LOGS_DIR = path.normpath(path.join(ROOT_DIR, "./logs"))
+HOME_DIR = path.normpath(path.join(path.expanduser("~"), ".gooby"))
+CACHE_DIR = path.normpath(path.join(HOME_DIR, "./cache"))
+LOGS_DIR = path.normpath(path.join(HOME_DIR, "./logs"))
 
 CACHE_FILE_EXT = ".cache"
 CACHE_TTL = 0
@@ -46,15 +50,19 @@ LOGGING_CONFIG = {
         },
         "file": {
             "level": "INFO",
-            "class": "logging.FileHandler",
+            "class": "logging.handlers.RotatingFileHandler",
             "formatter": "verbose",
             "filename": path.join(LOGS_DIR, "gooby.log"),
+            "maxBytes": 128000,
+            "backupCount": 4,
         },
         "file_errors": {
             "level": "WARNING",
-            "class": "logging.FileHandler",
+            "class": "logging.handlers.RotatingFileHandler",
             "formatter": "verbose",
             "filename": path.join(LOGS_DIR, "errors.log"),
+            "maxBytes": 128000,
+            "backupCount": 4,
         },
         "file_session": {
             "level": "DEBUG",
@@ -75,3 +83,9 @@ LOGGING_CONFIG = {
         },
     },
 }
+
+
+try:
+    from config_local import *
+except ImportError:
+    pass
