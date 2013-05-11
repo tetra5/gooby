@@ -19,7 +19,19 @@ from Skype4Py.enums import cmsReceived
 from plugin import Plugin
 
 
-_p = re.compile(ur"[\W_]+")
+_p = re.compile(
+    r"""
+    (www\d{0,3}\.)?
+    (?P<host>
+        [\w+\.]+
+        [\w{2,}]
+    )
+    (?P<path>
+        [\w+/?]+
+    )
+    \W
+    """,
+    re.UNICODE | re.VERBOSE)
 
 
 def find_shortened_urls(shorteners, haystack=""):
@@ -27,30 +39,36 @@ def find_shortened_urls(shorteners, haystack=""):
     Generator.
 
     Yields every valid shortened URL found in haystack string. Does not prepend
-    "http://" part to result. Converts all non-letter characters to
-    underscores.
+    "http://" part to result.
 
     .. note::
         URL path part is case-sensitive.
 
     >>> shorteners = ["t.co", "tinyurl.com", "bit.ly", "goo.gl"]
-    >>> haystack = '''t.co/derp,     BiT.Ly/HerP http://tinyURL.com/TEST
-    ... www.goo.gl/herpDERP/derpwww.bit.ly/herpDERP goo.gl/Test/WoNtWoRk
-    ... testbit.ly/123.jpg'''
+    >>> haystack = '''http://www.t.co/derp,     BiT.Ly/HerP //tinyURL.com/TEST
+    ... http://www.goo.gl/Test/WoNtWoRk testbit.ly/123.jpg testbit.ly/123'''
     >>> found = list(find_shortened_urls(shorteners, haystack))
-    >>> expected = ['bit.ly/herpDERP', 't.co/derp', 'bit.ly/HerP',
-    ... 'tinyurl.com/TEST']
+    >>> expected = ['t.co/derp', 'bit.ly/HerP', 'tinyurl.com/TEST',
+    ... 'goo.gl/Test/WoNtWoRk']
     >>> sorted(found) == sorted(expected)
     True
     """
 
-    for s in shorteners:
-        func = map(lambda x: filter(None, x[x.lower().find(s):].split("/")),
-                   haystack.split())
-        for host, path in filter(lambda x: len(x) is 2, func):
-            if "." not in path:
-                path = re.sub(_p, "_", path).strip("_")
-                yield "{0}/{1}".format(host.lower(), path)
+    for match in re.finditer(_p, haystack):
+        host = match.group("host").lower()
+        if host not in shorteners:
+            continue
+        yield "{0}{1}".format(host, match.group("path"))
+
+    # _p = re.compile(ur"[\W_]+")
+    #
+    # for s in shorteners:
+    #     func = map(lambda x: filter(None, x[x.lower().find(s):].split("/")),
+    #                haystack.split())
+    #     for host, path in filter(lambda x: len(x) is 2, func):
+    #         if "." not in path:
+    #             path = re.sub(_p, "_", path).strip("_")
+    #             yield "{0}/{1}".format(host.lower(), path)
 
 
 class URLDiscoverer(Plugin):
