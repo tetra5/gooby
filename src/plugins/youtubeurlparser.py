@@ -138,14 +138,16 @@ class YouTubeURLParser(Plugin):
 
         try:
             ns = "http://www.w3.org/2005/Atom"
-            title = xml.xpath("//ns:title", namespaces={"ns": ns})[0].text
+            title = xml.find(".//{%s}title" % ns).text
+            # title = xml.xpath("//ns:title", namespaces={"ns": ns})[0].text
 
-            ns = "http://gdata.youtube.com/schemas/2007"
-            duration = xml.xpath("//ns:duration/@seconds",
-                                 namespaces={"ns": ns})[0]
+            yt_ns = "http://gdata.youtube.com/schemas/2007"
+            duration = xml.find(".//{%s}duration" % yt_ns).attrib.get("seconds")
+            # duration = xml.xpath("//ns:duration/@seconds",
+            #                      namespaces={"ns": yt_ns})[0]
 
         except (AttributeError, etree.ParseError):
-            return
+            raise
 
         else:
             # Convert duration from seconds to h:m:s
