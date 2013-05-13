@@ -178,8 +178,8 @@ class YouTubeURLParser(Plugin):
             if video_id is None:
                 continue
 
-            self._logger.info("Retrieving {0} for {1} ({2})".format(
-                video_id, message.FromDisplayName, message.FromHandle
+            self._logger.info("Retrieving {0} for {1}".format(
+                video_id, message.FromHandle
             ))
 
             title = self.get_video_title(video_id)

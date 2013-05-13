@@ -70,8 +70,8 @@ class VimeoURLParser(Plugin):
             try:
                 titles.append(xml.find("video/title").text)
 
-                self._logger.info("Retrieving {0} for {1} ({2})".format(
-                    video_id, message.FromDisplayName, message.FromHandle
+                self._logger.info("Retrieving {0} for {1}".format(
+                    video_id, message.FromHandle
                 ))
             except AttributeError:
                 titles.append("Unable to retrieve video title for {0}".format(
