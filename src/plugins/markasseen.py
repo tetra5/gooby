@@ -3,7 +3,7 @@
 
 
 """
-:mod:`markasread`
+:mod:`markasseen`
 =================
 """
 
@@ -16,12 +16,7 @@ from Skype4Py.enums import cmsReceived
 from plugin import Plugin
 
 
-class MarkAsRead(Plugin):
-    def __init__(self, parent):
-        super(MarkAsRead, self).__init__(parent)
-
+class MarkAsSeen(Plugin):
     def on_message_status(self, message, status):
-        if not status == cmsReceived:
-            return
-
-        message.MarkAsSeen()
+        if status == cmsReceived:
+            message.MarkAsSeen()
