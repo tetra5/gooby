@@ -20,22 +20,22 @@ import re
 import time
 
 
-def camelcase_to_underscore(string):
+def camelcase_to_underscore(s):
     """
     Converts CamelCased string to lower-cased string with underscores.
 
-    :param string: a CamelCased string to convert
-    :type string: `unicode`
+    :param s: a CamelCased string to convert
+    :type s: `str` or `unicode`
 
     :return: converted underscored string
     :rtype: `unicode`
 
-    >>> camelcase_to_underscore("ThisIsACamelCasedString")
-    'this_is_a_camel_cased_string'
+    >>> camelcase_to_underscore(u"ThisIsACamelCasedString")
+    u'this_is_a_camel_cased_string'
     """
 
-    pattern = "(((?<=[a-z])[A-Z])|([A-Z](?![A-Z]|$)))"
-    return re.sub(pattern, "_\\1", string).lower().strip("_")
+    pattern = ur"(((?<=[a-z])[A-Z])|([A-Z](?![A-Z]|$)))"
+    return re.sub(pattern, u"_\\1", s).lower().strip(u"_")
 
 
 class retry_on_exception(object):
@@ -60,6 +60,8 @@ class retry_on_exception(object):
 
     Usage:
 
+    >>> # IDE code hinting fix.
+    >>> retry_on_exception = retry_on_exception
     >>> # The following useless function will be consecutively called 2 times.
     >>> @retry_on_exception((Exception, IOError), tries=2, delay=0, backoff=0)
     ... def useless_function():
@@ -86,7 +88,7 @@ class retry_on_exception(object):
                 except self._exception:
                     time.sleep(self._delay)
                     mtries -= 1
-                    mdelay *= self._backoff
+                    mdelay += self._backoff
             return
         return wrapper
 
