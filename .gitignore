@@ -13,6 +13,9 @@
 *~
 *.sass-cache
 
+# vagrant
+.vagrant
+
 # herpderp
 leprosorium.*
 config_local.*
