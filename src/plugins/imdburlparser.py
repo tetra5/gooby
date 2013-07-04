@@ -5,6 +5,9 @@
 """
 :mod:`imdburlparser` --- IMDb URL parser plugin
 ===============================================
+
+.. note::
+    This module requires `lxml library <http://lxml.de/>'_
 """
 
 
@@ -28,7 +31,60 @@ class IMDbURLParser(Plugin):
     """
 
     _api_url = "http://www.imdb.com/title/{0}"
-    _pattern = re.compile(ur"imdb\.com/title/(tt\d{7,})", re.IGNORECASE)
+
+    _pattern = re.compile(
+        r"""
+        imdb\.com/title/
+        (?P<id>
+            tt\d{7,}
+        )
+        /?
+        """,
+        re.UNICODE | re.IGNORECASE | re.VERBOSE)
+
+    _headers = {
+        "User-Agent": "Googlebot/2.1 (+http://www.googlebot.com/bot.html)",
+        "Accept-Language": "en-US,en;q=0.5",
+        "Connection": "Keep-Alive",
+    }
+    _opener = urllib2.build_opener()
+    _opener.addheaders = [(k, v) for k, v in _headers.iteritems()]
+
+    def get_movie_title(self, movie_id):
+        """
+        >>> plugin = IMDbURLParser()
+
+        >>> assert "tt0101420" not in plugin.cache
+
+        >>> plugin.get_movie_title("tt0101420")
+        u'Begotten (1990)'
+
+        >>> assert "tt0101420" in plugin.cache
+        """
+
+        @self.cache.get_cached(movie_id)
+        def _do_get_movie_title():
+            url = self._api_url.format(movie_id)
+
+            @retry_on_exception((urllib2.URLError, urllib2.HTTPError), tries=2,
+                                backoff=0, delay=1)
+            def retrieve_html():
+                response = self._opener.open(url)
+                buf = response.read(1024)
+                return lxml.html.fromstring(buf)
+
+            html = retrieve_html()
+
+            try:
+                title = u"{0}".format(html.find("head/title").text[:-7])
+
+            except AttributeError:
+                return None
+
+            else:
+                return title
+
+        return _do_get_movie_title()
 
     def on_message_status(self, message, status):
         if status != cmsReceived:
@@ -41,44 +97,33 @@ class IMDbURLParser(Plugin):
         if not found:
             return
 
-        headers = {
-            "User-Agent": "Googlebot/2.1 (+http://www.googlebot.com/bot.html)",
-            "Accept-Language": "en-US,en;q=0.5",
-        }
-        opener = urllib2.build_opener()
-        opener.addheaders = [(k, v) for k, v in headers.iteritems()]
-
         titles = []
 
         for movie_id in found:
-            url = self._api_url.format(movie_id)
+            msg = "Retrieving {0} for {1}".format(movie_id, message.FromHandle)
+            self._logger.info(msg)
 
-            @retry_on_exception((urllib2.URLError, urllib2.HTTPError), tries=2,
-                                backoff=0, delay=1)
-            def retrieve_html():
-                response = opener.open(url)
-                buf = response.read(1024)
-                return lxml.html.fromstring(buf)
+            title = self.get_movie_title(movie_id)
 
-            html = retrieve_html()
+            if title is not None:
+                titles.append(title)
+            else:
+                msg = "Unable to retrieve movie title for {0}".format(movie_id)
+                titles.append(msg)
 
-            try:
-                titles.append(html.find("head/title").text[:-7])
-
-                self._logger.info("Retrieving {0} for {1} ({2})".format(
-                    movie_id, message.FromDisplayName, message.FromHandle
-                ))
-            except AttributeError:
-                titles.append("Unable to retrieve movie title for {0}".format(
-                    movie_id
-                ))
-
-                msg = "Unable to retrieve {0} for {1} ({2})".format(
-                    movie_id, message.FromDisplayName, message.FromHandle
+                msg = "Unable to retrieve {0} for {1}".format(
+                    movie_id, message.FromHandle
                 )
                 self._logger.error(msg)
 
-        message.Chat.SendMessage(u"[IMDb] {0}".format(", ".join(titles)))
+        if not titles:
+            return
+
+        if len(titles) is 1:
+            msg = u"[IMDb] {0}".format("".join(titles))
+        else:
+            msg = u"[IMDb]\n{0}".format("\n".join(titles))
+        message.Chat.SendMessage(msg)
 
 
 if __name__ == "__main__":
