@@ -12,9 +12,8 @@ __docformat__ = "restructuredtext en"
 
 
 import random
-import re
 
-from Skype4Py.enums import cmsReceived
+from Skype4Py.enums import cmsReceived, cmeEmoted
 
 from plugin import Plugin
 
@@ -39,6 +38,9 @@ def all_same(myiter):
     return all([myiter[0] == item for item in myiter])
 
 
+# TODO: Maintain jackpot statistics.
+
+
 class HerpDerper(Plugin):
     """
     A very simple and "fun" plugin which reacts on certain keywords by replying
@@ -54,36 +56,26 @@ class HerpDerper(Plugin):
     ]
 
     def on_message_status(self, message, status):
-        if status != cmsReceived:
+        if status != cmsReceived or message.Type == cmeEmoted:
             return
 
-        match = None
-        for t in self._triggers:
-            p = re.compile(ur"{0}\b".format(t), re.IGNORECASE | re.UNICODE)
-            match = re.search(p, message.Body)
-            if match:
-                break
-
-        if not match:
+        if not any(t.lower() in message.Body.lower() for t in self._triggers):
             return
 
-        output = []
+        msg = []
 
-        max_herpderps = 6
+        max_herpderps = 4
         words_count = random.randint(1, max_herpderps)
         herps = ["herp"] * random.randint(1, words_count)
         herpsderps = herps + ["derp"] * (words_count - len(herps))
-
         random.shuffle(herpsderps)
 
-        output.append(" ".join(herpsderps))
+        msg.append(" ".join(herpsderps))
 
         if len(herpsderps) is max_herpderps and all_same(herpsderps):
-            output.append("{0} wins the jackpot!".format(
-                message.FromDisplayName
-            ))
+            msg.append("{0} wins the jackpot!".format(message.FromDisplayName))
 
-        message.Chat.SendMessage("\n".join(output))
+        message.Chat.SendMessage(u"\n".join(msg))
 
 
 if __name__ == "__main__":
