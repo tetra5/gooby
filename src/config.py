@@ -25,10 +25,6 @@ HOME_DIR = path.normpath(path.join(path.expanduser("~"), ".gooby"))
 CACHE_DIR = path.normpath(path.join(HOME_DIR, "./cache"))
 LOGS_DIR = path.normpath(path.join(HOME_DIR, "./logs"))
 
-CACHE_FILE_EXT = ".cache"
-CACHE_TTL = 0
-PICKLE_PROTOCOL_LEVEL = 0
-
 SLEEP_TIME = 1
 
 LOGGING_CONFIG = {
@@ -81,6 +77,32 @@ LOGGING_CONFIG = {
             "handlers": ["console", "file", "file_errors", "file_session"],
             "level": "WARNING",
         },
+    },
+}
+
+# Plugin cache configuration. Keys are case-sensitive and should match
+# corresponding plugin class names. Regular Python dictionary is being used as
+# a cache-like storage by default unless it hasn't been set explicitly.
+CACHE_CONFIG = {
+    "VimeoURLParser": {
+        "backend": "cache.SQLiteCache",
+        "timeout": 0.0,
+        "location": path.join(CACHE_DIR, "vimeo.sqlite"),
+    },
+    "YouTubeURLParser": {
+        "backend": "cache.SQLiteCache",
+        "timeout": 0.0,
+        "location": path.join(CACHE_DIR, "youtube.sqlite"),
+    },
+    "URLDiscoverer": {
+        "backend": "cache.SQLiteCache",
+        "timeout": 128000.0 * 42,  # 42 days.
+        "location": path.join(CACHE_DIR, "urls.sqlite"),
+    },
+    "SteamURLParser": {
+        "backend": "cache.SQLiteCache",
+        "timeout": 0.0,
+        "location": path.join(CACHE_DIR, "steam.sqlite"),
     },
 }
 
