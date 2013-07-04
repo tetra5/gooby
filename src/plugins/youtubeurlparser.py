@@ -39,7 +39,7 @@ def get_video_id(url):
     Parses video URL and returns its ID.
 
     :param url: YouTube video URL
-    :type url: `unicode`
+    :type url: `str`
 
     :returns: YouTube video ID
     :rtype: `unicode` or `None`
@@ -106,6 +106,7 @@ class YouTubeURLParser(Plugin):
     _headers = {
         "User-Agent": "Googlebot/2.1 (+http://www.googlebot.com/bot.html)",
         "Accept-Language": "en-US,en;q=0.5",
+        "Connection": "Keep-Alive",
     }
     _opener = urllib2.build_opener()
     _opener.addheaders = [(k, v) for k, v in _headers.iteritems()]
@@ -114,16 +115,16 @@ class YouTubeURLParser(Plugin):
         """Retrieves YouTube video title by its ID.
 
         :param video_id: YouTube video ID
-        :type video_id: `unicode` or None
+        :type video_id: `str` or None
 
-        >>> plugin = YouTubeURLParser(parent=None)
+        >>> plugin = YouTubeURLParser()
         >>> plugin.get_video_title("dQw4w9WgXcQ")
         u'Rick Astley - Never Gonna Give You Up [00:03:33]'
         """
 
-        cached = self._cache.get(video_id)
-        if cached:
-            return cached
+        cached_title = self._cache.get(video_id)
+        if cached_title is not None:
+            return cached_title
 
         url = self._api_url.format(video_id)
 
@@ -147,7 +148,7 @@ class YouTubeURLParser(Plugin):
             #                      namespaces={"ns": yt_ns})[0]
 
         except (AttributeError, etree.ParseError):
-            raise
+            return None
 
         else:
             # Convert duration from seconds to h:m:s
@@ -156,7 +157,8 @@ class YouTubeURLParser(Plugin):
             duration = "{0:02d}:{1:02d}:{2:02d}".format(hours, minutes, seconds)
 
             title = u"{0} [{1}]".format(title, duration)
-            self._cache.update({video_id: title})
+
+            self._cache.set(video_id, title)
             return title
 
     def on_message_status(self, message, status):
@@ -190,15 +192,19 @@ class YouTubeURLParser(Plugin):
                 msg = "Unable to retrieve video title for {0}".format(video_id)
                 titles.append(msg)
 
-                msg = "Unable to retrieve {0} for {1} ({2})".format(
-                    video_id, message.FromDisplayName, message.FromHandle
+                msg = "Unable to retrieve {0} for {1}".format(
+                    video_id, message.FromHandle
                 )
                 self._logger.error(msg)
 
         if not titles:
             return
 
-        message.Chat.SendMessage(u"[YouTube] {0}".format(", ".join(titles)))
+        if len(titles) is 1:
+            msg = u"[YouTube] {0}".format("".join(titles))
+        else:
+            msg = u"[YouTube]\n{0}".format("\n".join(titles))
+        message.Chat.SendMessage(msg)
 
 
 if __name__ == "__main__":
