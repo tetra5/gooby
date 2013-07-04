@@ -2,16 +2,9 @@
 # -*- coding: utf-8 -*-
 
 
-import os
 from distutils.core import setup
+from src import __version__
 
-
-__version__ = "unknown"
-# Get package version without importing it.
-for line in open(os.path.abspath("./src/__init__.py")):
-    if line.startswith("__version__"):
-        exec line
-        break
 
 __doc__ = """Gooby is a modular plugin-based Skype bot built on top of Skype4Py
 Skype API wrapper written completely in Python."""
