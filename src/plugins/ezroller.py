@@ -23,7 +23,7 @@ class EzRoller(ChatCommandPlugin):
     def __init__(self, parent):
         super(EzRoller, self).__init__(parent)
         self._commands = {
-            "!roll": self.on_roll_command,
+            u"!roll": self.on_roll_command,
             u"!кщдд": self.on_roll_command,
             u"!ролл": self.on_roll_command,
         }
