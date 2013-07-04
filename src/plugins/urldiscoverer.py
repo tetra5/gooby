@@ -21,15 +21,14 @@ from plugin import Plugin
 
 _p = re.compile(
     r"""
-    (www\d{0,3}\.)?
+    (www\d{0,9}\.)?
     (?P<host>
         [\w+\.]+
-        [\w{2,}]
+        [\w{2,4}]
     )
     (?P<path>
         [\w+/?]+
     )
-    \W
     """,
     re.UNICODE | re.VERBOSE)
 
@@ -46,10 +45,11 @@ def find_shortened_urls(shorteners, haystack=""):
 
     >>> shorteners = ["t.co", "tinyurl.com", "bit.ly", "goo.gl"]
     >>> haystack = '''http://www.t.co/derp,     BiT.Ly/HerP //tinyURL.com/TEST
-    ... http://www.goo.gl/Test/WoNtWoRk testbit.ly/123.jpg testbit.ly/123'''
+    ... http://www.goo.gl/Test/WoNtWoRk testbit.ly/123.jpg testbit.ly/123 x
+    ... http://t.co/Rs99hUtCQu http://t.co/NqJILtGM4M'''
     >>> found = list(find_shortened_urls(shorteners, haystack))
     >>> expected = ['t.co/derp', 'bit.ly/HerP', 'tinyurl.com/TEST',
-    ... 'goo.gl/Test/WoNtWoRk']
+    ... 'goo.gl/Test/WoNtWoRk', 't.co/Rs99hUtCQu', 't.co/NqJILtGM4M']
     >>> sorted(found) == sorted(expected)
     True
     """
@@ -106,6 +106,19 @@ class URLDiscoverer(Plugin):
     _opener = urllib2.build_opener(urllib2.HTTPRedirectHandler)
     _opener.addheaders = [(k, v) for k, v in _headers.iteritems()]
 
+    def resolve_url(self, url):
+        """
+        I've no idea how to test it. It just works by default.
+        """
+
+        resolved_url = self._cache.get(url)
+        if resolved_url is not None:
+            return resolved_url
+
+        resolved_url = self._opener.open("http://{0}".format(url)).url
+        self._cache.set(url, resolved_url)
+        return resolved_url
+
     def on_message_status(self, message, status):
         if status != cmsReceived:
             return
@@ -113,7 +126,8 @@ class URLDiscoverer(Plugin):
         if not any(s in message.Body.lower() for s in self._shorteners):
             return
 
-        found = list(find_shortened_urls(self._shorteners, message.Body))
+        found = list(find_shortened_urls(self._shorteners,
+                                         message.Body.strip()))
 
         if not found:
             return
@@ -122,11 +136,11 @@ class URLDiscoverer(Plugin):
 
         for url in found:
             try:
-                self._logger.info(u"Resolving {0} for {1} ({2})".format(
-                    url, message.FromDisplayName, message.FromHandle
+                self._logger.info(u"Resolving {0} for {1}".format(
+                    url, message.FromHandle
                 ))
-                location = self._opener.open("http://{0}".format(url)).url
-                resolved.append(u"{0} -> {1}".format(url, location))
+                resolved_url = self.resolve_url(url)
+                resolved.append(u"{0} -> {1}".format(url, resolved_url))
 
             except (urllib2.HTTPError, urllib2.URLError) as e:
                 m = u"Unable to resolve {0} for {1} ({2}): {3}".format(
