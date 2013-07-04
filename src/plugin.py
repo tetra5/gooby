@@ -10,20 +10,23 @@
 
 __docformat__ = "restructuredtext en"
 
-__all__ = ["Plugin", "ChatCommandPlugin", ]
 
-# FIXME: weakref
-#import weakref
-from os import path
+# TODO: Spam protection system.
+
+# FIXME: Plugin parent attribute is not currently used.
+
+
 import logging
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle
 
 from Skype4Py.enums import cmsReceived
 
-from config import CACHE_DIR, PICKLE_PROTOCOL_LEVEL, ROOT_DIR, CACHE_FILE_EXT
+import cache
+
+
+__all__ = [
+    "Plugin",
+    "ChatCommandPlugin",
+]
 
 
 class Plugin(object):
@@ -33,165 +36,126 @@ class Plugin(object):
     events, e.g.: :meth:`on_message_status` method binds to
     **OnMessageStatus** event.
 
-    Complete event list:
+    Complete events list:
 
     >>> import Skype4Py
     >>> s = set(dir(type)).union(["__weakref__"])
-    >>> list(set(dir(Skype4Py.skype.SkypeEvents)).difference(s))
-    ['CallSeenStatusChanged', 'ApplicationConnecting', 'VoicemailStatus',
-    'SmsMessageStatusChanged', 'GroupUsers', 'CallDtmfReceived',
-    'UserAuthorizationRequestReceived', 'ChatMembersChanged',
-    'ApplicationSending', 'WallpaperChanged', 'Reply', 'CallStatus',
-    'CallVideoReceiveStatusChanged', 'ApplicationReceiving',
-    'PluginMenuItemClicked', 'ChatWindowState', 'ConnectionStatus',
-    'ApplicationStreams', 'SmsTargetStatusChanged',
-    'CallVideoSendStatusChanged', 'MessageStatus', 'CallVideoStatusChanged',
-    'PluginEventClicked', 'ClientWindowState', 'CallHistory',
-    'CallInputStatusChanged', 'AsyncSearchUsersFinished', 'AttachmentStatus',
-    'UserStatus', 'GroupExpanded', 'Command', 'Error', 'ChatMemberRoleChanged',
-    'AutoAway', 'ContactsFocused', 'Mute', 'OnlineStatus',
-    'CallTransferStatusChanged', 'MessageHistory', 'ApplicationDatagram',
-    'GroupVisible', 'SilentModeStatusChanged', 'Notify', 'GroupDeleted',
-    'UserMood', 'FileTransferStatusChanged']
+    >>> events = list(set(dir(Skype4Py.skype.SkypeEvents)).difference(s))
+
+    >>> assert u"CallSeenStatusChanged" in events
+
+    >>> assert u"ApplicationConnecting" in events
+
+    >>> assert u"VoicemailStatus" in events
+
+    >>> assert u"SmsMessageStatusChanged" in events
+
+    >>> assert u"GroupUsers" in events
+
+    >>> assert u"CallDtmfReceived" in events
+
+    >>> assert u"UserAuthorizationRequestReceived" in events
+
+    >>> assert u"ChatMembersChanged" in events
+
+    >>> assert u"ApplicationSending" in events
+
+    >>> assert u"WallpaperChanged" in events
+
+    >>> assert u"Reply" in events
+
+    >>> assert u"CallStatus" in events
+
+    >>> assert u"CallVideoReceiveStatusChanged" in events
+
+    >>> assert u"ApplicationReceiving" in events
+
+    >>> assert u"PluginMenuItemClicked" in events
+
+    >>> assert u"ChatWindowState" in events
+
+    >>> assert u"ConnectionStatus" in events
+
+    >>> assert u"ApplicationStreams" in events
+
+    >>> assert u"SmsTargetStatusChanged" in events
+
+    >>> assert u"CallVideoSendStatusChanged" in events
+
+    >>> assert u"MessageStatus" in events
+
+    >>> assert u"CallVideoStatusChanged" in events
+
+    >>> assert u"PluginEventClicked" in events
+
+    >>> assert u"ClientWindowState" in events
+
+    >>> assert u"CallHistory" in events
+
+    >>> assert u"CallInputStatusChanged" in events
+
+    >>> assert u"AsyncSearchUsersFinished" in events
+
+    >>> assert u"AttachmentStatus" in events
+
+    >>> assert u"UserStatus" in events
+
+    >>> assert u"GroupExpanded" in events
+
+    >>> assert u"Command" in events
+
+    >>> assert u"Error" in events
+
+    >>> assert u"ChatMemberRoleChanged" in events
+
+    >>> assert u"AutoAway" in events
+
+    >>> assert u"ContactsFocused" in events
+
+    >>> assert u"Mute" in events
+
+    >>> assert u"OnlineStatus" in events
+
+    >>> assert u"CallTransferStatusChanged" in events
+
+    >>> assert u"MessageHistory" in events
+
+    >>> assert u"ApplicationDatagram" in events
+
+    >>> assert u"GroupVisible" in events
+
+    >>> assert u"SilentModeStatusChanged" in events
+
+    >>> assert u"Notify" in events
+
+    >>> assert u"GroupDeleted" in events
+
+    >>> assert u"UserMood" in events
+
+    >>> assert u"FileTransferStatusChanged" in events
 
     .. seealso::
         ``plugins`` package for plugins derived from this class, e.g.:
         :class:`~youtubeurlparser.YouTubeURLParser`
     """
 
-    # FIXME: parent
-    def __init__(self, parent):
-        """
-        Initializes plugin logging facility.
-
-        .. seealso::
-
-            :attr:`logger`
-                Accessing plugin logger.
-
-        Initializes and reads plugin cache.
-
-        .. seealso::
-
-            :attr:`cache_fname`
-                Cache file name.
-
-            :attr:`cache_path`
-                Cache file path.
-
-            :meth:`_read_cache`
-                Reading plugin cache.
-
-            :meth:`_write_cache`
-                Writing plugin cache.
-
-        :param parent: :class:`~application.Application` object.
-        :type parent: `object`
-        """
-
-        # FIXME: weakref + parent
-        #self._parent = weakref.ref(parent)
-
-        # Logging related setup.
+    def __init__(self, parent=None):
+        self._parent = parent
         self._logger_name = "Gooby.Plugin." + self.__class__.__name__
+
         self._logger = logging.getLogger(self._logger_name)
-        self._logger.debug("Object initialized")
+        self._logger.debug("Logger initialized")
 
-        # Cache related setup.
-        self._cache = {}
-        self._cache_fname = (self.__class__.__name__ + CACHE_FILE_EXT).lower()
-        self._cache_path = path.join(CACHE_DIR, self._cache_fname)
-        self._read_cache()
-
-#    def __del__(self):
-#        self._write_cache()
-
-    @property
-    def cache(self):
-        """
-        Read-only accessor.
-
-        :type: `dict`
-        """
-
-        return self._cache
-
-    @property
-    def cache_fname(self):
-        """
-        Read-only accessor.
-
-        :type: `unicode`
-        """
-
-        return self._cache_fname
-
-    @property
-    def cache_path(self):
-        """
-        Read-only accessor.
-
-        :type: `unicode`
-        """
-
-        return self._cache_path
+        self._cache = cache.get_cache(self.__class__.__name__)
+        self._logger.debug("Cache initialized")
 
     @property
     def logger(self):
-        """
-        Read-only accessor.
-
-        :type: :class:`logging.Logger` object or `None` if not initialized
-        """
-
         return self._logger
 
-#    def parent(self):
-#        """
-#        Read-only accessor.
-#
-#        :type: `object`
-#        """
-#
-#        return self._parent
-
-    def _read_cache(self):
-        """
-        Reads plugin cache.
-        """
-
-        self._logger.debug("Reading cache '{0}' ...".format(
-            path.relpath(self._cache_path, start=ROOT_DIR)
-        ))
-        try:
-            with open(self._cache_path, "rb") as f:
-                self._cache = pickle.load(f)
-        except (IOError, OSError):
-            self._logger.debug("Cache is not accessible or doesn't exist")
-        except (pickle.UnpicklingError, AttributeError, EOFError,
-                IndexError), e:
-            self._logger.error("Unpickling error")
-            self._logger.exception(e)
-
-    def _write_cache(self):
-        """
-        Writes plugin cache.
-        """
-
-        if not self._cache:
-            return
-        self._logger.info("Writing cache '{0}' ...".format(
-            path.relpath(self._cache_path, start=ROOT_DIR)
-        ))
-        try:
-            with open(self._cache_path, "wb") as f:
-                pickle.dump(self._cache, f, PICKLE_PROTOCOL_LEVEL)
-        except (IOError, OSError), e:
-            self._logger.warning("Cache is not accessible")
-            self._logger.exception(e)
-        except pickle.PicklingError, e:
-            self._logger.error("Pickling error")
-            self._logger.exception(e)
+    @property
+    def cache(self):
+        return self._cache
 
     def on_message_status(self, message, status):
         """
@@ -724,8 +688,7 @@ class ChatCommandPlugin(Plugin):
                     }
 
             def on_my_command(self, message):
-                chat = message.Chat
-                chat.SendMessage("Message received.")
+                message.chat.SendMessage("Message received.")
 
     The code above is pretty much self-explainatory:
 
@@ -735,18 +698,12 @@ class ChatCommandPlugin(Plugin):
     * implement a callback method
     """
 
-    def __init__(self, parent):
+    def __init__(self, parent=None):
         super(ChatCommandPlugin, self).__init__(parent)
         self._commands = {}
 
     @property
     def commands(self):
-        """
-        Accessor.
-
-        :type: `dict`
-        """
-
         return self._commands
 
     @commands.setter
@@ -764,3 +721,8 @@ class ChatCommandPlugin(Plugin):
                 if message.Body.lstrip().lower().startswith(command.lower()):
                     if callable(callback):
                         callback(message)
+
+
+if __name__ == "__main__":
+    import doctest
+    doctest.testmod()
