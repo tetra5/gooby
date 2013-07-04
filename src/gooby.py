@@ -30,24 +30,9 @@ if sys.version_info < (2, 7):
     raise SystemExit("Gooby requires Python 2.7")
 
 
-# TODO: ConfigParser + external configuration file(s) support.
-
-# TODO: Accept friend list requests automatically?
-# Having a dedicated plugin should be sufficient.
-
-# TODO: Rework caching.
-# Use caching dict class instead of plugin cache for more versatility.
-# It's also going to be much more easier to implement database caching if
-# necessary.
-
 # TODO: Move API clients to separate packages (YouTube, Google, etc).
-# Common tasks should be as much reusable as possible.
 
 # TODO: Some kind of plugin manager to make use of chained plugins.
-# i.e. situation when shortened URL contains YouTube video URL, and unshortener
-# plugin triggers YouTube URL parser plugin as soon as it's done with
-# unshortening. Note that it's going to be a long-term task and won't be here
-# in near future.
 
 
 class Gooby(Application):
@@ -107,7 +92,8 @@ class Gooby(Application):
 
         assert not isinstance(plugincls, plugin.Plugin), "Invalid plugin class"
 
-        pobj = plugincls(None)
+        # FIXME: parent attribute is currently unused.
+        pobj = plugincls(parent=None)
         pref = weakref.ref(pobj)
 
         # Set of object attributes to be excluded.
@@ -179,11 +165,6 @@ class Gooby(Application):
 
     def stop(self):
         self._logger.info("Shutting down")
-
-        # FIXME: Temporary work-around until the new cache system is done.
-        for plugin in self._plugin_refs:
-            plugin()._write_cache()
-
         logging.shutdown()
 
 
@@ -195,8 +176,12 @@ def main():
     import datetime
     import codecs
 
+    import cache
     from config import CACHE_DIR, LOGS_DIR, PLUGINS_DIR, SLEEP_TIME, \
-        LOGGING_CONFIG, HOME_DIR
+        LOGGING_CONFIG, HOME_DIR, CACHE_CONFIG
+
+    # FIXME: Version import.
+    __version__ = "2013.1"
 
     socket.setdefaulttimeout(3)
 
@@ -213,13 +198,7 @@ def main():
 
     logging.config.dictConfig(LOGGING_CONFIG)
 
-    __version__ = "unknown"
-
-    # Get package version without importing it.
-    for line in open(os.path.abspath("./__init__.py")):
-        if line.startswith("__version__"):
-            exec line
-            break
+    cache.dict_config(CACHE_CONFIG)
 
     argparser = argparse.ArgumentParser(
         version=__version__,
@@ -298,4 +277,6 @@ def main():
 
 
 if __name__ == "__main__":
+    reload(sys)
+    sys.setdefaultencoding("utf-8")
     sys.exit(main())
