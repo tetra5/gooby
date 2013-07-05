@@ -46,15 +46,6 @@ class HerpDerper(Plugin):
     A very simple and "fun" plugin which reacts on certain keywords by replying
     messages with random amount of "herp"'s and "derp"'s while maintaining
     meaningless statistics.
-
-    26.06.13 в 13:42 tetra5.org написал (-а):
-    > ouya оказалась фэйлом
-    невообразимо!
-
-
-    > [Wednesday, June 26, 2013 3:35:23 PM slimcheg] что он выбрал очень хороший рейс для этого
-
-    хуйпизда
     """
 
     _triggers = [
@@ -65,7 +56,7 @@ class HerpDerper(Plugin):
     ]
 
     def on_message_status(self, message, status):
-        if status != cmsReceived and message.Type == cmeEmoted:
+        if status != cmsReceived or message.Type == cmeEmoted:
             return
 
         if not any(t.lower() in message.Body.lower() for t in self._triggers):
