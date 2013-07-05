@@ -37,7 +37,6 @@ SUBSTITUTES = {
 }
 
 EXTRA_WORDS = [
-    u"двач",
     u"тян",
     u"кун",
     u"лал",
