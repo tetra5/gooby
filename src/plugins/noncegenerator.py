@@ -307,7 +307,9 @@ class NonceGenerator(Plugin):
                 self._quotas[message.FromHandle] = [message.Timestamp]
 
         if quota_is_reached:
-            _output.append(generate_nonce_phrase(message.Body))
+            result = generate_nonce_phrase(message.Body)
+            if message.Body.lower() != result.lower():
+                _output.append(result)
 
         # Algorithm which triggers randomly if nothing else has been
         # triggered before.
