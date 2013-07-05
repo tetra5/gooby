@@ -22,6 +22,14 @@ except ImportError:
     import pickle
 
 
+# FIXME: The code skips multi-threading check currently.
+# This decision isn't optimal to say at the very least. The solution works
+# for this case as Skype4Py threads are queued but it will eventually be
+# the cause of concurrent SQLite access troubles.
+# Possible workarounds include using SQLAlchemy or custom thread locking
+# mechanism.
+
+
 # Hard-coded SQL queries are only being used in simple default built-in SQLite
 # caching system.
 SQL_CREATE_TABLE = """
@@ -350,8 +358,11 @@ class SQLiteCache(BaseCache):
         if self._connection is None:
             kwargs = dict(database=self._location, timeout=30)
             if self._autocommit:
-                kwargs.update(dict(isolation_level=None,
-                                   check_same_thread=False))
+                kwargs.update(dict(isolation_level=None))
+
+            # FIXME: Potentially dangerous garbage.
+            kwargs.update(dict(check_same_thread=False))
+
             self._connection = sqlite3.Connection(**kwargs)
             self._connection.cursor().execute(SQL_CREATE_TABLE)
         return self._connection
