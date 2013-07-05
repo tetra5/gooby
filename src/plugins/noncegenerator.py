@@ -251,7 +251,7 @@ class NonceGenerator(Plugin):
     TRIGGER_THRESHOLD = 0.000625
 
     # A value which "special words only" algorithm should trigger on
-    # randomly. (float 0 <= x <= 1.0). Default is 1/2.
+    # randomly. (float 0 <= x <= 1.0). Default is 1/1.
     EXTRA_TRIGGER_THRESHOLD = 1.0
 
     HISTORY_LIMIT = 5
@@ -324,16 +324,17 @@ class NonceGenerator(Plugin):
                 if message.Body.lower() != result.lower():
                     _output.append(result)
 
+        msg = list()
+
         if _output:
-            msg = list()
             history = self._history[message.Chat.Name]
             for string_ in _output:
                 if string_ not in history:
                     msg.append(string_)
                     history.append(string_)
 
+        if msg:
             shuffle(msg)
-
             message.Chat.SendMessage(u"\n".join(msg))
 
 
