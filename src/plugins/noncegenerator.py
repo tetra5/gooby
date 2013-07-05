@@ -243,8 +243,8 @@ class NonceGenerator(Plugin):
     TIME_INTERVAL_LIMIT = 2
 
     # A value which algorithm should trigger on randomly (float 0 <= x <= 1.0)
-    # Default is 1/160.
-    TRIGGER_THRESHOLD = 0.00625
+    # Default is 1/1600.
+    TRIGGER_THRESHOLD = 0.000625
 
     # A value which "special words only" algorithm should trigger on
     # randomly. (float 0 <= x <= 1.0). Default is 1/2.
