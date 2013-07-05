@@ -350,7 +350,8 @@ class SQLiteCache(BaseCache):
         if self._connection is None:
             kwargs = dict(database=self._location, timeout=30)
             if self._autocommit:
-                kwargs.update(dict(isolation_level=None))
+                kwargs.update(dict(isolation_level=None,
+                                   check_same_thread=False))
             self._connection = sqlite3.Connection(**kwargs)
             self._connection.cursor().execute(SQL_CREATE_TABLE)
         return self._connection
