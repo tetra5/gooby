@@ -49,6 +49,7 @@ EXTRA_WORDS = [
     u"бомбанул",
     u"пукан",
     u"пердак",
+    u"выйграл",
 ]
 
 TEMPLATES_SIMPLE = [
@@ -247,7 +248,7 @@ class NonceGenerator(Plugin):
 
     # A value which "special words only" algorithm should trigger on
     # randomly. (float 0 <= x <= 1.0). Default is 1/2.
-    EXTRA_TRIGGER_THRESHOLD = 0.5
+    EXTRA_TRIGGER_THRESHOLD = 1.0
 
     HISTORY_LIMIT = 5
 
@@ -312,9 +313,10 @@ class NonceGenerator(Plugin):
         # triggered before.
         if not _output:
             if self.TRIGGER_THRESHOLD - uniform(0.0, 1.0) > 0:
-                _output.append(generate_nonce_phrase(
-                    phrase=message.Body, nonce_quantity=uniform(0.1, 0.9)
-                ))
+                result = generate_nonce_phrase(phrase=message.Body,
+                                               nonce_quantity=uniform(0.1, 0.9))
+                if message.Body.lower() != result.lower():
+                    _output.append(result)
 
         if _output:
             msg = list()
