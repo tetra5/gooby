@@ -169,8 +169,8 @@ def parse_windows_quote(message):
 
 def message_is_quoted(message):
     return parse_linux_quote(message) is None \
-        and parse_macosx_quote(message) is None \
-        and parse_windows_quote(message) is None
+        or parse_macosx_quote(message) is None \
+        or parse_windows_quote(message) is None
 
 
 class HerpDerper(Plugin):
