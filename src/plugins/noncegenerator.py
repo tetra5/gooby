@@ -37,8 +37,8 @@ SUBSTITUTES = {
 }
 
 EXTRA_WORDS = [
-    u"тян",
-    u"кун",
+    # u"тян",
+    # u"кун",
     u"лал",
     u"лойс",
     u"азаза",
@@ -54,6 +54,7 @@ EXTRA_WORDS = [
     u"выйгра",
     u"сасай",
     u"сасал",
+    u"зделол",
 ]
 
 TEMPLATES_SIMPLE = [
@@ -64,6 +65,7 @@ TEMPLATES_SIMPLE = [
 TEMPLATES_COMPOSITE = [
     u"{word}-{nonce_word}",
     u"{nonce_word}",
+    u"{word}, блядь, {nonce_word}",
     u"{nonce_word}, блядь",
     u"{nonce_word}, нахуй",
     u"{word}-{nonce_word}, блядь",
