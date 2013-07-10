@@ -104,6 +104,11 @@ CACHE_CONFIG = {
         "timeout": 0.0,
         "location": path.join(CACHE_DIR, "steam.sqlite"),
     },
+    "HerpDerper": {
+        "backend": "cache.SQLiteCache",
+        "timeout": 0.0,
+        "location": path.join(CACHE_DIR, "herpderper.sqlite"),
+    },
 }
 
 
