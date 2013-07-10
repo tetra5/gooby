@@ -191,8 +191,8 @@ class HerpDerper(Plugin):
         if status != cmsReceived or message.Type == cmeEmoted:
             return
 
-        if message_is_quoted(message.Body.strip()):
-            return
+        # if message_is_quoted(message.Body.strip()):
+        #     return
 
         if not any(t.lower() in message.Body.lower() for t in self._triggers):
             return
