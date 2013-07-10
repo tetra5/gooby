@@ -38,7 +38,7 @@ def all_same(myiter):
 
 def parse_linux_quote(message):
     """
-    >>> message = '''
+    >>> message = ur'''
     ... > [Wednesday, June 26, 2013 1:37:59 PM username derp] a quoted message
     ...
     ... some other message.
@@ -91,7 +91,7 @@ def parse_linux_quote(message):
 
 def parse_macosx_quote(message):
     """
-    >>> message = '''
+    >>> message = ur'''
     ... 26.06.13 в 13:37 skypename.derp написал (-а):
     ... > a quoted message
     ... some other message.
@@ -130,7 +130,7 @@ def parse_macosx_quote(message):
 
 def parse_windows_quote(message):
     """
-    >>> message = '''
+    >>> message = ur'''
     ... [1:37:59 PM] username derp: a quoted message
     ...
     ... <<< some other message.
@@ -168,9 +168,9 @@ def parse_windows_quote(message):
 
 
 def message_is_quoted(message):
-    return parse_linux_quote(message) is None \
-        or parse_macosx_quote(message) is None \
-        or parse_windows_quote(message) is None
+    return parse_linux_quote(message) is not None \
+        or parse_macosx_quote(message) is not None \
+        or parse_windows_quote(message) is not None
 
 
 class HerpDerper(Plugin):
@@ -191,8 +191,8 @@ class HerpDerper(Plugin):
         if status != cmsReceived or message.Type == cmeEmoted:
             return
 
-        # if message_is_quoted(message.Body.strip()):
-        #     return
+        if message_is_quoted(message.Body.strip()):
+            return
 
         if not any(t.lower() in message.Body.lower() for t in self._triggers):
             return
