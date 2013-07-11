@@ -136,6 +136,7 @@ def parse_windows_quote(message):
     >>> assert found is not None
     >>> assert found.group("quote") == "a quoted message"
     """
+    # FIXME: Does not work with actual client quotes for some reason.
 
     pattern = re.compile(
         r"""
@@ -227,8 +228,9 @@ class HerpDerper(Plugin):
         msg = []
 
         max_words = 3
+        words_count = random.randint(1, max_words)
         words = []
-        for _ in xrange(1, max_words + 1):
+        for _ in xrange(words_count):
             words.append(random.choice(["herp", "derp", "hurr", "durr"]))
 
         msg.append(" ".join(words))
