@@ -173,7 +173,7 @@ def message_is_quoted(message):
     >>> message = ur'''
     ... [1:37:59 PM] юзернейм derp: a quoted message
     ...
-    ... <<< some other message.
+    ... >>> some other message.
     ... '''
     >>> assert message_is_quoted(message) is True
 
