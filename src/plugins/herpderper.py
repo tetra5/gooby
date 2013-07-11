@@ -169,18 +169,23 @@ def parse_windows_quote(message):
 
 def message_is_quoted(message):
     """
+    >>> # Windows client.
     >>> message = ur'''
-    ... [1:37:59 PM] username derp: a quoted message
+    ... [1:37:59 PM] юзернейм derp: a quoted message
     ...
     ... <<< some other message.
     ... '''
     >>> assert message_is_quoted(message) is True
+
+    >>> # Linux client.
     >>> message = ur'''
-    ... > [Wednesday, June 26, 2013 1:37:59 PM username derp] a quoted message
+    ... > [Wednesday, June 26, 2013 1:37:59 PM юзернейм derp] a quoted message
     ...
     ... some other message.
     ... '''
     >>> assert message_is_quoted(message) is True
+
+    >>> # Mac OS X client.
     >>> message = ur'''
     ... 26.06.13 в 13:37 skypename.derp написал (-а):
     ... > a quoted message
@@ -188,9 +193,14 @@ def message_is_quoted(message):
     ... '''
     >>> assert message_is_quoted(message) is True
     """
-    return parse_linux_quote(message) is not None \
-        or parse_macosx_quote(message) is not None \
-        or parse_windows_quote(message) is not None
+
+    if parse_macosx_quote(message) is not None:
+        return True
+    if parse_linux_quote(message) is not None:
+        return True
+    if parse_windows_quote(message) is not None:
+        return True
+    return False
 
 
 class HerpDerper(Plugin):
@@ -211,7 +221,7 @@ class HerpDerper(Plugin):
         if status != cmsReceived or message.Type == cmeEmoted:
             return
 
-        if message_is_quoted(message.Body.strip()):
+        if message_is_quoted(message.Body):
             return
 
         if not any(t.lower() in message.Body.lower() for t in self._triggers):
