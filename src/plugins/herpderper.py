@@ -156,7 +156,7 @@ def parse_windows_quote(message):
         (?P<quote>
             .*
         )\n*
-        <<<\s?
+        <<<\s*
         (?P<message>
             .*
         )
