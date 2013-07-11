@@ -115,10 +115,10 @@ def parse_macosx_quote(message):
         (?P<sender>
             [a-zA-Z0-9_\-\.]+
         )\s.*:\n
-        >\s?
+        >\s*
         (?P<quote>
             .*
-        )\n?
+        )\n*
         (?P<message>
             .*
         )
@@ -130,9 +130,7 @@ def parse_macosx_quote(message):
 
 def parse_windows_quote(message):
     """
-    >>> message = ur'''
-    ... [1:37:59 PM] username derp: a quoted message
-    ...
+    >>> message = ur'''[1:37:59] username derp: a quoted message
     ... <<<'''
     >>> found = parse_windows_quote(message)
     >>> assert found is not None
@@ -146,10 +144,10 @@ def parse_windows_quote(message):
         \[
         (?P<time>
             \d{1,2}:\d{2}:\d{2}
-        )\s
+        )\s*
         (?P<ampm>
             \w{2}
-        )]\s
+        )?]\s
         (?P<sender>
             .*
         ):\s
