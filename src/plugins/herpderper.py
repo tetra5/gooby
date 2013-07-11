@@ -133,8 +133,7 @@ def parse_windows_quote(message):
     >>> message = ur'''
     ... [1:37:59 PM] username derp: a quoted message
     ...
-    ... <<< some other message.
-    ... '''
+    ... <<<'''
     >>> found = parse_windows_quote(message)
     >>> assert found is not None
     >>> assert found.group("quote") == "a quoted message"
@@ -157,7 +156,7 @@ def parse_windows_quote(message):
         (?P<quote>
             .*
         )\n*
-        >>>\s
+        <<<\s?
         (?P<message>
             .*
         )
@@ -173,7 +172,7 @@ def message_is_quoted(message):
     >>> message = ur'''
     ... [1:37:59 PM] юзернейм derp: a quoted message
     ...
-    ... >>> some other message.
+    ... <<< тест
     ... '''
     >>> assert message_is_quoted(message) is True
 
@@ -221,10 +220,10 @@ class HerpDerper(Plugin):
         if status != cmsReceived or message.Type == cmeEmoted:
             return
 
-        if message_is_quoted(message.Body):
+        if not any(t.lower() in message.Body.lower() for t in self._triggers):
             return
 
-        if not any(t.lower() in message.Body.lower() for t in self._triggers):
+        if message_is_quoted(message.Body):
             return
 
         msg = []
