@@ -70,13 +70,13 @@ class IMDbURLParser(Plugin):
                                 backoff=0, delay=1)
             def retrieve_html():
                 response = self._opener.open(url)
-                buf = response.read(1024)
+                buf = response.read(4096)
                 return lxml.html.fromstring(buf)
 
             html = retrieve_html()
 
             try:
-                title = u"{0}".format(html.find("head/title").text[:-7])
+                title = u"{0}".format(html.find(".//title").text[:-7])
 
             except AttributeError:
                 return None
