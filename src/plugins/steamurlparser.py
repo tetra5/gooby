@@ -123,12 +123,14 @@ class SteamURLParser(Plugin):
         http://store.steampowered.com/app/239030
 
         >>> plugin = SteamURLParser()
+
         >>> plugin.get_app_info("239030")
         ('Papers, Please', '8 Aug 2013', u'249 p\u0443\u0431.')
 
         >>> plugin.get_app_info("218620")
         ('PAYDAY 2', '13 Aug 2013', u'499 p\u0443\u0431.')
         """
+
         @self.cache.get_cached(app_id)
         def _do_get_app_info():
             url = self._api_url.format(app_id)
@@ -171,6 +173,15 @@ class SteamURLParser(Plugin):
                 path = ".//div[@class='apphub_AppName']"
                 title = html.find(path).text
 
+                # Checks whether a store item is DLC or not.
+                # p = ".//div[@class='game_area_dlc_bubble game_area_bubble']"
+                # try:
+                #     html.find(p).tag
+                # except AttributeError:
+                #     pass
+                # else:
+                #     title = "{0} [DLC]".format(title)
+
                 # <div class="game_purchase_price price" itemprop="price">...
                 try:
                     price = html.find_class("price")[0].text.strip()
@@ -199,11 +210,11 @@ class SteamURLParser(Plugin):
                     price = "{0} - {1} = {2}".format(original, discount, final)
 
                 # Release date.
-                # Second <div> inside <div class="glance_details">.
+                # Last <div> inside <div class="glance_details">.
                 # <div class="glance_details"><div></div><div>...
                 try:
-                    root = html.find(".//div[@class='glance_details']")
-                    released = root.findall(".//div")[1].text.strip()
+                    root = html.findall(".//div[@class='glance_details']")[-1]
+                    released = root.findall(".//div")[-1].text.strip()
                     released = released.replace("Release Date: ", "")
 
                 except IndexError:
