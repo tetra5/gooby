@@ -127,7 +127,7 @@ class SteamURLParser(Plugin):
             msg = "Retrieving {0} for {1}".format(app_id, message.FromHandle)
             self._logger.info(msg)
 
-            info = self.get_app_info()
+            info = self.get_app_info(app_id)
 
             if info is not None:
                 title = "{0} ({1}) {2}".format(*info)
