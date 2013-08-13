@@ -100,7 +100,7 @@ class MyCookieHandler(urllib2.HTTPCookieProcessor):
 
 
 class SteamURLParser(Plugin):
-    _api_url = "http://store.steampowered.com/app/{0}/?cc=us"
+    _api_url = "http://store.steampowered.com/app/{0}/?cc=ru"
 
     _pattern = re.compile(
         r"""
@@ -124,10 +124,10 @@ class SteamURLParser(Plugin):
 
         >>> plugin = SteamURLParser()
         >>> plugin.get_app_info("239030")
-        ('Papers, Please', 'Aug 8, 2013', '$9.99')
+        ('Papers, Please', '8 Aug 2013', u'249 p\u0443\u0431.')
 
         >>> plugin.get_app_info("218620")
-        ('PAYDAY 2', 'Aug 13, 2013', '$29.99')
+        ('PAYDAY 2', '13 Aug 2013', u'499 p\u0443\u0431.')
         """
         @self.cache.get_cached(app_id)
         def _do_get_app_info():
