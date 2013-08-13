@@ -123,6 +123,6 @@ CACHE_CONFIG = {
 
 
 try:
-    from .config_local import *
+    from config_local import *
 except ImportError:
     pass
