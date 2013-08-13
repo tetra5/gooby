@@ -14,14 +14,89 @@
 __docformat__ = "restructuredtext en"
 
 
+import os
+import urllib
 import urllib2
+import cookielib
 import re
+import gzip
+
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from StringIO import StringIO
 
 import lxml.html
 from Skype4Py.enums import cmsReceived
 
 from plugin import Plugin
 from utils import retry_on_exception
+from config import HOME_DIR
+
+
+class GzipHandler(urllib2.BaseHandler):
+    """
+    A handler that enhances urllib2's capabilities with transparent gzipped
+    data handling support.
+    """
+
+    def http_request(self, request):
+        request.add_header("Accept-Encoding", "gzip")
+        return request
+
+    https_request = http_request
+
+    def http_response(self, request, response):
+        new_response = response
+        if response.headers.get("Content-Encoding") == "gzip":
+            gzipped = gzip.GzipFile(
+                fileobj=StringIO(response.read()), mode="r")
+            new_response = urllib2.addinfourl(
+                gzipped, response.headers, response.url, response.code)
+            new_response.msg = response.msg
+        return new_response
+
+    https_response = http_response
+
+
+class MyHandler(urllib2.BaseHandler):
+    """
+    Just a bunch of extra HTTP headers for urllib2 to inject into HTTP
+    requests. Conveniently stored inside a separate handler class.
+    """
+
+    _headers = {
+        "User-Agent": "Googlebot/2.1 (+http://www.googlebot.com/bot.html)",
+        "Accept-Language": "en-US,en;q=0.5",
+        "Connection": "Keep-Alive",
+        "Cache-Control": "max-age=0",
+        "Referrer": "http://store.steampowered.com/",
+    }
+
+    def http_request(self, request):
+        for k, v in self._headers.iteritems():
+            request.add_header(k, v)
+        return request
+
+    https_request = http_request
+
+
+class MyCookieHandler(urllib2.HTTPCookieProcessor):
+    _cookiejar_path = os.path.join(HOME_DIR, "steam.cookies")
+
+    def __init__(self):
+        self.cookiejar = cookielib.LWPCookieJar(self._cookiejar_path)
+        try:
+            self.cookiejar.load()
+        except (IOError, cookielib.LoadError):
+            pass
+
+    def http_response(self, request, response):
+        self.cookiejar.extract_cookies(response, request)
+        self.cookiejar.save(ignore_expires=True, ignore_discard=True)
+        return response
+
+    https_response = http_response
 
 
 class SteamURLParser(Plugin):
@@ -37,15 +112,11 @@ class SteamURLParser(Plugin):
         """,
         re.UNICODE | re.IGNORECASE | re.VERBOSE)
 
-    _headers = {
-        "User-Agent": "Googlebot/2.1 (+http://www.googlebot.com/bot.html)",
-        "Accept-Language": "en-US,en;q=0.5",
-        "Connection": "Keep-Alive",
-        "Cache-Control": "max-age=0",
-        "Referrer": "http://store.steampowered.com/",
-    }
     _opener = urllib2.build_opener()
-    _opener.addheaders = [(k, v) for k, v in _headers.iteritems()]
+    _opener.add_handler(GzipHandler())
+    _opener.add_handler(MyHandler())
+    _opener.add_handler(MyCookieHandler())
+    _opener.add_handler(urllib2.HTTPRedirectHandler())
 
     def get_app_info(self, app_id):
         """
@@ -54,6 +125,9 @@ class SteamURLParser(Plugin):
         >>> plugin = SteamURLParser()
         >>> plugin.get_app_info("239030")
         ('Papers, Please', 'Aug 8, 2013', '$9.99')
+
+        >>> plugin.get_app_info("218620")
+        ('PAYDAY 2', 'Aug 13, 2013', '$29.99')
         """
         @self.cache.get_cached(app_id)
         def _do_get_app_info():
@@ -63,10 +137,28 @@ class SteamURLParser(Plugin):
                                 backoff=0, delay=1)
             def retrieve_html():
                 response = self._opener.open(url)
-                buf = response.read(65536)
+                buf = response.read()
                 return lxml.html.fromstring(buf)
 
             html = retrieve_html()
+
+            # Age verification is necessary.
+            # <div id="agegate_box">...
+            try:
+                if html.get_element_by_id("agegate_box") is not None:
+                    api_url = "http://store.steampowered.com/agecheck/app/{0}/"
+                    url = api_url.format(app_id)
+                    data = {
+                        "snr": "1_agecheck_agecheck__age-gate",
+                        "ageDay": "1",
+                        "ageMonth": "January",
+                        "ageYear": "1900",
+                    }
+
+                    response = self._opener.open(url, urllib.urlencode(data))
+                    html = lxml.html.fromstring(response.read())
+            except KeyError:
+                pass
 
             try:
                 # <div class="apphub_AppName">...
