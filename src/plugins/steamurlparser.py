@@ -59,7 +59,7 @@ class GzipHandler(urllib2.BaseHandler):
     https_response = http_response
 
 
-class MyHandler(urllib2.BaseHandler):
+class HeaderHandler(urllib2.BaseHandler):
     """
     Just a bunch of extra HTTP headers for urllib2 to inject into HTTP
     requests. Conveniently stored inside a separate handler class.
@@ -81,11 +81,9 @@ class MyHandler(urllib2.BaseHandler):
     https_request = http_request
 
 
-class MyCookieHandler(urllib2.HTTPCookieProcessor):
-    _cookiejar_path = os.path.join(HOME_DIR, "steam.cookies")
-
-    def __init__(self):
-        self.cookiejar = cookielib.LWPCookieJar(self._cookiejar_path)
+class CookieHandler(urllib2.HTTPCookieProcessor):
+    def __init__(self, cookiejar_path):
+        self.cookiejar = cookielib.LWPCookieJar(cookiejar_path)
         try:
             self.cookiejar.load()
         except (IOError, cookielib.LoadError):
@@ -114,8 +112,8 @@ class SteamURLParser(Plugin):
 
     _opener = urllib2.build_opener()
     _opener.add_handler(GzipHandler())
-    _opener.add_handler(MyHandler())
-    _opener.add_handler(MyCookieHandler())
+    _opener.add_handler(HeaderHandler())
+    _opener.add_handler(CookieHandler(os.path.join(HOME_DIR, "steam.cookies")))
     _opener.add_handler(urllib2.HTTPRedirectHandler())
 
     def get_app_info(self, app_id):
@@ -148,14 +146,14 @@ class SteamURLParser(Plugin):
 
             html = retrieve_html(url)
 
-            # Age verification is necessary.
-            # <div id="agegate_box">...
             try:
                 html.get_element_by_id("agegate_box")
 
             except KeyError:
                 pass
 
+            # Age verification is necessary.
+            # <div id="agegate_box">...
             else:
                 # Sends POST data and stores relevant cookies for the future.
                 api_url = "http://store.steampowered.com/agecheck/app/{0}/"
@@ -189,7 +187,8 @@ class SteamURLParser(Plugin):
                 except IndexError:
                     price = "price hasn't been set yet"
 
-                # There's an active discount on that item currently.
+                # Checks whether there's an active discount on that store item
+                # currently.
                 # <div class="discount_pct">...
                 try:
                     path = ".//div[@class='discount_pct']"
