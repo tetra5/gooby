@@ -135,63 +135,77 @@ class SteamURLParser(Plugin):
 
             @retry_on_exception((urllib2.URLError, urllib2.HTTPError), tries=2,
                                 backoff=0, delay=1)
-            def retrieve_html():
-                response = self._opener.open(url)
+            def retrieve_html(url, data=None):
+                if data is None:
+                    response = self._opener.open(url)
+                else:
+                    data = urllib.urlencode(data.copy())
+                    response = self._opener.open(url, data)
                 buf = response.read()
                 return lxml.html.fromstring(buf)
 
-            html = retrieve_html()
+            html = retrieve_html(url)
 
             # Age verification is necessary.
             # <div id="agegate_box">...
             try:
-                if html.get_element_by_id("agegate_box") is not None:
-                    api_url = "http://store.steampowered.com/agecheck/app/{0}/"
-                    url = api_url.format(app_id)
-                    data = {
-                        "snr": "1_agecheck_agecheck__age-gate",
-                        "ageDay": "1",
-                        "ageMonth": "January",
-                        "ageYear": "1900",
-                    }
+                html.get_element_by_id("agegate_box")
 
-                    response = self._opener.open(url, urllib.urlencode(data))
-                    html = lxml.html.fromstring(response.read())
             except KeyError:
                 pass
 
+            else:
+                # Sends POST data and stores relevant cookies for the future.
+                api_url = "http://store.steampowered.com/agecheck/app/{0}/"
+                url = api_url.format(app_id)
+                data = {
+                    "snr": "1_agecheck_agecheck__age-gate",
+                    "ageDay": "1",
+                    "ageMonth": "January",
+                    "ageYear": "1900",
+                }
+                html = retrieve_html(url, data)
+
             try:
                 # <div class="apphub_AppName">...
-                title = html.find(".//div[@class='apphub_AppName']").text
+                path = ".//div[@class='apphub_AppName']"
+                title = html.find(path).text
 
                 # <div class="game_purchase_price price" itemprop="price">...
                 try:
                     price = html.find_class("price")[0].text.strip()
+
                 except IndexError:
                     price = "price hasn't been set yet"
 
+                # There's an active discount on that item currently.
                 # <div class="discount_pct">...
                 try:
-                    discount = html.find(".//div[@class='discount_pct']")
-                    discount = discount.text.lstrip("-")
+                    path = ".//div[@class='discount_pct']"
+                    discount = html.find(path).text.lstrip("-")
+
                 except AttributeError:
                     pass
+
                 else:
                     # <div class="discount_original_price">...
-                    orig = html.find(".//div[@class='discount_original_price']")
-                    orig = orig.text
+                    path = ".//div[@class='discount_original_price']"
+                    original = html.find(path).text
 
                     # <div class="discount_final_price" itemprop="price">...
-                    final = html.find(".//div[@class='discount_final_price']")
-                    final = final.text
+                    path = ".//div[@class='discount_final_price']"
+                    final = html.find(path).text
 
-                    price = "{0} - {1} = {2}".format(orig, discount, final)
+                    price = "{0} - {1} = {2}".format(original, discount, final)
 
+                # Release date.
+                # Second <div> inside <div class="glance_details">.
                 # <div class="glance_details"><div></div><div>...
                 try:
                     root = html.find(".//div[@class='glance_details']")
                     released = root.findall(".//div")[1].text.strip()
                     released = released.replace("Release Date: ", "")
+
                 except IndexError:
                     released = "unknown release date"
 
