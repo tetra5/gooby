@@ -83,6 +83,16 @@ LOGGING_CONFIG = {
 # Plugin cache configuration. Keys are case-sensitive and should match
 # corresponding plugin class names. Regular Python dictionary is being used as
 # a cache-like storage by default unless it hasn't been set explicitly.
+#
+# It's also possible to add additional config entries to setup the low-level
+# cache system usage, i.e.:
+#
+# >>> cache = cache.get_cache("derp")
+#
+# will be looking for "derp" cache config entry firstly.
+#
+# Note this behaviour is a subject to change in a near future to remotely
+# match Django cache system which is far more flexible.
 CACHE_CONFIG = {
     "VimeoURLParser": {
         "backend": "cache.SQLiteCache",
@@ -101,7 +111,7 @@ CACHE_CONFIG = {
     },
     "SteamURLParser": {
         "backend": "cache.SQLiteCache",
-        "timeout": 0.0,
+        "timeout": 3600.0,
         "location": path.join(CACHE_DIR, "steam.sqlite"),
     },
     "HerpDerper": {
@@ -113,6 +123,6 @@ CACHE_CONFIG = {
 
 
 try:
-    from config_local import *
+    from .config_local import *
 except ImportError:
     pass
