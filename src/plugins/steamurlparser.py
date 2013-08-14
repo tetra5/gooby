@@ -118,8 +118,6 @@ class SteamURLParser(Plugin):
 
     def get_app_info(self, app_id):
         """
-        http://store.steampowered.com/app/239030
-
         >>> plugin = SteamURLParser()
 
         >>> plugin.get_app_info("239030")
@@ -171,14 +169,17 @@ class SteamURLParser(Plugin):
                 path = ".//div[@class='apphub_AppName']"
                 title = html.find(path).text
 
-                # Checks whether a store item is DLC or not.
-                # p = ".//div[@class='game_area_dlc_bubble game_area_bubble']"
-                # try:
-                #     html.find(p).tag
-                # except AttributeError:
-                #     pass
-                # else:
-                #     title = "{0} [DLC]".format(title)
+                # Checks whether the store item is a DLC.
+                p = ".//div[@class='game_area_dlc_bubble game_area_bubble']"
+                try:
+                    html.find(p).tag
+
+                except AttributeError:
+                    pass
+
+                else:
+                    if "dlc" not in title.lower():
+                        title = "{0}, DLC".format(title)
 
                 # <div class="game_purchase_price price" itemprop="price">...
                 try:
