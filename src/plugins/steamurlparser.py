@@ -91,7 +91,11 @@ class CookieHandler(urllib2.HTTPCookieProcessor):
 
     def http_response(self, request, response):
         self.cookiejar.extract_cookies(response, request)
-        self.cookiejar.save(ignore_expires=True, ignore_discard=True)
+        try:
+            # Makes cookie jar file output be more verbose.
+            self.cookiejar.save(ignore_expires=True, ignore_discard=True)
+        except IOError:
+            pass
         return response
 
     https_response = http_response
@@ -207,7 +211,7 @@ class SteamURLParser(Plugin):
                     path = ".//div[@class='discount_final_price']"
                     final = html.find(path).text
 
-                    price = "{0} - {1} = {2}".format(original, discount, final)
+                    price = u"{0} - {1} = {2}".format(original, discount, final)
 
                 # Release date.
                 # Last <div> inside <div class="glance_details">.
