@@ -51,7 +51,7 @@ SQL_REPLACE = "REPLACE INTO container (key, value, expires) VALUES (?, ?, ?)"
 
 SQL_CLEAR = "DELETE FROM container"
 
-SQL_CLEAR_EXPIRED = "DELETE FROM container WHERE expires < ? AND expires != 0"
+SQL_CLEAR_EXPIRED = "DELETE FROM container WHERE expires <= ? AND expires != 0"
 
 SQL_COUNT = "SELECT count(*) FROM container WHERE key = ?"
 
@@ -99,6 +99,7 @@ class BaseCache(object):
     def get_cached(self, key, timeout=None):
         """
         Caching decorator.
+        Stores return value of a cached function or method.
 
         .. seealso::
             :class:`SimpleCache` for basic usage.
@@ -106,18 +107,19 @@ class BaseCache(object):
 
         self._timeout = timeout
 
-        def decorated(func):
+        def decorated(cached_function):
             def wrapper(*args, **kwargs):
-                value = self.get(key)
-                if value is None:
-                    value = func(*args, **kwargs)
+                cached = self.get(key)
+                if cached is None:
+                    cached = cached_function(*args, **kwargs)
                     timeout = self._timeout
                     if timeout is None:
-                        timeout = self._default_timeout
-                    if timeout != 0:
-                        timeout += time()
-                    self.set(key, value, timeout)
-                return value
+                        expires = self._default_timeout
+                    else:
+                        expires = timeout
+                    if expires >= 0:
+                        self.set(key, cached, expires)
+                return cached
             return wrapper
         return decorated
 
@@ -205,6 +207,8 @@ class SimpleCache(BaseCache):
     >>> assert len(cache) is 2
     """
 
+    # FIXME: Not thread-safe.
+
     def __init__(self, default_timeout=600):
         """
         :param default_timeout: default cache TTL in seconds. Timeout set to 0
@@ -227,22 +231,28 @@ class SimpleCache(BaseCache):
     def set(self, key, value, timeout=None):
         self._prune()
         if timeout is None:
-            timeout = self._default_timeout
-        if timeout != 0:
-            timeout += time()
+            expires = 0
+        elif self._default_timeout == 0:
+            expires = 0
+        elif timeout == 0:
+            expires = 0
+        else:
+            expires = time() + timeout
         value = pickle.dumps(value, pickle.HIGHEST_PROTOCOL)
-        item = (timeout, value)
-        self._cache.update({key: item})
+        self._cache.update({key: (expires, value)})
 
     def add(self, key, value, timeout=None):
         self._prune()
         if timeout is None:
-            timeout = self._default_timeout
-        if timeout != 0:
-            timeout += time()
+            expires = 0
+        elif self._default_timeout == 0:
+            expires = 0
+        elif timeout == 0:
+            expires = 0
+        else:
+            expires = time() + timeout
         value = pickle.dumps(value, pickle.HIGHEST_PROTOCOL)
-        item = (timeout, value)
-        self._cache.setdefault(key, item)
+        self._cache.setdefault(key, (expires, value))
 
     def delete(self, key):
         self._cache.pop(key, None)
@@ -252,7 +262,7 @@ class SimpleCache(BaseCache):
 
     def _prune(self):
         for key, (expires, _) in self._cache.items():
-            if expires < time() and expires != 0:
+            if expires <= time() and expires != 0:
                 self._cache.pop(key, None)
 
     def __contains__(self, key):
@@ -296,7 +306,7 @@ class SQLiteCache(BaseCache):
     ...     return "derp"
     ...
     >>> # Outputs 42 as its output is cached for unlimited time.
-    >>> assert do_something() is 42
+    >>> assert do_something() == 42
 
     >>> cache.set("mykey", 42, timeout=-1)
     >>> # Outputs "derp" as the cached value is expired.
@@ -361,6 +371,8 @@ class SQLiteCache(BaseCache):
                 kwargs.update(dict(isolation_level=None))
 
             # FIXME: Potentially dangerous garbage.
+            # Not thread-safe.
+            # See this module's docstring for more information.
             kwargs.update(dict(check_same_thread=False))
 
             self._connection = sqlite3.Connection(**kwargs)
@@ -378,7 +390,7 @@ class SQLiteCache(BaseCache):
                 result = connection.cursor().execute(SQL_SELECT,
                                                      (key,)).fetchone()
                 expires = result[1]
-                if expires > time() or expires == 0:
+                if expires >= time() or expires == 0:
                     value = pickle.loads(str(result[0]))
             except TypeError:
                 pass
@@ -387,22 +399,28 @@ class SQLiteCache(BaseCache):
     def set(self, key, value, timeout=None):
         self._prune()
         if timeout is None:
-            timeout = self._default_timeout
-        if timeout != 0:
-            timeout += time()
+            expires = 0
+        elif self._default_timeout == 0:
+            expires = 0
+        elif timeout == 0:
+            expires = 0
+        else:
+            expires = time() + timeout
         with self._get_connection() as connection:
             value = buffer(pickle.dumps(value, pickle.HIGHEST_PROTOCOL))
-            connection.cursor().execute(SQL_REPLACE, (key, value, timeout,))
+            connection.cursor().execute(SQL_REPLACE, (key, value, expires,))
 
     def add(self, key, value, timeout=None):
         self._prune()
         if timeout is None:
-            timeout = self._default_timeout
-        if timeout != 0:
-            timeout += time()
+            expires = 0
+        elif self._default_timeout == 0:
+            expires = 0
+        else:
+            expires = time() + timeout
         with self._get_connection() as connection:
             value = buffer(pickle.dumps(value, pickle.HIGHEST_PROTOCOL))
-            connection.cursor().execute(SQL_INSERT, (key, value, timeout,))
+            connection.cursor().execute(SQL_INSERT, (key, value, expires,))
 
     def delete(self, key):
         with self._get_connection() as connection:
@@ -501,7 +519,7 @@ class BaseCacheConfigurator(object):
         "location": "",
 
         # Cache time-to-live in seconds, with "0" means no expiration.
-        "timeout": 0.0,
+        "timeout": 0,
     }
 
     def __init__(self, config, cache_manager=cache_manager):
