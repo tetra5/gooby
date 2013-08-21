@@ -49,7 +49,7 @@ LOGGING_CONFIG = {
             "class": "logging.handlers.RotatingFileHandler",
             "formatter": "verbose",
             "filename": path.join(LOGS_DIR, "gooby.log"),
-            "maxBytes": 128000,
+            "maxBytes": 1024000,
             "backupCount": 4,
         },
         "file_errors": {
@@ -118,6 +118,11 @@ CACHE_CONFIG = {
         "backend": "cache.SQLiteCache",
         "timeout": 0.0,
         "location": path.join(CACHE_DIR, "herpderper.sqlite"),
+    },
+    "IMDbURLParser": {
+        "backend": "cache.SQLiteCache",
+        "timeout": 0.0,
+        "location": path.join(CACHE_DIR, "imdb.sqlite"),
     },
 }
 
