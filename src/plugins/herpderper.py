@@ -211,7 +211,7 @@ class HerpDerper(Plugin):
     _triggers = [
         u"губи",
         u"ue,b",
-        u"gooby",
+        # u"gooby",
         u"пщщин",
     ]
 
