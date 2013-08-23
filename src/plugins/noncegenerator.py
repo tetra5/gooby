@@ -198,10 +198,10 @@ def generate_nonce_phrase(phrase,
     ...                            nonce_quantity=0.0)
     >>> assert np == "без изменений".decode("utf8")
 
-    >>> np = generate_nonce_phrase("лахкрч".decode("utf-8"),
-    ...                            templates_composite=templates_composite,
+    >>> np = generate_nonce_phrase("а лахкрч".decode("utf-8"),
+    ...                            templates_simple=templates_simple,
     ...                            nonce_quantity=1.0)
-    >>> assert np == "лахкрч-хуяхкрч".decode("utf-8")
+    >>> assert np == "а лахкрч-хуяхкрч".decode("utf-8")
     """
 
     assert 0 <= nonce_quantity <= 1.0
@@ -222,8 +222,9 @@ def generate_nonce_phrase(phrase,
             templates = templates_nonce_only
 
         for part in word_parts:
+            if len(part) is 1:
+                continue
             if not word_is_eligible(part) and part.lower() not in extra_words:
-                print word_is_eligible(part)
                 continue
             nonce_word = generate_nonce_word(part, preserve_case=preserve_case)
             template = choice(templates)
