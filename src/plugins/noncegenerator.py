@@ -111,7 +111,7 @@ def find_first_vowel_index(word):
     return index - 1 if found else None
 
 
-def word_is_eligible(word, vowel_threshold=2):
+def word_is_eligible(word, vowel_threshold=1):
     """
     >>> assert word_is_eligible("учёт".decode("utf8"), 2) is True
 
@@ -141,6 +141,9 @@ def generate_nonce_word(word, preserve_case=False):
 
     >>> nw = generate_nonce_word("ЛАЛКА".decode("utf8"), preserve_case=False)
     >>> assert nw == "хуялка".decode("utf8")
+
+    >>> nw = generate_nonce_word("нармкрч".decode("utf-8"), preserve_case=False)
+    >>> assert nw == "хуярмкрч".decode("utf-8")
     """
 
     index = find_first_vowel_index(word)
@@ -154,12 +157,10 @@ def generate_nonce_word(word, preserve_case=False):
     if not preserve_case:
         return nonce_word.lower()
 
-    if word[:index + 1].istitle():
-        nonce_word = nonce_word.title()
-    elif word[:index + 1].isupper():
+    if word[:index + 1].isupper():
         nonce_word = nonce_word.upper()
-    elif word[:index + 1].islower():
-        nonce_word = nonce_word.lower()
+    elif word[:index + 1].istitle():
+        nonce_word = nonce_word.title()
 
     return nonce_word
 
@@ -196,6 +197,11 @@ def generate_nonce_phrase(phrase,
     >>> np = generate_nonce_phrase("без изменений".decode("utf8"),
     ...                            nonce_quantity=0.0)
     >>> assert np == "без изменений".decode("utf8")
+
+    >>> np = generate_nonce_phrase("лахкрч".decode("utf-8"),
+    ...                            templates_composite=templates_composite,
+    ...                            nonce_quantity=1.0)
+    >>> assert np == "лахкрч-хуяхкрч".decode("utf-8")
     """
 
     assert 0 <= nonce_quantity <= 1.0
@@ -217,6 +223,7 @@ def generate_nonce_phrase(phrase,
 
         for part in word_parts:
             if not word_is_eligible(part) and part.lower() not in extra_words:
+                print word_is_eligible(part)
                 continue
             nonce_word = generate_nonce_word(part, preserve_case=preserve_case)
             template = choice(templates)
