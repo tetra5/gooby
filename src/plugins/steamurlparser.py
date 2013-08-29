@@ -125,8 +125,10 @@ class SteamURLParser(Plugin):
         >>> plugin = SteamURLParser()
 
         >>> assert "239030" not in plugin.cache
+
         >>> plugin.get_app_info("239030")
         ('Papers, Please', '8 Aug 2013', u'249 p\u0443\u0431.')
+
         >>> assert "239030" in plugin.cache
 
         >>> plugin.get_app_info("218620")
@@ -197,10 +199,14 @@ class SteamURLParser(Plugin):
 
                 # Checks whether there's an active discount on that store item
                 # currently.
-                # <div class="discount_pct">...
+                # <div class="game_purchase_action_bg">
+                #   <div class="discount_pct">...
+                rpath = ".//div[@class='discount_block game_purchase_discount']"
+
                 try:
+                    root = html.find(rpath)
                     path = ".//div[@class='discount_pct']"
-                    discount = html.find(path).text.lstrip("-")
+                    discount = root.find(path).text.lstrip("-")
 
                 except AttributeError:
                     pass
@@ -208,11 +214,11 @@ class SteamURLParser(Plugin):
                 else:
                     # <div class="discount_original_price">...
                     path = ".//div[@class='discount_original_price']"
-                    original = html.find(path).text
+                    original = root.find(path).text
 
                     # <div class="discount_final_price" itemprop="price">...
                     path = ".//div[@class='discount_final_price']"
-                    final = html.find(path).text
+                    final = root.find(path).text
 
                     price = u"{0} - {1} = {2}".format(original, discount, final)
 
