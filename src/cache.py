@@ -138,6 +138,12 @@ class BaseCache(object):
     def __len__(self):
         raise NotImplementedError
 
+    def __unicode__(self):
+        return "<{0} ({1} stored)>".format(self.__class__.__name__, len(self))
+
+    def __str__(self):
+        return unicode(self).encode("utf-8")
+
 
 class SimpleCache(BaseCache):
     """
