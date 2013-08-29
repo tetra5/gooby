@@ -41,6 +41,7 @@ EXTRA_WORDS = [
     # u"кун",
     u"лал",
     u"лойс",
+    u"лоис",
     u"азаза",
     u"нарм",
     u"бахает",
@@ -142,7 +143,7 @@ def generate_nonce_word(word, preserve_case=False):
     >>> nw = generate_nonce_word("ЛАЛКА".decode("utf8"), preserve_case=False)
     >>> assert nw == "хуялка".decode("utf8")
 
-    >>> nw = generate_nonce_word("нармкрч".decode("utf-8"), preserve_case=False)
+    >>> nw = generate_nonce_word("ннармкрч".decode("utf-8"), False)
     >>> assert nw == "хуярмкрч".decode("utf-8")
     """
 
@@ -152,7 +153,12 @@ def generate_nonce_word(word, preserve_case=False):
         return word
 
     char = word[index]
-    nonce_word = u"{0}{1}".format(SUBSTITUTES[char.lower()], word[index + 1:])
+
+    try:
+        nonce_word = u"{0}{1}".format(SUBSTITUTES[char.lower()],
+                                      word[index + 1:])
+    except KeyError:
+        return word
 
     if not preserve_case:
         return nonce_word.lower()
