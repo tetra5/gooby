@@ -124,8 +124,10 @@ class SteamURLParser(Plugin):
         """
         >>> plugin = SteamURLParser()
 
+        >>> assert "239030" not in plugin.cache
         >>> plugin.get_app_info("239030")
         ('Papers, Please', '8 Aug 2013', u'249 p\u0443\u0431.')
+        >>> assert "239030" in plugin.cache
 
         >>> plugin.get_app_info("218620")
         ('PAYDAY 2', '13 Aug 2013', u'499 p\u0443\u0431.')
@@ -168,15 +170,16 @@ class SteamURLParser(Plugin):
                 }
                 html = retrieve_html(url, data)
 
+            # Store item is a single title or DLC.
             try:
                 # <div class="apphub_AppName">...
                 path = ".//div[@class='apphub_AppName']"
                 title = html.find(path).text
 
                 # Checks whether the store item is a DLC.
-                p = ".//div[@class='game_area_dlc_bubble game_area_bubble']"
+                path = ".//div[@class='game_area_dlc_bubble game_area_bubble']"
                 try:
-                    html.find(p).tag
+                    html.find(path).tag
 
                 except AttributeError:
                     pass
