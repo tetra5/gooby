@@ -124,6 +124,11 @@ CACHE_CONFIG = {
         "timeout": 0.0,
         "location": path.join(CACHE_DIR, "imdb.sqlite"),
     },
+    "DuplicateURLChecker": {
+        "backend": "cache.SQLiteCache",
+        "timeout": 128000.0 * 3,  # 3 days.
+        "location": path.join(CACHE_DIR, "urls.sqlite"),
+    },
 }
 
 
