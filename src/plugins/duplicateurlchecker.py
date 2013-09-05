@@ -104,6 +104,9 @@ class DuplicateURLChecker(Plugin):
                     if full_name in message.Body:
                         return
 
+                    if posted_by in message.Body:
+                        return
+
                     s = "{0} has been originally posted by {1} on {2}"
                     msg = s.format(
                         truncate(url, max_len=15, end="..."),
