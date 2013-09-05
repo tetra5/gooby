@@ -123,8 +123,8 @@ class BaseCache(object):
             return wrapper
         return decorated
 
-    def __setitem__(self, key, value):
-        self.set(key, value)
+    def __setitem__(self, key, value, timeout=None):
+        self.set(key, value, timeout)
 
     def __delitem__(self, key):
         self.delete(key)
@@ -236,14 +236,8 @@ class SimpleCache(BaseCache):
 
     def set(self, key, value, timeout=None):
         self._prune()
-        if timeout is None:
-            expires = 0
-        elif self._default_timeout == 0:
-            expires = 0
-        elif timeout == 0:
-            expires = 0
-        else:
-            expires = time() + timeout
+        timeout = timeout or self._default_timeout or 0
+        expires = time() + timeout if timeout > 0 else timeout
         value = pickle.dumps(value, pickle.HIGHEST_PROTOCOL)
         self._cache.update({key: (expires, value)})
 
@@ -404,14 +398,16 @@ class SQLiteCache(BaseCache):
 
     def set(self, key, value, timeout=None):
         self._prune()
-        if timeout is None:
-            expires = 0
-        elif self._default_timeout == 0:
-            expires = 0
-        elif timeout == 0:
-            expires = 0
-        else:
-            expires = time() + timeout
+        timeout = timeout or self._default_timeout or 0
+        expires = time() + timeout if timeout > 0 else timeout
+        # if timeout is None:
+        #     expires = 0
+        # elif self._default_timeout == 0:
+        #     expires = 0
+        # elif timeout == 0:
+        #     expires = 0
+        # else:
+        #     expires = time() + timeout
         with self._get_connection() as connection:
             value = buffer(pickle.dumps(value, pickle.HIGHEST_PROTOCOL))
             connection.cursor().execute(SQL_REPLACE, (key, value, expires,))
