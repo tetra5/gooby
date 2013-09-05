@@ -101,6 +101,10 @@ class CookieHandler(urllib2.HTTPCookieProcessor):
     https_response = http_response
 
 
+# FIXME: http://store.steampowered.com/app/223390/
+# URLs like this need a better parsing. Module refactoring is also necessary.
+
+
 class SteamURLParser(Plugin):
     _api_url = "http://store.steampowered.com/app/{0}/?cc=ru"
 
@@ -133,6 +137,9 @@ class SteamURLParser(Plugin):
 
         >>> plugin.get_app_info("218620")
         ('PAYDAY 2', '13 Aug 2013', u'499 p\u0443\u0431.')
+
+        # >>> plugin.get_app_info("223390")
+        # ''
         """
 
         @self.cache.get_cached(app_id)
@@ -191,11 +198,13 @@ class SteamURLParser(Plugin):
                         title = "{0}, DLC".format(title)
 
                 # <div class="game_purchase_price price" itemprop="price">...
+                path = ".//div[@class='game_purchase_price price']"
                 try:
-                    price = html.find_class("price")[0].text.strip()
+                    # price = html.find(path)[0].text.strip()
+                    price = html.find(path).text.strip()
 
-                except IndexError:
-                    price = "price hasn't been set yet"
+                except (IndexError, TypeError):
+                    price = html.find(path).text.strip()
 
                 # Checks whether there's an active discount on that store item
                 # currently.
@@ -227,8 +236,11 @@ class SteamURLParser(Plugin):
                 # <div class="glance_details"><div></div><div>...
                 try:
                     root = html.findall(".//div[@class='glance_details']")[-1]
-                    released = root.findall(".//div")[-1].text.strip()
-                    released = released.replace("Release Date: ", "")
+                    if len(root) > 1:
+                        released = root.findall(".//div")[-1].text.strip()
+                        released = released.replace("Release Date: ", "")
+                    else:
+                        released = "released"
 
                 except IndexError:
                     released = "unknown release date"
