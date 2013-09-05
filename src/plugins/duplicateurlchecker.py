@@ -75,6 +75,9 @@ class DuplicateURLChecker(Plugin):
         if status != cmsReceived:
             return
 
+        if "gooby" in message.Body.lower():
+            return
+
         found = find_urls(message.Body)
 
         if not found:
