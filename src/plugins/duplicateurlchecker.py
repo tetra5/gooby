@@ -99,7 +99,10 @@ class DuplicateURLChecker(Plugin):
                         msg = s.format(
                             truncate(url, max_len=15, end="..."),
                             posted_by,
-                            datetime.fromtimestamp(ts).strftime("%A, %x at %X")
+                            datetime.fromtimestamp(ts).strftime(
+                                # "%A, %x at %X"
+                                "%d.%m.%Y at %X"
+                            )
                         )
                         output.append(msg)
 
