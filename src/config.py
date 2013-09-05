@@ -127,7 +127,7 @@ CACHE_CONFIG = {
     "DuplicateURLChecker": {
         "backend": "cache.SQLiteCache",
         "timeout": 128000.0 * 3,  # 3 days.
-        "location": path.join(CACHE_DIR, "urls.sqlite"),
+        "location": path.join(CACHE_DIR, "duplicateurls.sqlite"),
     },
 }
 
