@@ -243,14 +243,8 @@ class SimpleCache(BaseCache):
 
     def add(self, key, value, timeout=None):
         self._prune()
-        if timeout is None:
-            expires = 0
-        elif self._default_timeout == 0:
-            expires = 0
-        elif timeout == 0:
-            expires = 0
-        else:
-            expires = time() + timeout
+        timeout = timeout or self._default_timeout or 0
+        expires = time() + timeout if timeout > 0 else timeout
         value = pickle.dumps(value, pickle.HIGHEST_PROTOCOL)
         self._cache.setdefault(key, (expires, value))
 
@@ -414,12 +408,14 @@ class SQLiteCache(BaseCache):
 
     def add(self, key, value, timeout=None):
         self._prune()
-        if timeout is None:
-            expires = 0
-        elif self._default_timeout == 0:
-            expires = 0
-        else:
-            expires = time() + timeout
+        timeout = timeout or self._default_timeout or 0
+        expires = time() + timeout if timeout > 0 else timeout
+        # if timeout is None:
+        #     expires = 0
+        # elif self._default_timeout == 0:
+        #     expires = 0
+        # else:
+        #     expires = time() + timeout
         with self._get_connection() as connection:
             value = buffer(pickle.dumps(value, pickle.HIGHEST_PROTOCOL))
             connection.cursor().execute(SQL_INSERT, (key, value, expires,))
