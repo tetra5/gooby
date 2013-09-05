@@ -87,24 +87,33 @@ class DuplicateURLChecker(Plugin):
 
         for url in found:
             if url not in self.cache:
-                self.cache[url] = (message.FromHandle, time())
+                self.cache[url] = (
+                    message.FromHandle,
+                    message.FromDisplayName,
+                    time()
+                )
             else:
                 try:
-                    posted_by, ts = self.cache[url]
+                    posted_by, full_name, ts = self.cache[url]
                 except (KeyError, ValueError):
                     pass
                 else:
-                    if posted_by != message.FromHandle:
-                        s = "{0} has been originally posted by {1} on {2}"
-                        msg = s.format(
-                            truncate(url, max_len=15, end="..."),
-                            posted_by,
-                            datetime.fromtimestamp(ts).strftime(
-                                # "%A, %x at %X"
-                                "%d.%m.%Y at %X"
-                            )
-                        )
-                        output.append(msg)
+                    if posted_by == message.FromHandle:
+                        return
+
+                    if full_name in message.Body:
+                        return
+
+                    s = "{0} has been originally posted by {1} on {2}"
+                    msg = s.format(
+                        truncate(url, max_len=15, end="..."),
+                        # posted_by,
+                        full_name,
+                        datetime.fromtimestamp(ts).strftime("%d.%m.%Y at %X")
+                    )
+                    output.append(msg)
+
+                    self._logger.info("Duplicate URL by {0}".format(posted_by))
 
         if not output:
             return
