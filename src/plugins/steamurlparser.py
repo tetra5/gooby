@@ -21,6 +21,7 @@ import cookielib
 import re
 import gzip
 import datetime
+import calendar
 import codecs
 import urlparse
 import errno
@@ -191,7 +192,7 @@ class SteamApp(object):
     '505 Games'
 
     >>> app.release_date
-    datetime.datetime(2013, 8, 13, 0, 0)
+    datetime.datetime(2013, 8, 13, 4, 0)
 
     >>> app.price
     u'499 p\u0443\u0431.'
@@ -238,6 +239,7 @@ class SteamApp(object):
         opener.add_handler(GzipHandler())
         opener.add_handler(SteamHeaderHandler())
         opener.add_handler(SteamCookieHandler())
+        # opener.addheaders.append(("Cookie", "birthtime=315561601"))
 
         app_id, cc = cls.parse_app_url(app_url)
         if cc is None:
@@ -427,9 +429,8 @@ class SteamApp(object):
             * empty string if release date is unknown or hasn't been set.
         """
 
-        # FIXME: one day mismatch if release date is current day.
-        # HTTP server returns incorrect date.
-        # Timezone offset = -14400.
+        # HTTP server returns GMT time.
+        # Timezone offset = 14400.
 
         if self._release_date is None:
             path = ".//div[@class='glance_details']"
@@ -439,9 +440,12 @@ class SteamApp(object):
                     d = root.findall(".//div")[-1].text.strip()
                     fmt = "Release Date: %d %b %Y"
                     try:
-                        self._release_date = datetime.datetime.strptime(d, fmt)
+                        r_date = datetime.datetime.strptime(d, fmt)
+                        r_date = calendar.timegm(r_date.utctimetuple())
+                        r_date = datetime.datetime.fromtimestamp(r_date)
+                        self._release_date = r_date
 
-                    # TODO: add additional date formats support.
+                    # TODO: add additional date formats.
                     except ValueError:
                         # raise SteamAppError("time data doesn't match format")
                         self._release_date = d.replace("Release Date: ", "")
@@ -577,7 +581,7 @@ class SteamURLParser(Plugin):
         >>> assert "239030" not in plugin.cache
 
         >>> plugin.get_app_info("239030")  # doctest: +NORMALIZE_WHITESPACE
-        ('Papers, Please', datetime.datetime(2013, 8, 8, 0, 0),
+        ('Papers, Please', datetime.datetime(2013, 8, 8, 4, 0),
         u'249 p\u0443\u0431.', 1)
 
         >>> assert "239030" in plugin.cache
@@ -610,37 +614,38 @@ class SteamURLParser(Plugin):
             else:
                 item_str = "{title} ({r_date}) {price}"
                 item_vars = {}
-
                 m = "Retrieving {0} for {1}".format(app_id, message.FromHandle)
                 self._logger.info(m)
-
                 try:
                     title, r_date, price, flags = self.get_app_info(app_id)
-
                 except SteamAppError:
                     m = "Unable to retrieve {0} for {1}"
                     self._logger.error(m.format(app_id, message.FromHandle))
                     m = "Unable to retrieve info for {0}"
                     output.append(m.format(app_id))
+                    continue
 
+                if flags & FREE_TO_PLAY or price == 0:
+                    item_vars["price"] = "free to play"
                 else:
-                    if flags & FREE_TO_PLAY or price == 0:
-                        item_vars["price"] = "free to play"
+                    if isinstance(price, tuple):
+                        price_fmt = "{0} - {1}% = {2}"
+                        item_vars["price"] = price_fmt.format(*price)
                     else:
-                        if isinstance(price, tuple):
-                            price_fmt = "{0} - {1}% = {2}"
-                            item_vars["price"] = price_fmt.format(*price)
-                        else:
-                            item_vars["price"] = price
+                        item_vars["price"] = price
+                try:
+                    item_vars["r_date"] = r_date.strftime("%d.%m.%Y")
+                # Weird date format.
+                except AttributeError:
+                    if item_vars["r_date"] != "":
 
-                    try:
-                        item_vars["r_date"] = r_date.strftime("%d.%m.%Y")
-                    except AttributeError:
                         item_vars["r_date"] = r_date
+                    else:
+                        item_vars["r_date"] = "unknown release date"
 
-                    item_vars["title"] = title
+                item_vars["title"] = title
 
-                    output.append(item_str.format(**item_vars))
+                output.append(item_str.format(**item_vars))
 
         if not output:
             return
