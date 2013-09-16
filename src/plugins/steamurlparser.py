@@ -625,8 +625,10 @@ class SteamURLParser(Plugin):
                     output.append(m.format(app_id))
                     continue
 
-                if flags & FREE_TO_PLAY or price == 0:
+                if flags & FREE_TO_PLAY:
                     item_vars["price"] = "free to play"
+                elif price == 0:
+                    item_vars["price"] = "price hasn't been set yet"
                 else:
                     if isinstance(price, tuple):
                         price_fmt = "{0} - {1}% = {2}"
@@ -642,6 +644,8 @@ class SteamURLParser(Plugin):
                         item_vars["r_date"] = "unknown release date"
 
                 item_vars["title"] = title
+                if flags & DLC and "dlc" not in title.lower():
+                    item_vars["title"] += ", DLC"
 
                 output.append(item_str.format(**item_vars))
 
