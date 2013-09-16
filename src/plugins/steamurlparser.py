@@ -14,17 +14,17 @@
 __docformat__ = "restructuredtext en"
 
 
-import os
-import urllib
+# import os
+# import urllib
 import urllib2
-import cookielib
+# import cookielib
 import re
 import gzip
 import datetime
 import calendar
 import codecs
 import urlparse
-import errno
+# import errno
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -34,7 +34,7 @@ import lxml.html
 from Skype4Py.enums import cmsReceived
 
 from plugin import Plugin
-from config import HOME_DIR
+# from config import HOME_DIR
 
 
 class GzipHandler(urllib2.BaseHandler):
@@ -79,6 +79,9 @@ class SteamHeaderHandler(urllib2.BaseHandler):
         "Cache-Control": "max-age=0",
         "Referer": "http://store.steampowered.com/",
         "Host": "store.steampowered.com",
+
+        # Age check verification cookie.
+        "Cookie": "birthtime=315561601",
     }
 
     def http_request(self, request):
@@ -90,35 +93,35 @@ class SteamHeaderHandler(urllib2.BaseHandler):
     https_request = http_request
 
 
-class SteamCookieHandler(urllib2.HTTPCookieProcessor):
-    def __init__(self, cookiejar=None):
-        urllib2.HTTPCookieProcessor.__init__(self, cookiejar)
-
-        if cookiejar is None:
-            cookiejar_path = os.path.join(HOME_DIR, "steam_cookies.txt")
-            cookiejar = cookielib.LWPCookieJar(cookiejar_path)
-
-        try:
-            cookiejar.load(ignore_expires=True, ignore_discard=True)
-        except (IOError, cookielib.LoadError) as e:
-            # No such file or directory.
-            if e.errno == errno.ENOENT:
-                pass
-            else:
-                raise
-
-        self.cookiejar = cookiejar
-
-    def http_response(self, request, response):
-        self.cookiejar.extract_cookies(response, request)
-        try:
-            # Makes cookie jar file output be more verbose.
-            self.cookiejar.save(ignore_expires=True, ignore_discard=True)
-            pass
-        except IOError:
-            raise
-
-        return response
+# class SteamCookieHandler(urllib2.HTTPCookieProcessor):
+#     def __init__(self, cookiejar=None):
+#         urllib2.HTTPCookieProcessor.__init__(self, cookiejar)
+#
+#         if cookiejar is None:
+#             cookiejar_path = os.path.join(HOME_DIR, "steam_cookies.txt")
+#             cookiejar = cookielib.LWPCookieJar(cookiejar_path)
+#
+#         try:
+#             cookiejar.load(ignore_expires=True, ignore_discard=True)
+#         except (IOError, cookielib.LoadError) as e:
+#             # No such file or directory.
+#             if e.errno == errno.ENOENT:
+#                 pass
+#             else:
+#                 raise
+#
+#         self.cookiejar = cookiejar
+#
+#     def http_response(self, request, response):
+#         self.cookiejar.extract_cookies(response, request)
+#         try:
+#             # Makes cookie jar file output be more verbose.
+#             self.cookiejar.save(ignore_expires=True, ignore_discard=True)
+#             pass
+#         except IOError:
+#             raise
+#
+#         return response
 
 
 class SteamAppError(Exception):
@@ -238,7 +241,6 @@ class SteamApp(object):
         opener.add_handler(urllib2.HTTPRedirectHandler())
         opener.add_handler(GzipHandler())
         opener.add_handler(SteamHeaderHandler())
-        opener.add_handler(SteamCookieHandler())
         # opener.addheaders.append(("Cookie", "birthtime=315561601"))
 
         app_id, cc = cls.parse_app_url(app_url)
@@ -249,17 +251,18 @@ class SteamApp(object):
         reader = codecs.getreader("utf-8")
         html_string = reader(response).read()
 
-        # Submitting age verification POST data if necessary.
-        if "agegate_box" in html_string:
-            post_data = {
-                "snr": "1_agecheck_agecheck__age-gate",
-                "ageDay": "1",
-                "ageMonth": "January",
-                "ageYear": "1900",
-            }
-            url = cls._age_check_api_url.format(app_id)
-            response = opener.open(url, urllib.urlencode(post_data))
-            html_string = reader(response).read()
+        # opener.add_handler(SteamCookieHandler())
+        # # Submitting age verification POST data if necessary.
+        # if "agegate_box" in html_string:
+        #     post_data = {
+        #         "snr": "1_agecheck_agecheck__age-gate",
+        #         "ageDay": "1",
+        #         "ageMonth": "January",
+        #         "ageYear": "1900",
+        #     }
+        #     url = cls._age_check_api_url.format(app_id)
+        #     response = opener.open(url, urllib.urlencode(post_data))
+        #     html_string = reader(response).read()
 
         return cls.from_html_string(html_string)
 
