@@ -636,9 +636,9 @@ class SteamURLParser(Plugin):
                 try:
                     item_vars["r_date"] = r_date.strftime("%d.%m.%Y")
                 except AttributeError:
-                    try:
+                    if r_date != "":
                         item_vars["r_date"] = r_date
-                    except KeyError:
+                    else:
                         item_vars["r_date"] = "unknown release date"
 
                 item_vars["title"] = title
