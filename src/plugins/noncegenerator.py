@@ -270,7 +270,8 @@ class NonceGenerator(Plugin):
 
     # A value which "special words only" algorithm should trigger on
     # randomly. (float 0 <= x <= 1.0). Default is 1/1.
-    EXTRA_TRIGGER_THRESHOLD = 1.0
+    #EXTRA_TRIGGER_THRESHOLD = 1.0
+    EXTRA_TRIGGER_THRESHOLD = 0.1
 
     HISTORY_LIMIT = 5
 
