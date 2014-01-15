@@ -177,7 +177,7 @@ class SteamApp(object):
     <Steam application #218620>
 
     >>> app.flags
-    1
+    9
 
     >>> bool(app.flags & (SOFTWARE & ~FREE_TO_PLAY))
     False
@@ -588,6 +588,9 @@ class SteamURLParser(Plugin):
         u'249 p\u0443\u0431.', 1)
 
         >>> assert "239030" in plugin.cache
+
+        >>> plugin.get_app_info("259660")
+        ''
         """
 
         @self.cache.get_cached(app_id)
@@ -621,7 +624,7 @@ class SteamURLParser(Plugin):
                 self._logger.info(m)
                 try:
                     title, r_date, price, flags = self.get_app_info(app_id)
-                except SteamAppError:
+                except SteamAppError, urllib2.URLError:
                     m = "Unable to retrieve {0} for {1}"
                     self._logger.error(m.format(app_id, message.FromHandle))
                     m = "Unable to retrieve info for {0}"
@@ -647,8 +650,16 @@ class SteamURLParser(Plugin):
                         item_vars["r_date"] = "unknown release date"
 
                 item_vars["title"] = title
+
+                item_extras = []
                 if flags & DLC and "dlc" not in title.lower():
-                    item_vars["title"] += ", DLC"
+                    item_extras.append("DLC")
+                if flags & EARLY_ACCESS:
+                    item_extras.append("Early Access")
+                if item_extras:
+                    item_vars["title"] = "{0}, {1}".format(
+                        item_vars["title"], ", ".join(item_extras)
+                    )
 
                 output.append(item_str.format(**item_vars))
 
