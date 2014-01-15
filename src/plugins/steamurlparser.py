@@ -588,9 +588,6 @@ class SteamURLParser(Plugin):
         u'249 p\u0443\u0431.', 1)
 
         >>> assert "239030" in plugin.cache
-
-        >>> plugin.get_app_info("259660")
-        ''
         """
 
         @self.cache.get_cached(app_id)
@@ -654,11 +651,14 @@ class SteamURLParser(Plugin):
                 item_extras = []
                 if flags & DLC and "dlc" not in title.lower():
                     item_extras.append("DLC")
-                if flags & EARLY_ACCESS:
-                    item_extras.append("Early Access")
                 if item_extras:
                     item_vars["title"] = "{0}, {1}".format(
                         item_vars["title"], ", ".join(item_extras)
+                    )
+
+                if flags & EARLY_ACCESS:
+                    item_vars["title"] = "[Early Access] {0}".format(
+                        item_vars["title"]
                     )
 
                 output.append(item_str.format(**item_vars))
