@@ -112,7 +112,7 @@ def find_first_vowel_index(word):
     return index - 1 if found else None
 
 
-def word_is_eligible(word, vowel_threshold=1):
+def word_is_eligible(word, vowel_threshold=2):
     """
     >>> assert word_is_eligible("учёт".decode("utf8"), 2) is True
 
@@ -121,8 +121,8 @@ def word_is_eligible(word, vowel_threshold=1):
     >>> assert word_is_eligible("молоко".decode("utf8"), 4) is False
     """
 
-    if len(word) <= 2:
-        return False
+    #if len(word) <= 2:
+    #    return False
 
     if any(sub.lower() in word.lower() for sub in SUBSTITUTES.itervalues()):
         return False
@@ -210,15 +210,16 @@ def generate_nonce_phrase(phrase,
     ...                            nonce_quantity=0.0)
     >>> assert np == "без изменений".decode("utf8")
 
-    >>> np = generate_nonce_phrase("а лахкрч".decode("utf-8"),
+    >>> np = generate_nonce_phrase("а лахкороч".decode("utf-8"),
     ...                            templates_simple=templates_simple,
     ...                            nonce_quantity=1.0)
-    >>> assert np == "а лахкрч-хуяхкрч".decode("utf-8")
+    >>> assert np == "а лахкороч-хуяхкороч".decode("utf-8")
 
-    >>> np = generate_nonce_phrase("да".decode("utf-8"),
+    >>> np = generate_nonce_phrase("да бля это".decode("utf-8"),
+    ...                            templates_simple=templates_simple,
     ...                            templates_composite=templates_composite,
     ...                            nonce_quantity=1.0)
-    >>> assert np == "да".decode("utf-8")
+    >>> assert np == "да бля это-хуэто".decode("utf-8")
     """
 
     assert 0 <= nonce_quantity <= 1.0
@@ -321,7 +322,7 @@ class NonceGenerator(Plugin):
                 for keyword in EXTRA_WORDS:
                     if word.lower().startswith(keyword.lower()):
                         #if self.EXTRA_TRIGGER_THRESHOLD - uniform(0.0, 1.0) > 0:
-                        if uniform(0.0, 1.0) >= self.EXTRA_TRIGGER_THRESHOLD:
+                        if uniform(0.0, 1.0) <= self.EXTRA_TRIGGER_THRESHOLD:
                             _output.append(generate_nonce_phrase(word))
 
         # Quota algorithm.
@@ -350,7 +351,7 @@ class NonceGenerator(Plugin):
         # triggered before.
         if not _output:
             #if self.TRIGGER_THRESHOLD - uniform(0.0, 1.0) > 0:
-            if uniform(0.0, 1.0) >= self.TRIGGER_THRESHOLD:
+            if uniform(0.0, 1.0) <= self.TRIGGER_THRESHOLD:
                 result = generate_nonce_phrase(phrase=message.Body,
                                                nonce_quantity=uniform(0.1, 0.9))
                 if message.Body.lower() != result.lower():
