@@ -121,6 +121,9 @@ def word_is_eligible(word, vowel_threshold=1):
     >>> assert word_is_eligible("молоко".decode("utf8"), 4) is False
     """
 
+    if len(word) <= 2:
+        return False
+
     if any(sub.lower() in word.lower() for sub in SUBSTITUTES.itervalues()):
         return False
 
@@ -145,6 +148,9 @@ def generate_nonce_word(word, preserve_case=False):
 
     >>> nw = generate_nonce_word("ннармкрч".decode("utf-8"), False)
     >>> assert nw == "хуярмкрч".decode("utf-8")
+
+    >>> nw = generate_nonce_word("да".decode("utf-8"), False)
+    >>> assert nw == "да".decode("utf-8")
     """
 
     index = find_first_vowel_index(word)
@@ -208,6 +214,11 @@ def generate_nonce_phrase(phrase,
     ...                            templates_simple=templates_simple,
     ...                            nonce_quantity=1.0)
     >>> assert np == "а лахкрч-хуяхкрч".decode("utf-8")
+
+    >>> np = generate_nonce_phrase("да".decode("utf-8"),
+    ...                            templates_composite=templates_composite,
+    ...                            nonce_quantity=1.0)
+    >>> assert np == "да".decode("utf-8")
     """
 
     assert 0 <= nonce_quantity <= 1.0
@@ -309,7 +320,8 @@ class NonceGenerator(Plugin):
                 word = word.strip(u"{0}{1}".format(u"—", punctuation))
                 for keyword in EXTRA_WORDS:
                     if word.lower().startswith(keyword.lower()):
-                        if self.EXTRA_TRIGGER_THRESHOLD - uniform(0.0, 1.0) > 0:
+                        #if self.EXTRA_TRIGGER_THRESHOLD - uniform(0.0, 1.0) > 0:
+                        if uniform(0.0, 1.0) >= self.EXTRA_TRIGGER_THRESHOLD:
                             _output.append(generate_nonce_phrase(word))
 
         # Quota algorithm.
@@ -337,7 +349,8 @@ class NonceGenerator(Plugin):
         # Algorithm which triggers randomly if nothing else has been
         # triggered before.
         if not _output:
-            if self.TRIGGER_THRESHOLD - uniform(0.0, 1.0) > 0:
+            #if self.TRIGGER_THRESHOLD - uniform(0.0, 1.0) > 0:
+            if uniform(0.0, 1.0) >= self.TRIGGER_THRESHOLD:
                 result = generate_nonce_phrase(phrase=message.Body,
                                                nonce_quantity=uniform(0.1, 0.9))
                 if message.Body.lower() != result.lower():
