@@ -129,6 +129,11 @@ CACHE_CONFIG = {
         "timeout": 128000.0 * 3,  # 3 days.
         "location": path.join(CACHE_DIR, "duplicateurls.sqlite"),
     },
+    "GuessThePicture": {
+        "backend": "cache.SQLiteCache",
+        "timeout": 128000.0 * 3,  # 3 days.
+        "location": path.join(CACHE_DIR, "guessthepicture.sqlite"),
+    },
 }
 
 
