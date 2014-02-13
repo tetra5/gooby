@@ -173,11 +173,10 @@ class GuessThePicture(Plugin):
             guess = html.find(path).text.strip()
 
         except AttributeError:
-            return None
+            guess = "#skip#"
 
-        else:
-            self._cache.set(image_url, guess)
-            return guess
+        self._cache.set(image_url, guess)
+        return guess
 
     def on_message_status(self, message, status):
         if status != cmsReceived:
@@ -196,12 +195,12 @@ class GuessThePicture(Plugin):
 
             guess = self.guess_the_picture(url)
 
-            if guess is not None:
+            if guess is "#skip#":
+                msg = "...no idea, skipping".format(message.FromHandle)
+                self._logger.error(msg)
+            else:
                 output.append(guess)
                 self._logger.info("-> {0}".format(guess))
-            else:
-                msg = "Unable to guess image for {0}".format(message.FromHandle)
-                self._logger.error(msg)
 
         if not output:
             return
