@@ -11,9 +11,6 @@
 """
 
 
-from __future__ import unicode_literals
-
-
 __docformat__ = "restructuredtext en"
 
 
@@ -139,9 +136,13 @@ class GuessThePicture(Plugin):
     def guess_the_picture(self, image_url):
         """
         >>> plugin = GuessThePicture()
-        >>> plugin.guess_the_picture("http://d24w6bsrhbeh9d.cloudfront.net/photo/a09n4Yq_460sa_v1.gif")
+
+        >>> url = "http://d24w6bsrhbeh9d.cloudfront.net/photo/a09n4Yq_460sa_v1.gif"
+        >>> plugin.guess_the_picture(url)
         'firewood processor'
-        >>> plugin.guess_the_picture("http://armarium.org/u/2014/02/13/JRbC65Q.gif")
+
+        >>> url = "http://armarium.org/u/2014/02/13/JRbC65Q.gif"
+        >>> plugin.guess_the_picture(url)
         'family guy gif'
         """
 
@@ -204,7 +205,7 @@ class GuessThePicture(Plugin):
         #else:
         #    msg = u"^ etot about\n{0}".format("\n".join(output))
 
-        msg = "^ etot about {0}".format(", ".join(output))
+        msg = u"^ etot about {0}".format(", ".join(output))
 
         message.Chat.SendMessage(msg)
 
