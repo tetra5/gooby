@@ -182,13 +182,14 @@ class GuessThePicture(Plugin):
         output = []
 
         for url in found:
+            self._logger.info("Guessing {0} for {1}".format(
+                url, message.FromHandle))
+
             guess = self.guess_the_picture(url)
 
             if guess is not None:
                 output.append(guess)
-                self._logger.info("Guessing {0} for {1}".format(
-                    url, message.FromHandle
-                ))
+                self._logger.info("Success!")
             else:
                 msg = "Unable to guess image for {0}".format(message.FromHandle)
                 self._logger.error(msg)
