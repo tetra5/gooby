@@ -195,7 +195,7 @@ class GuessThePicture(Plugin):
 
             guess = self.guess_the_picture(url)
 
-            if guess is "#skip#":
+            if guess == "#skip#":
                 msg = "...no idea, skipping".format(message.FromHandle)
                 self._logger.error(msg)
             else:
