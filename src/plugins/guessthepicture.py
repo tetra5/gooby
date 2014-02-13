@@ -17,6 +17,7 @@ from __future__ import unicode_literals
 __docformat__ = "restructuredtext en"
 
 
+import codecs
 import gzip
 import urllib2
 import re
@@ -67,9 +68,9 @@ class GoogleHeaderHandler(urllib2.BaseHandler):
 
     _headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0",
-        #"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        #"Accept-Language": "en-US,en;q=0.5",
-        #"Accept-Charset": "utf-8",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.5",
+        "Accept-Charset": "utf-8",
         #"Connection": "Keep-Alive",
         #"Cache-Control": "max-age=0",
         #"Referer": "http://www.google.com",
@@ -133,7 +134,7 @@ class GuessThePicture(Plugin):
     _api_url = "http://www.google.com/searchbyimage?image_url={0}"
 
     _opener = urllib2.build_opener()
-    _opener.add_handler(urllib2.HTTPRedirectHandler())
+    #_opener.add_handler(urllib2.HTTPRedirectHandler())
     _opener.add_handler(GzipHandler())
     _opener.add_handler(GoogleHeaderHandler())
 
@@ -160,8 +161,9 @@ class GuessThePicture(Plugin):
                             backoff=0, delay=1)
         def retrieve_html():
             response = self._opener.open(url)
-            buf = response.read()
-            return lxml.html.fromstring(buf)
+            reader = codecs.getreader("utf-8")
+            html_string = reader(response).read()
+            return lxml.html.fromstring(html_string)
 
         html = retrieve_html()
 
