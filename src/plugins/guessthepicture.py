@@ -141,6 +141,8 @@ class GuessThePicture(Plugin):
         >>> plugin = GuessThePicture()
         >>> plugin.guess_the_picture("http://d24w6bsrhbeh9d.cloudfront.net/photo/a09n4Yq_460sa_v1.gif")
         'firewood processor'
+        >>> plugin.guess_the_picture("http://armarium.org/u/2014/02/13/JRbC65Q.gif")
+        'family guy gif'
         """
 
         cached_guess = self._cache.get(image_url)
@@ -197,10 +199,13 @@ class GuessThePicture(Plugin):
         if not output:
             return
 
-        if len(output) is 1:
-            msg = u"^ etot about {0}".format("".join(output))
-        else:
-            msg = u"^ etot about\n{0}".format("\n".join(output))
+        #if len(output) is 1:
+        #    msg = u"^ etot about {0}".format("".join(output))
+        #else:
+        #    msg = u"^ etot about\n{0}".format("\n".join(output))
+
+        msg = "^ etot about {0}".format(", ".join(output))
+
         message.Chat.SendMessage(msg)
 
 
