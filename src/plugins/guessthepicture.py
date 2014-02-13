@@ -11,6 +11,9 @@
 """
 
 
+from __future__ import unicode_literals
+
+
 __docformat__ = "restructuredtext en"
 
 
@@ -85,9 +88,10 @@ class GoogleHeaderHandler(urllib2.BaseHandler):
 def find_urls(s):
     """
     >>> s = '''http://test.com/a.jpg www.test.com/derp.gif
-    ... http://www.test.com/.gif http://www.test.com/test.gif.png'''
+    ... http://www.test.com/.gif http://www.test.com/test.gif.png
+    ... http://www.youtube.com/watch?v=dQw4w9WgXcQ'''
     >>> expected = (["http://test.com/a.jpg", "www.test.com/derp.gif",
-    ... "http://www.test.com/test.gif.png"])
+    ... "http://www.test.com/test.gif.png", "http://www.test.com/.gif"])
     >>> found = find_urls(s)
     >>> assert sorted(found) == sorted(expected)
     """
@@ -113,16 +117,15 @@ def find_urls(s):
                 |
                 [^\s`!()\[\]{};:'".,<>?«»“”‘’]
             )
-            (?P<image_file>
-                [a-z0-9.\-]+[.](jpg|gif|png)
-            )
         )
         """,
         re.UNICODE | re.IGNORECASE | re.VERBOSE)
 
     retval = []
     for found in re.findall(pattern, s):
-        retval.append(found[0])
+        for ext in ("gif", "png", "jpg"):
+            if found[0].endswith(".{0}".format(ext)):
+                retval.append(found[0])
     return retval
 
 
@@ -130,6 +133,7 @@ class GuessThePicture(Plugin):
     _api_url = "http://www.google.com/searchbyimage?image_url={0}"
 
     _opener = urllib2.build_opener()
+    _opener.add_handler(urllib2.HTTPRedirectHandler())
     _opener.add_handler(GzipHandler())
     _opener.add_handler(GoogleHeaderHandler())
 
@@ -201,11 +205,11 @@ class GuessThePicture(Plugin):
             return
 
         #if len(output) is 1:
-        #    msg = u"^ etot about {0}".format("".join(output))
+        #    msg = "^ etot about {0}".format("".join(output))
         #else:
-        #    msg = u"^ etot about\n{0}".format("\n".join(output))
+        #    msg = "^ etot about\n{0}".format("\n".join(output))
 
-        msg = u"^ etot about {0}".format(", ".join(output))
+        msg = "^ etot about {0}".format(", ".join(output))
 
         message.Chat.SendMessage(msg)
 
