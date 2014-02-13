@@ -131,7 +131,7 @@ CACHE_CONFIG = {
     },
     "GuessThePicture": {
         "backend": "cache.SQLiteCache",
-        "timeout": 128000.0 * 3,  # 3 days.
+        "timeout": 128000.0 * 42,  # 42 days.
         "location": path.join(CACHE_DIR, "guessthepicture.sqlite"),
     },
 }
