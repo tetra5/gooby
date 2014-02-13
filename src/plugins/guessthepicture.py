@@ -189,7 +189,7 @@ class GuessThePicture(Plugin):
 
             if guess is not None:
                 output.append(guess)
-                self._logger.info("Success!")
+                self._logger.info("-> {0}".format(guess))
             else:
                 msg = "Unable to guess image for {0}".format(message.FromHandle)
                 self._logger.error(msg)
