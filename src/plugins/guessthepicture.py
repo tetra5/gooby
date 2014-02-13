@@ -64,11 +64,11 @@ class GoogleHeaderHandler(urllib2.BaseHandler):
 
     _headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:23.0) Gecko/20100101 Firefox/23.0",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.5",
-        "Accept-Charset": "utf-8",
-        "Connection": "Keep-Alive",
-        "Cache-Control": "max-age=0",
+        #"Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        #"Accept-Language": "en-US,en;q=0.5",
+        #"Accept-Charset": "utf-8",
+        #"Connection": "Keep-Alive",
+        #"Cache-Control": "max-age=0",
         #"Referer": "http://www.google.com",
         #"Host": "www.google.com",
     }
