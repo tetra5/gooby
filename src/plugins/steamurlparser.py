@@ -146,7 +146,7 @@ class SteamApp(object):
     >>> app_id = "218620"
 
     # Dota 2
-    # >>> app_id = "570"
+    #>>> app_id = "570"
 
     # Z3TA+ 2 (Software)
     # >>> app_id = "241790"
@@ -161,7 +161,7 @@ class SteamApp(object):
     # >>> app_id = "226410"
 
     Tomb Raider
-    # >>> app_id = "203160"
+    #>>> app_id = "203160"
 
     # Rise of Flight: Channel Battles Edition
     # Mock; Game + DLC available + discount.
@@ -436,22 +436,28 @@ class SteamApp(object):
         # Timezone offset = 14400.
 
         if self._release_date is None:
-            path = ".//div[@class='glance_details']"
+            path = ".//div[@class='glance_ctn']"
             try:
                 root = self._data.findall(path)[-1]
                 if len(root) > 1:
-                    d = root.findall(".//div")[-1].text.strip()
-                    fmt = "Release Date: %d %b %Y"
-                    try:
-                        r_date = datetime.datetime.strptime(d, fmt)
-                        r_date = calendar.timegm(r_date.utctimetuple())
-                        r_date = datetime.datetime.fromtimestamp(r_date)
-                        self._release_date = r_date
+                    #d = root.findall(".//div")[-1].text.strip()
+                    for div in root.findall(".//div"):
+                        try:
+                            d = div.text.strip()
+                        except AttributeError:
+                            continue
+                        if "release date:" in d.lower():
+                            fmt = "Release Date: %d %b %Y"
+                            try:
+                                r_date = datetime.datetime.strptime(d, fmt)
+                                r_date = calendar.timegm(r_date.utctimetuple())
+                                r_date = datetime.datetime.fromtimestamp(r_date)
+                                self._release_date = r_date
 
-                    # TODO: add additional date formats.
-                    except ValueError:
-                        # raise SteamAppError("time data doesn't match format")
-                        self._release_date = d.replace("Release Date: ", "")
+                            # TODO: add additional date formats.
+                            except ValueError:
+                                # raise SteamAppError("time data doesn't match format")
+                                self._release_date = d.replace("Release Date: ", "")
                 else:
                     # Store item has been released but its release date
                     # hasn't been set for some reason.
@@ -509,12 +515,22 @@ class SteamApp(object):
         """
 
         if self._genre is None:
+            self._genre = []
+            path = ".//div[@itemprop='review']/div[@class='details_block']"
             try:
-                path = ".//div[@class='glance_details']/div/a"
-                self._genre = [el.text for el in self._data.findall(path)]
-            except AttributeError:
-                # raise SteamAppError("unable to parse genre")
-                self._genre = []
+                for a in self._data.findall(path)[0].findall(".//a"):
+                    if "genre" in a.get("href").lower():
+                        self._genre.append(a.text.strip())
+            except (AttributeError, IndexError):
+                # raise SteamAppError("unable to parse item details block")
+                pass
+
+            #try:
+            #    path = ".//div[@class='glance_details']/div/a"
+            #    self._genre = [el.text for el in self._data.findall(path)]
+            #except AttributeError:
+            #    # raise SteamAppError("unable to parse genre")
+            #    self._genre = []
 
         return self._genre
 
@@ -585,7 +601,7 @@ class SteamURLParser(Plugin):
 
         >>> plugin.get_app_info("239030")  # doctest: +NORMALIZE_WHITESPACE
         ('Papers, Please', datetime.datetime(2013, 8, 8, 4, 0),
-        u'249 p\u0443\u0431.', 1)
+        (u'249 p\u0443\u0431.', '20', u'199 p\u0443\u0431.'), 17)
 
         >>> assert "239030" in plugin.cache
         """
@@ -615,8 +631,8 @@ class SteamURLParser(Plugin):
             except ValueError:
                 pass
             else:
-                item_str = "{title} ({r_date}) {price}"
                 item_vars = {}
+
                 m = "Retrieving {0} for {1}".format(app_id, message.FromHandle)
                 self._logger.info(m)
                 try:
@@ -631,7 +647,8 @@ class SteamURLParser(Plugin):
                 if flags & FREE_TO_PLAY:
                     item_vars["price"] = "free to play"
                 elif price == 0:
-                    item_vars["price"] = "price hasn't been set yet"
+                    #item_vars["price"] = "price hasn't been set yet"
+                    pass
                 else:
                     if isinstance(price, tuple):
                         price_fmt = "{0} - {1}% = {2}"
@@ -644,7 +661,8 @@ class SteamURLParser(Plugin):
                     if r_date != "":
                         item_vars["r_date"] = r_date
                     else:
-                        item_vars["r_date"] = "unknown release date"
+                        #item_vars["r_date"] = "unknown release date"
+                        pass
 
                 item_vars["title"] = title
 
@@ -661,7 +679,21 @@ class SteamURLParser(Plugin):
                         item_vars["title"]
                     )
 
-                output.append(item_str.format(**item_vars))
+                #item_str = "{title} ({r_date}) {price}"
+                #output.append(item_str.format(**item_vars))
+
+                out = list()
+                out.append(item_vars["title"])
+                try:
+                    out.append("({0})".format(item_vars["r_date"]))
+                except IndexError:
+                    pass
+                try:
+                    out.append(item_vars["price"])
+                except IndexError:
+                    pass
+
+                output.append(" ".join(out))
 
         if not output:
             return
