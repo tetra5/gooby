@@ -88,10 +88,10 @@ class GoogleHeaderHandler(urllib2.BaseHandler):
 
 def find_urls(s):
     """
-    >>> s = '''http://test.com/a.jpg www.test.com/derp.gif
+    >>> s = '''http://test.com/a.jpeg www.test.com/derp.gif
     ... http://www.test.com/.gif http://www.test.com/test.gif.png
     ... http://www.youtube.com/watch?v=dQw4w9WgXcQ'''
-    >>> expected = (["http://test.com/a.jpg", "www.test.com/derp.gif",
+    >>> expected = (["http://test.com/a.jpeg", "www.test.com/derp.gif",
     ... "http://www.test.com/test.gif.png", "http://www.test.com/.gif"])
     >>> found = find_urls(s)
     >>> assert sorted(found) == sorted(expected)
@@ -124,7 +124,7 @@ def find_urls(s):
 
     retval = []
     for found in re.findall(pattern, s):
-        for ext in ("gif", "png", "jpg"):
+        for ext in ("gif", "png", "jpg", "jpeg"):
             if found[0].endswith(".{0}".format(ext)):
                 retval.append(found[0])
     return retval
