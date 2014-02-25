@@ -11,20 +11,25 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys, os
+import sys
+import os
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, os.path.abspath("../../src/"))
-sys.path.insert(0, os.path.abspath("../../src/plugins/"))
+sys.path.insert(0, os.path.abspath("../../gooby/"))
+sys.path.insert(0, os.path.abspath("../../gooby/plugins/"))
 
 # -- General configuration -----------------------------------------------------
 
+__version__ = None
+VERSION = None
+
 # Read package version without importing it
-for line in open(os.path.abspath("../../src/__init__.py")):
-    if line.startswith("__version__"):
+for line in open(os.path.abspath("../../gooby/version.py")):
+    if line.startswith("VERSION"):
         exec line
+        __version__ = ".".join(map(str, VERSION))
         break
 
 
@@ -33,9 +38,11 @@ for line in open(os.path.abspath("../../src/__init__.py")):
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.todo',
-              'sphinx.ext.autodoc',
-              'sphinx.ext.viewcode',]
+extensions = [
+    'sphinx.ext.todo',
+    'sphinx.ext.autodoc',
+    'sphinx.ext.viewcode',
+]
 
 
 # Add any paths that contain templates here, relative to this directory.
@@ -56,7 +63,7 @@ master_doc = u'index'
 # General information about the project.
 project = u'Gooby'
 
-copyright = u'2012, Dmitriy Vinogradov <tetra5dotorg@gmail.com>'
+copyright = u'2014, Dmitriy Vinogradov <tetra5dotorg@gmail.com>'
 
 
 # The version info for the project you're documenting, acts as replacement for

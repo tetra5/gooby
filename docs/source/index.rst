@@ -14,11 +14,13 @@ Core modules
    :maxdepth: 2
    :numbered:
 
-   application.rst
    gooby.rst
-   plugin.rst
+   cache.rst
    config.rst
    errors.rst
+   output.rst
+   plugin.rst
+   pluginmanager.rst
    utils.rst
 
 Plugins
@@ -28,8 +30,17 @@ Plugins
    :maxdepth: 2
    :numbered:
 
-   youtubeurlparser.rst
+   duplicateurlchecker.rst
+   ezroller.rst
+   guessthepicture.rst
+   herpderper.rst
+   imdburlparser.rst
+   markasseen.rst
+   noncegenerator.rst
+   steamurlparser.rst
    urldiscoverer.rst
+   vimeourlparser.rst
+   youtubeurlparser.rst
 
 Indices and tables
 ==================
