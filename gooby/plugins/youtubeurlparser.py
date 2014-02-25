@@ -13,6 +13,9 @@
 """
 
 
+from __future__ import unicode_literals
+
+
 __docformat__ = "restructuredtext en"
 
 
@@ -28,10 +31,11 @@ except ImportError:
     except ImportError:
         from xml.etree import ElementTree as etree
 
-from Skype4Py.enums import cmsReceived
+from Skype4Py.enums import cmsReceived, cmsSent
 
 from plugin import Plugin
 from utils import retry_on_exception
+from output import ChatMessage
 
 
 def get_video_id(url):
@@ -162,7 +166,7 @@ class YouTubeURLParser(Plugin):
             return title
 
     def on_message_status(self, message, status):
-        if status != cmsReceived:
+        if status not in (cmsReceived, cmsSent):
             return
 
         if not any(s in message.Body for s in ("youtu.be", "youtube.com")):
@@ -204,7 +208,10 @@ class YouTubeURLParser(Plugin):
             msg = u"[YouTube] {0}".format("".join(titles))
         else:
             msg = u"[YouTube]\n{0}".format("\n".join(titles))
-        message.Chat.SendMessage(msg)
+        #message.Chat.SendMessage(msg)
+        self.output.append(ChatMessage(message.Chat.Name, msg))
+
+        return message, status
 
 
 if __name__ == "__main__":

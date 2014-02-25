@@ -11,6 +11,9 @@
 """
 
 
+from __future__ import unicode_literals
+
+
 __docformat__ = "restructuredtext en"
 
 
@@ -19,10 +22,12 @@ import re
 
 from lxml import etree
 from lxml.etree import XMLSyntaxError
-from Skype4Py.enums import cmsReceived
+
+from Skype4Py.enums import cmsReceived, cmsSent
 
 from plugin import Plugin
 from utils import retry_on_exception
+from output import ChatMessage
 
 
 def get_video_id(url):
@@ -100,7 +105,7 @@ class VimeoURLParser(Plugin):
             return title
 
     def on_message_status(self, message, status):
-        if status != cmsReceived:
+        if status not in (cmsReceived, cmsSent):
             return
 
         if "vimeo.com/" not in message.Body:
@@ -142,7 +147,9 @@ class VimeoURLParser(Plugin):
             msg = u"[Vimeo] {0}".format("".join(titles))
         else:
             msg = u"[Vimeo]\n{0}".format("\n".join(titles))
-        message.Chat.SendMessage(msg)
+        #message.Chat.SendMessage(msg)
+        self.output.append(ChatMessage(message.Chat.Name, msg))
+        return message, status
 
 
 if __name__ == "__main__":

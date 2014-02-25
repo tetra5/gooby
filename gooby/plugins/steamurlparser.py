@@ -11,6 +11,9 @@
 """
 
 
+from __future__ import unicode_literals
+
+
 __docformat__ = "restructuredtext en"
 
 
@@ -31,9 +34,10 @@ except ImportError:
     from StringIO import StringIO
 
 import lxml.html
-from Skype4Py.enums import cmsReceived
+from Skype4Py.enums import cmsReceived, cmsSent
 
 from plugin import Plugin
+from output import ChatMessage
 # from config import HOME_DIR
 
 
@@ -614,7 +618,7 @@ class SteamURLParser(Plugin):
         return _do_get_app_info()
 
     def on_message_status(self, message, status):
-        if status != cmsReceived:
+        if status not in (cmsReceived, cmsSent):
             return
 
         if "store.steampowered.com/app/" not in message.Body:
@@ -702,8 +706,9 @@ class SteamURLParser(Plugin):
             msg = u"[Steam] {0}".format("".join(output))
         else:
             msg = u"[Steam]\n{0}".format("\n".join(output))
-
-        message.Chat.SendMessage(msg)
+        #message.Chat.SendMessage(msg)
+        self.output.append(ChatMessage(message.Chat.Name, msg))
+        return message, status
 
 
 if __name__ == "__main__":

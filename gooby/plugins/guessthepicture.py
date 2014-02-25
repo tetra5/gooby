@@ -27,10 +27,11 @@ except ImportError:
     from StringIO import StringIO
 
 import lxml.html
-from Skype4Py.enums import cmsReceived
+from Skype4Py.enums import cmsReceived, cmsSent
 
 from plugin import Plugin
 from utils import retry_on_exception
+from output import ChatMessage
 
 
 class GzipHandler(urllib2.BaseHandler):
@@ -179,7 +180,7 @@ class GuessThePicture(Plugin):
         return guess
 
     def on_message_status(self, message, status):
-        if status != cmsReceived:
+        if status not in (cmsReceived, cmsSent):
             return
 
         found = find_urls(message.Body)
@@ -212,8 +213,9 @@ class GuessThePicture(Plugin):
 
         msg = "^ etot about {0}".format(", ".join(output))
 
-        message.Chat.SendMessage(msg)
-
+        self.output.append(ChatMessage(message.Chat.Name, msg))
+        #message.Chat.SendMessage(msg)
+        return message, status
 
 if __name__ == "__main__":
     import doctest

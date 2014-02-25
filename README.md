@@ -11,10 +11,12 @@ Requirements
 
 * Skype4Py library https://github.com/awahlig/skype4py
 
+* Some plugins require lxml library http://lxml.de
+
 Copyright and license
 ---------------------
 
-Copyright (c) 2012 tetra5 <tetra5dotorg@gmail.com>
+Copyright (c) 2012-2014 tetra5 <tetra5dotorg@gmail.com>
 
 Licensed under The MIT License (MIT); you may not use this work except in
 compliance with the License. You may obtain a copy of the License in the

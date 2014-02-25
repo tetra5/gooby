@@ -8,6 +8,9 @@
 """
 
 
+from __future__ import unicode_literals
+
+
 __docformat__ = "restructuredtext en"
 
 
@@ -19,6 +22,7 @@ from math import ceil
 from Skype4Py.enums import cmsReceived, cmeEmoted
 
 from plugin import Plugin
+from output import ChatMessage
 
 
 VOWELS = u"аеёиоуыэюя"
@@ -368,7 +372,10 @@ class NonceGenerator(Plugin):
 
         if msg:
             shuffle(msg)
-            message.Chat.SendMessage(u"\n".join(msg))
+            self.output.append(ChatMessage(message.Chat.Name, "\n".join(msg)))
+            #message.Chat.SendMessage(u"\n".join(msg))
+
+        return message, status
 
 
 if __name__ == "__main__":

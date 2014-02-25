@@ -8,12 +8,13 @@
 """
 
 
+from __future__ import unicode_literals
+
+
 __docformat__ = "restructuredtext en"
 
 
 # TODO: Spam protection system.
-
-# FIXME: Plugin parent attribute is not currently used.
 
 
 import logging
@@ -27,6 +28,12 @@ __all__ = [
     "Plugin",
     "ChatCommandPlugin",
 ]
+
+
+DEFAULT_PLUGIN_CONFIG = {
+    "priority": 0,
+    "whitelist": None,
+}
 
 
 class Plugin(object):
@@ -139,8 +146,7 @@ class Plugin(object):
         :class:`~youtubeurlparser.YouTubeURLParser`
     """
 
-    def __init__(self, parent=None):
-        self._parent = parent
+    def __init__(self, priority=0, whitelist=None, **kwargs):
         self._logger_name = "Gooby.Plugin." + self.__class__.__name__
 
         self._logger = logging.getLogger(self._logger_name)
@@ -148,6 +154,16 @@ class Plugin(object):
 
         self._cache = cache.get_cache(self.__class__.__name__)
         self._logger.debug("Cache initialized")
+
+        self.priority = priority
+        self.whitelist = whitelist
+        self.options = kwargs
+        self.output = list()
+
+    def flush_output(self):
+        output = self.output[:]
+        self.output = list()
+        return output
 
     @property
     def logger(self):
@@ -678,17 +694,18 @@ class ChatCommandPlugin(Plugin):
     ::
 
         from plugin import ChatCommandPlugin
+        from output import ChatMessage
 
         class MyPlugin(ChatCommandPlugin):
-            def __init__(self, parent):
-                super(MyPlugin, self).__init__(parent)
+            def __init__(self, priority, whitelist, **kwargs):
+                super(MyPlugin, self).__init__(priority, whitelist, **kwargs)
 
                 self._commands = {
                     "!mycommand": self.on_my_command,
                     }
 
             def on_my_command(self, message):
-                message.chat.SendMessage("Message received.")
+                self.output.append(ChatMessage(message.Chat.Name, "herp derp"))
 
     The code above is pretty much self-explainatory:
 
@@ -698,17 +715,9 @@ class ChatCommandPlugin(Plugin):
     * implement a callback method
     """
 
-    def __init__(self, parent=None):
-        super(ChatCommandPlugin, self).__init__(parent)
+    def __init__(self, priority=0, whitelist=None, **kwargs):
+        super(ChatCommandPlugin, self).__init__(priority, whitelist, **kwargs)
         self._commands = {}
-
-    @property
-    def commands(self):
-        return self._commands
-
-    @commands.setter
-    def commands(self, value):
-        self._commands = value
 
     def on_message_status(self, message, status):
         """

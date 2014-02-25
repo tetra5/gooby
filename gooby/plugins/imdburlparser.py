@@ -11,6 +11,9 @@
 """
 
 
+from __future__ import unicode_literals
+
+
 __docformat__ = "restructuredtext en"
 
 
@@ -18,10 +21,11 @@ import urllib2
 import re
 
 import lxml.html
-from Skype4Py.enums import cmsReceived
+from Skype4Py.enums import cmsReceived, cmsSent
 
 from plugin import Plugin
 from utils import retry_on_exception
+from output import ChatMessage
 
 
 class IMDbURLParser(Plugin):
@@ -87,7 +91,7 @@ class IMDbURLParser(Plugin):
         return _do_get_movie_title()
 
     def on_message_status(self, message, status):
-        if status != cmsReceived:
+        if status not in (cmsReceived, cmsSent):
             return
 
         if "imdb.com/title/tt" not in message.Body:
@@ -123,8 +127,9 @@ class IMDbURLParser(Plugin):
             msg = u"[IMDb] {0}".format("".join(titles))
         else:
             msg = u"[IMDb]\n{0}".format("\n".join(titles))
-        message.Chat.SendMessage(msg)
-
+        self.output.append(ChatMessage(message.Chat.Name, msg))
+        #message.Chat.SendMessage(msg)
+        return message, status
 
 if __name__ == "__main__":
     import doctest

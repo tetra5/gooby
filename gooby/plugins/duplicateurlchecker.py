@@ -8,6 +8,9 @@
 """
 
 
+from __future__ import unicode_literals
+
+
 __docformat__ = "restructuredtext en"
 
 
@@ -18,6 +21,7 @@ from time import time
 from Skype4Py.enums import cmsReceived
 
 from plugin import Plugin
+from output import ChatMessage
 
 
 def find_urls(s):
@@ -61,13 +65,13 @@ def find_urls(s):
     return retval
 
 
-def truncate(s, max_len, end):
+def chop(s, max_len, ending=""):
     """
-    >>> assert truncate("http://www.derp.com", 15, "!") == "http://www.derp!"
-    >>> assert truncate("test", 10, "...") == "test"
+    >>> assert chop("http://www.derp.com", 15, "!") == "http://www.derp!"
+    >>> assert chop("test", 10, "...") == "test"
     """
 
-    return s if len(s) <= max_len else "{0}{1}".format(s[:max_len], end)
+    return s if len(s) <= max_len else "{0}{1}".format(s[:max_len], ending)
 
 
 class DuplicateURLChecker(Plugin):
@@ -87,11 +91,9 @@ class DuplicateURLChecker(Plugin):
 
         for url in found:
             if url not in self.cache:
-                self.cache[url] = (
-                    message.FromHandle,
-                    message.FromDisplayName,
-                    time()
-                )
+                self.cache[url] = (message.FromHandle,
+                                   message.FromDisplayName,
+                                   time())
             else:
                 try:
                     posted_by, full_name, ts = self.cache[url]
@@ -107,16 +109,15 @@ class DuplicateURLChecker(Plugin):
                     if posted_by in message.Body:
                         return
 
-                    s = "{0} has been originally posted by {1} on {2}"
-                    msg = s.format(
-                        truncate(url, max_len=15, end="..."),
-                        # posted_by,
+                    m = "{0} has been originally posted by {1} on {2}".format(
+                        chop(url, max_len=15, ending="..."),
                         full_name,
-                        datetime.fromtimestamp(ts).strftime("%d.%m.%Y at %X")
-                    )
-                    output.append(msg)
+                        datetime.fromtimestamp(ts).strftime("%d.%m.%Y at %X"))
+                    output.append(m)
 
-                    self._logger.info("Duplicate URL by {0}".format(posted_by))
+                    m = "URL dupe by {0}, originally posted by {1}".format(
+                        message.FromHandle, posted_by)
+                    self._logger.info(m)
 
         if not output:
             return
@@ -125,7 +126,9 @@ class DuplicateURLChecker(Plugin):
             msg = u"[Duplicate URL] {0}".format("".join(output))
         else:
             msg = u"[Duplicate URL]\n{0}".format("\n".join(output))
-        message.Chat.SendMessage(msg)
+        self.output.append(ChatMessage(message.Chat.Name, msg))
+        #message.Chat.SendMessage(msg)
+        return message, status
 
 
 if __name__ == "__main__":

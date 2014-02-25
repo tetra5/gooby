@@ -3,14 +3,18 @@
 
 
 """
-@author: tetra5 <tetra5dotorg@gmail.com>
+:mod:`youtubeurlparser` --- Threaded conference poll plugin
+===========================================================
 """
 
 
-__version__ = "2012.1"
+# FIXME: this module is obsolete and has to be rewritten.
 
 
-# TODO: this module begs for refactoring.
+from __future__ import unicode_literals
+
+
+__docformat__ = "restructuredtext en"
 
 
 import re
@@ -25,7 +29,7 @@ class Poll(ChatCommandPlugin):
         self._commands = {
             "!poll": self.on_poll_command,
             "!vote": self.on_vote_command,
-            }
+        }
         self._polls = {}
 
     def stop_poll(self, chat):
@@ -51,7 +55,7 @@ class Poll(ChatCommandPlugin):
         chat = message.Chat
         chat_name = message.ChatName
 
-        pattern = r"!poll\s+(start|show|stop)(?:\s+(\d{1,2})\s+(.*))?"
+        pattern = ur"!poll\s+(start|show|stop)(?:\s+(\d{1,2})\s+(.*))?"
         match = re.match(pattern, message.Body, re.UNICODE)
 
         if not match:

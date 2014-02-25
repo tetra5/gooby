@@ -8,6 +8,9 @@
 """
 
 
+from __future__ import unicode_literals
+
+
 __docformat__ = "restructuredtext en"
 
 
@@ -16,4 +19,16 @@ class APIError(Exception):
     .. class::`APIError`
     """
 
+    pass
+
+
+class GoobyError(Exception):
+    pass
+
+
+class OutputError(GoobyError):
+    pass
+
+
+class PluginError(GoobyError):
     pass

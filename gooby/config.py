@@ -8,6 +8,9 @@
 """
 
 
+from __future__ import unicode_literals
+
+
 __docformat__ = "restructuredtext en"
 
 
@@ -19,10 +22,10 @@ from utils import get_current_file_path
 ROOT_DIR = path.abspath(path.dirname(get_current_file_path()))
 PLUGINS_DIR = path.normpath(path.join(ROOT_DIR, "./plugins"))
 
-# CACHE_DIR = path.normpath(path.join(ROOT_DIR, "./cache"))
-# LOGS_DIR = path.normpath(path.join(ROOT_DIR, "./logs"))
 HOME_DIR = path.normpath(path.join(path.expanduser("~"), ".gooby"))
+# CACHE_DIR = path.normpath(path.join(ROOT_DIR, "./cache"))
 CACHE_DIR = path.normpath(path.join(HOME_DIR, "./cache"))
+# LOGS_DIR = path.normpath(path.join(ROOT_DIR, "./logs"))
 LOGS_DIR = path.normpath(path.join(HOME_DIR, "./logs"))
 
 SLEEP_TIME = 1
@@ -61,7 +64,7 @@ LOGGING_CONFIG = {
             "backupCount": 4,
         },
         "file_session": {
-            "level": "DEBUG",
+            "level": "INFO",
             "class": "logging.FileHandler",
             "formatter": "verbose",
             "filename": path.join(LOGS_DIR, "session.log"),
@@ -136,7 +139,60 @@ CACHE_CONFIG = {
     },
 }
 
+# Plugin configuration syntax:
+#
+# PLUGINS_CONFIG = {
+#     # Plugin module, plugin class name.
+#     "plugins.myplugin.MyPlugin": {
+#
+#         # Plugin execution priority, higher priority gets handled earlier.
+#         # Default: 0.
+#         "priority": 1,
+#
+#         # List of chat names, where this particular plugin is allowed.
+#         # Recent/bookmarked chat lists are accessible by executing the
+#         # following command:
+#         #     $ python ./gooby.py listchats
+#         # Default: None or empty list, which means whitelist is disabled.
+#         "whitelist": [
+#             "#herp/$derp;0000000000000000",
+#         ],
+#     },
+# }
+PLUGINS_CONFIG = {
+    "plugins.urldiscoverer.URLDiscoverer": {
+        "priority": 42,
+    },
+    "plugins.youtubeurlparser.YouTubeURLParser": {
 
+    },
+    "plugins.vimeourlparser.VimeoURLParser": {
+
+    },
+    "plugins.steamurlparser.SteamURLParser": {
+
+    },
+    "plugins.noncegenerator.NonceGenerator": {
+
+    },
+    "plugins.imdburlparser.IMDbURLParser": {
+
+    },
+    "plugins.herpderper.HerpDerper": {
+
+    },
+    "plugins.guessthepicture.GuessThePicture": {
+
+    },
+    "plugins.ezroller.EzRoller": {
+
+    },
+    "plugins.duplicateurlchecker.DuplicateURLChecker": {
+
+    },
+}
+
+# Import custom settings.
 try:
     from localconfig import *
 except ImportError:

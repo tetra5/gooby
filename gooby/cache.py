@@ -22,12 +22,10 @@ except ImportError:
     import pickle
 
 
-# FIXME: The code skips multi-threading check currently.
+# FIXME: This code is not thread-safe.
 # This decision isn't optimal to say at the very least. The solution works
 # for this case as Skype4Py threads are queued but it will eventually be
 # the cause of concurrent SQLite access troubles.
-# Possible workarounds include using SQLAlchemy or custom thread locking
-# mechanism.
 
 
 # Hard-coded SQL queries are only being used in simple default built-in SQLite
@@ -274,8 +272,8 @@ class SQLiteCache(BaseCache):
 
     >>> cache = SQLiteCache()
 
-    >>> cache.add("mykey", 42, timeout=3600)
-    >>> assert cache.get("mykey") is 42
+    >>> cache.add("herp_ [mykey]--_ DERP", 42, timeout=3600)
+    >>> assert cache.get("herp_ [mykey]--_ DERP") is 42
 
     >>> cache.set("mykey", "derp", timeout=3600)
     >>> assert cache.get("mykey") == "derp"

@@ -7,6 +7,9 @@
 """
 
 
+# FIXME: this module is obsolete and has to be rewritten.
+
+
 __version__ = "2012.1"
 
 

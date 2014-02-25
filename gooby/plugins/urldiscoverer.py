@@ -8,6 +8,9 @@
 """
 
 
+from __future__ import unicode_literals
+
+
 __docformat__ = "restructuredtext en"
 
 
@@ -17,6 +20,7 @@ import re
 from Skype4Py.enums import cmsReceived
 
 from plugin import Plugin
+from output import ChatMessage
 
 
 _p = re.compile(
@@ -107,10 +111,6 @@ class URLDiscoverer(Plugin):
     _opener.addheaders = [(k, v) for k, v in _headers.iteritems()]
 
     def resolve_url(self, url):
-        """
-        I've no idea how to test it. It just works by default.
-        """
-
         resolved_url = self._cache.get(url)
         if resolved_url is not None:
             return resolved_url
@@ -154,7 +154,13 @@ class URLDiscoverer(Plugin):
         if not resolved:
             return
 
-        message.Chat.SendMessage(u"[Redirect] {0}".format("\n".join(resolved)))
+        if len(resolved) is 1:
+            msg = "redirection {0}".format(resolved[0])
+        else:
+            msg = "redirection {0}".format("\n".join(resolved))
+        self.output.append(ChatMessage(message.Chat.Name, msg))
+        #message.Chat.SendMessage(msg)
+        return message, status
 
 
 if __name__ == "__main__":
