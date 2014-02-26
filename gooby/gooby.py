@@ -39,7 +39,7 @@ class Gooby(object):
 
         skype_options = {}
         if any(sys.platform.startswith(p) for p in ("linux", "darwin")):
-            skype_options.update({"Transport": "dbus"})
+            skype_options.update({"Transport": "x11"})
         self.skype = Skype4Py.Skype(**skype_options)
         setattr(self.skype, "FriendlyName", "Gooby")
         self.skype.Client.Start(Minimized=True, Nosplash=True)
