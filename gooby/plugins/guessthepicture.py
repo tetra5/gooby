@@ -149,7 +149,7 @@ class GuessThePicture(Plugin):
 
         >>> url = "http://armarium.org/u/2014/02/13/JRbC65Q.gif"
         >>> plugin.guess_the_picture(url)
-        'family guy gif'
+        'family guy fart'
         """
 
         cached_guess = self._cache.get(image_url)
@@ -197,8 +197,8 @@ class GuessThePicture(Plugin):
             guess = self.guess_the_picture(url)
 
             if guess == "#skip#":
-                msg = "...no idea, skipping".format(message.FromHandle)
-                self._logger.error(msg)
+                msg = "No clue, skipping".format(message.FromHandle)
+                self._logger.info(msg)
             else:
                 output.append(guess)
                 self._logger.info("-> {0}".format(guess))
@@ -216,6 +216,7 @@ class GuessThePicture(Plugin):
         self.output.append(ChatMessage(message.Chat.Name, msg))
         #message.Chat.SendMessage(msg)
         return message, status
+
 
 if __name__ == "__main__":
     import doctest
