@@ -148,13 +148,6 @@ def main():
     options = parser.parse_args()
 
     def _log_error():
-        """
-        Unhandled exception handler. Those kind of exceptions are considered
-        to be critical, leading to program termination.
-        Keeping that in mind, traceback is being logged to separate file or
-        console if log file is inaccessible for writing.
-        """
-
         dt = datetime.date.today().isoformat()
         f = os.path.join(options.logs_dir, "traceback-{0}.log".format(dt))
         message = "Unexpected error has occurred. Terminating application"
@@ -164,8 +157,6 @@ def main():
                 print("See '{0}' for more details".format(f), file=sys.stderr)
                 traceback.print_exc(file=_f)
         except (IOError, OSError):
-            # Log file is inaccessible for writing. Outputs traceback to
-            # console.
             traceback.print_exc(file=sys.stderr)
 
     gooby = None
@@ -180,7 +171,7 @@ def main():
 
     except:
         _log_error()
-        return 1
+        raise
 
     finally:
         if gooby is not None:
