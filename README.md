@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/tetra5/gooby.png?branch=master)](https://travis-ci.org/tetra5/gooby)
+
 Gooby
 =====
 
