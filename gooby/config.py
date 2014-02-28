@@ -137,6 +137,11 @@ CACHE_CONFIG = {
         "timeout": 128000.0 * 42,  # 42 days.
         "location": path.join(CACHE_DIR, "guessthepicture.sqlite"),
     },
+    "LentaURLParser": {
+        "backend": "cache.SQLiteCache",
+        "timeout": 0,
+        "location": path.join(CACHE_DIR, "lentaurlparser.sqlite"),
+    },
 }
 
 # Plugin configuration syntax:
@@ -188,6 +193,9 @@ PLUGINS_CONFIG = {
 
     },
     "plugins.duplicateurlchecker.DuplicateURLChecker": {
+
+    },
+    "plugins.lentaurlparser.LentaURLParser": {
 
     },
 }
