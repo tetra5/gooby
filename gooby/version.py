@@ -14,6 +14,6 @@ from __future__ import unicode_literals
 __docformat__ = "restructuredtext en"
 
 
-VERSION = (2014, 2, 26)
+VERSION = (2014, 3, 7)
 
 __version__ = ".".join(map(str, VERSION))
