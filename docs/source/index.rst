@@ -30,11 +30,13 @@ Plugins
    :maxdepth: 2
    :numbered:
 
+   birthdayreminder.rst
    duplicateurlchecker.rst
    ezroller.rst
    guessthepicture.rst
    herpderper.rst
    imdburlparser.rst
+   lentaurlparser.rst
    markasseen.rst
    noncegenerator.rst
    steamurlparser.rst
