@@ -181,6 +181,7 @@ class BirthdayReminder(Plugin):
 
         last_deltas = list()
         next_deltas = list()
+        todays_birthdays = list()
         today = datetime.datetime.today()
         for name, dt in self.birthdays.iteritems():
             dt = dt.replace(year=today.year)
@@ -190,6 +191,8 @@ class BirthdayReminder(Plugin):
                 last_deltas.append(item)
             elif delta.days < 0:
                 next_deltas.append(item)
+            elif delta.days == 0:
+                todays_birthdays.append(name)
 
         last_item = min(last_deltas, key=operator.itemgetter(1))
         last_recipient = _format_recipients((last_item[0],))
@@ -206,6 +209,14 @@ class BirthdayReminder(Plugin):
             "next_day_or_days": _pluralize(next_delta, "day"),
         }
         msg = REMINDER_TEMPLATE.format(**substitutes)
+        if todays_birthdays:
+            recs = _format_recipients(todays_birthdays)
+            substitutes = {
+                "recipient": recs,
+                "interjection": random.choice(INTERJECTIONS),
+            }
+            notification = NOTIFICATION_TEMPLATE.format(**substitutes)
+            msg = "{0}{1}".format(notification, msg)
 
         self.output.append(ChatMessage(message.Chat.Name, msg))
 
