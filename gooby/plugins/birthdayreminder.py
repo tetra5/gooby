@@ -140,8 +140,9 @@ class BirthdayReminder(Plugin):
             m = "{0} and {1}".format(", ".join(recs[:-1]), recs[-1])
             message = template.format(m)
 
+        message = "{0} {1}".format(message, random.choice(INTERJECTIONS))
+
         for chat in self.whitelist:
-            message = "{0} {1}".format(message, random.choice(INTERJECTIONS))
             self.output.append(ChatMessage(chat, message))
 
 if __name__ == "__main__":
