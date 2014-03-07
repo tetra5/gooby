@@ -198,6 +198,11 @@ PLUGINS_CONFIG = {
     "plugins.lentaurlparser.LentaURLParser": {
 
     },
+    "plugins.birthdayreminder.BirthdayReminder": {
+        "birthdays": {
+            # "Derp": "31.12.2000",
+        },
+    },
 }
 
 # Import custom settings.
