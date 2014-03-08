@@ -116,14 +116,15 @@ def _format_recipients(recipients):
         return "{0} and {1}".format(", ".join(recs[:-1]), recs[-1])
 
 
-_timer = ""
+_timer = None
 
 @atexit.register
 def _cleanup():
     global _timer
     if _timer:
         _timer.cancel()
-    _timer = None
+        _timer.join()
+    del _timer
 
 
 class BirthdayReminder(Plugin):
@@ -154,8 +155,6 @@ class BirthdayReminder(Plugin):
 
     def _check(self):
         global _timer
-        if _timer is None:
-            return
         today = datetime.datetime.today()
         recipients = list()
         for name, dt in self.birthdays.iteritems():
