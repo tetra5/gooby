@@ -116,7 +116,7 @@ def _format_recipients(recipients):
         return "{0} and {1}".format(", ".join(recs[:-1]), recs[-1])
 
 
-_timer = None
+_timer = ""
 
 @atexit.register
 def _cleanup():
