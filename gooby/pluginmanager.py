@@ -28,7 +28,10 @@ from errors import PluginError
 
 log = logging.getLogger("Gooby.PluginManager")
 
-if __debug__:
+
+_debug = False
+
+if _debug:
     logging.basicConfig()
     log.setLevel(logging.DEBUG)
 
