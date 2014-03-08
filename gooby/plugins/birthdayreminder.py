@@ -122,7 +122,7 @@ _timer = None
 def _cleanup():
     global _timer
     if _timer:
-        _timer.cancel()
+        _timer.clear()
     del _timer
 
 
