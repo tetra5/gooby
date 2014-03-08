@@ -25,7 +25,7 @@ from plugin import Plugin
 from output import ChatMessage
 
 
-NOTIFICATION_TEMPLATE = "Today is {recipient} birthday! {interjection}"
+NOTIFICATION_TEMPLATE = "Today is {recipient} birthday! {interjection}!"
 
 REMINDER_TEMPLATE = """
 It was {last_recipient} birthday {last_delta} {last_day_or_days} ago.
@@ -33,24 +33,25 @@ It was {last_recipient} birthday {last_delta} {last_day_or_days} ago.
 """
 
 INTERJECTIONS = [
-    "Hurrah!",
-    "Hooray!",
-    "Huzzah!",
-    "Fancy!",
-    "Awesome!",
-    "Whee!",
-    "Whoa!",
-    "Unbelievable!",
-    "Wow!",
-    "Amazing!",
-    "Yahoo!",
-    "Yippie!",
-    "Yay!",
-    "Yeah!",
-    "Exciting!",
-    "Yee-haw!",
-    "Sweet!",
-    "Fantastic!",
+    "Hurrah",
+    "Hooray",
+    "Huzzah",
+    "Fancy",
+    "Awesome",
+    "Whee",
+    "Whoa",
+    "Unbelievable",
+    "Wow",
+    "Amazing",
+    "Yahoo",
+    "Yippie",
+    "Yay",
+    "Yeah",
+    "Exciting",
+    "Yee-haw",
+    "Sweet",
+    "Fantastic",
+    "OMG",
 ]
 
 
