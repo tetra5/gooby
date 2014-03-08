@@ -123,6 +123,7 @@ def _cleanup():
     global _timer
     if _timer:
         _timer.cancel()
+    _timer = None
 
 
 class BirthdayReminder(Plugin):
@@ -153,6 +154,8 @@ class BirthdayReminder(Plugin):
 
     def _check(self):
         global _timer
+        if _timer is None:
+            return
         today = datetime.datetime.today()
         recipients = list()
         for name, dt in self.birthdays.iteritems():
