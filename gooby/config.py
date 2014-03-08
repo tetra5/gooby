@@ -14,19 +14,19 @@ from __future__ import unicode_literals
 __docformat__ = "restructuredtext en"
 
 
-from os import path
+import os
 
 from utils import get_current_file_path
 
 
-ROOT_DIR = path.abspath(path.dirname(get_current_file_path()))
-PLUGINS_DIR = path.normpath(path.join(ROOT_DIR, "./plugins"))
+ROOT_DIR = os.path.abspath(os.path.dirname(get_current_file_path()))
+PLUGINS_DIR = os.path.normpath(os.path.join(ROOT_DIR, "./plugins"))
 
-HOME_DIR = path.normpath(path.join(path.expanduser("~"), ".gooby"))
-# CACHE_DIR = path.normpath(path.join(ROOT_DIR, "./cache"))
-CACHE_DIR = path.normpath(path.join(HOME_DIR, "./cache"))
-# LOGS_DIR = path.normpath(path.join(ROOT_DIR, "./logs"))
-LOGS_DIR = path.normpath(path.join(HOME_DIR, "./logs"))
+HOME_DIR = os.path.normpath(os.path.join(os.path.expanduser("~"), ".gooby"))
+# CACHE_DIR = os.path.normpath(os.path.join(ROOT_DIR, "./cache"))
+CACHE_DIR = os.path.normpath(os.path.join(HOME_DIR, "./cache"))
+# LOGS_DIR = os.path.normpath(os.path.join(ROOT_DIR, "./logs"))
+LOGS_DIR = os.path.normpath(os.path.join(HOME_DIR, "./logs"))
 
 SLEEP_TIME = 1
 
@@ -51,7 +51,7 @@ LOGGING_CONFIG = {
             "level": "INFO",
             "class": "logging.handlers.RotatingFileHandler",
             "formatter": "verbose",
-            "filename": path.join(LOGS_DIR, "gooby.log"),
+            "filename": os.path.join(LOGS_DIR, "gooby.log"),
             "maxBytes": 1024000,
             "backupCount": 4,
         },
@@ -59,7 +59,7 @@ LOGGING_CONFIG = {
             "level": "WARNING",
             "class": "logging.handlers.RotatingFileHandler",
             "formatter": "verbose",
-            "filename": path.join(LOGS_DIR, "errors.log"),
+            "filename": os.path.join(LOGS_DIR, "errors.log"),
             "maxBytes": 128000,
             "backupCount": 4,
         },
@@ -67,7 +67,7 @@ LOGGING_CONFIG = {
             "level": "INFO",
             "class": "logging.FileHandler",
             "formatter": "verbose",
-            "filename": path.join(LOGS_DIR, "session.log"),
+            "filename": os.path.join(LOGS_DIR, "session.log"),
             "mode": "w",
         },
     },
@@ -100,47 +100,47 @@ CACHE_CONFIG = {
     "VimeoURLParser": {
         "backend": "cache.SQLiteCache",
         "timeout": 0.0,
-        "location": path.join(CACHE_DIR, "vimeo.sqlite"),
+        "location": os.path.join(CACHE_DIR, "vimeo.sqlite"),
     },
     "YouTubeURLParser": {
         "backend": "cache.SQLiteCache",
         "timeout": 0.0,
-        "location": path.join(CACHE_DIR, "youtube.sqlite"),
+        "location": os.path.join(CACHE_DIR, "youtube.sqlite"),
     },
     "URLDiscoverer": {
         "backend": "cache.SQLiteCache",
         "timeout": 128000.0 * 42,  # 42 days.
-        "location": path.join(CACHE_DIR, "urls.sqlite"),
+        "location": os.path.join(CACHE_DIR, "urls.sqlite"),
     },
     "SteamURLParser": {
         "backend": "cache.SQLiteCache",
         "timeout": 3600.0,
-        "location": path.join(CACHE_DIR, "steam.sqlite"),
+        "location": os.path.join(CACHE_DIR, "steam.sqlite"),
     },
     "HerpDerper": {
         "backend": "cache.SQLiteCache",
         "timeout": 0.0,
-        "location": path.join(CACHE_DIR, "herpderper.sqlite"),
+        "location": os.path.join(CACHE_DIR, "herpderper.sqlite"),
     },
     "IMDbURLParser": {
         "backend": "cache.SQLiteCache",
         "timeout": 0.0,
-        "location": path.join(CACHE_DIR, "imdb.sqlite"),
+        "location": os.path.join(CACHE_DIR, "imdb.sqlite"),
     },
     "DuplicateURLChecker": {
         "backend": "cache.SQLiteCache",
         "timeout": 128000.0 * 3,  # 3 days.
-        "location": path.join(CACHE_DIR, "duplicateurls.sqlite"),
+        "location": os.path.join(CACHE_DIR, "duplicateurls.sqlite"),
     },
     "GuessThePicture": {
         "backend": "cache.SQLiteCache",
         "timeout": 128000.0 * 42,  # 42 days.
-        "location": path.join(CACHE_DIR, "guessthepicture.sqlite"),
+        "location": os.path.join(CACHE_DIR, "guessthepicture.sqlite"),
     },
     "LentaURLParser": {
         "backend": "cache.SQLiteCache",
         "timeout": 0,
-        "location": path.join(CACHE_DIR, "lentaurlparser.sqlite"),
+        "location": os.path.join(CACHE_DIR, "lentaurlparser.sqlite"),
     },
 }
 
@@ -158,9 +158,16 @@ CACHE_CONFIG = {
 #         # Recent/bookmarked chat lists are accessible by executing the
 #         # following command:
 #         #     $ python ./gooby.py listchats
+#         #
 #         # Default: None or empty list, which means whitelist is disabled.
 #         "whitelist": [
+#             # Whitelisted by chat name with chat ID:
 #             "#herp/$derp;0000000000000000",
+#             # Whitelisted by chat name only (Skype is known for changing chat
+#             # IDs):
+#             "#herp/$derp"
+#             # Whitelisted by ID only:
+#             "0000000000000000"
 #         ],
 #     },
 # }
@@ -200,7 +207,13 @@ PLUGINS_CONFIG = {
     },
     "plugins.birthdayreminder.BirthdayReminder": {
         "birthdays": {
-            # "Derp": "31.12.2000",
+            # Valid date formats:
+            # ["%d.%m", "%d.%m.%Y", "%Y-%m-%d"]
+            #
+            # Examples:
+            # "Derp": "31.12.1900",
+            # "Derp": "31.12",
+            # "Derp": "2000-12-31",
         },
     },
 }

@@ -26,11 +26,9 @@ from plugin import DEFAULT_PLUGIN_CONFIG
 from errors import PluginError
 
 
-_debug = False
-
 log = logging.getLogger("Gooby.PluginManager")
 
-if _debug:
+if __debug__:
     logging.basicConfig()
     log.setLevel(logging.DEBUG)
 
@@ -151,9 +149,9 @@ class PluginManager(object):
                         except (AttributeError, TypeError):
                             pass
                         else:
-                            if whitelist and chat not in whitelist:
-                                log.debug("{0} is not whitelisted".format(
-                                    chat))
+                            if whitelist and not chat_is_whitelisted(chat,
+                                                                     whitelist):
+                                log.debug("{0} is not whitelisted".format(chat))
                                 continue
 
                     # Since event handler execution is chained, we have to
@@ -183,6 +181,16 @@ class PluginManager(object):
                 return args
 
         return ProxyHandler(event)
+
+
+def chat_is_whitelisted(chat, whitelist):
+    if chat in whitelist:
+        return True
+    try:
+        chat_name, chat_id = chat.split(";", 1)
+        return chat_name in whitelist or chat_id in whitelist
+    except ValueError:
+        pass
 
 
 if __name__ == "__main__":

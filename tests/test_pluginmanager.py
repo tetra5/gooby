@@ -18,7 +18,8 @@ import unittest
 
 import tests
 from gooby.plugin import Plugin
-from gooby.pluginmanager import PluginManager, camelcase_to_underscores
+from gooby.pluginmanager import (PluginManager, camelcase_to_underscores,
+    chat_is_whitelisted)
 
 
 SAMPLE_CONFIG = {
@@ -28,6 +29,7 @@ SAMPLE_CONFIG = {
             "some_chat",
         ],
         "test": 123,
+        "herp": "derp",
     },
     "tests.test_pluginmanager.YetAnotherPlugin": {
         "priority": 42,
@@ -82,7 +84,7 @@ class PluginManagerTestCase(unittest.TestCase):
             if p.__class__.__name__ == "TestPlugin":
                 options = p.options
                 break
-        expected = {"test": 123}
+        expected = {"test": 123, "herp": "derp"}
         self.assertEquals(options, expected)
 
     def test_handlers_for_event(self):
@@ -180,6 +182,36 @@ class PluginManagerTestCase(unittest.TestCase):
             ("handler", 0, None),
         ]
         self.assertItemsEqual(handlers, expected)
+
+
+class ChatIsWhitelistedTestCase(unittest.TestCase):
+    def setUp(self):
+        self.whitelist = [
+            "#user1+/$user2=;0000000000000000",
+            "0000000000000000",
+            "2222222222222222",
+            "#user1+/$user2=",
+        ]
+
+    def test_chat_is_whitelisted_by_name_with_id(self):
+        chat_name1 = "#user1+/$user2=;0000000000000000"
+        self.assertTrue(chat_is_whitelisted(chat_name1, self.whitelist))
+        chat_name2 = "#user1+/$user2=;XXXXXXXXXXXXXXXX"
+        self.assertTrue(chat_is_whitelisted(chat_name2, self.whitelist))
+
+    def test_chat_is_whitelisted_by_name(self):
+        chat_name1 = "#user1+/$user2=;XXXXXXXXXXXXXXXX"
+        self.assertTrue(chat_is_whitelisted(chat_name1, self.whitelist))
+        chat_name2 = "#user3*/$user4%;XXXXXXXXXXXXXXXX"
+        self.assertFalse(chat_is_whitelisted(chat_name2, self.whitelist))
+
+    def test_chat_is_whitelisted_by_id(self):
+        chat_name1 = "#user3*/$user4%;0000000000000000"
+        self.assertTrue(chat_is_whitelisted(chat_name1, self.whitelist))
+        chat_name2 = "#user3*/$user4%;XXXXXXXXXXXXXXXX"
+        self.assertFalse(chat_is_whitelisted(chat_name2, self.whitelist))
+        chat_name3 = "#user3*/$user4%;2222222222222222"
+        self.assertTrue(chat_is_whitelisted(chat_name3, self.whitelist))
 
 
 class CamelCaseToUnderscoresTestCase(unittest.TestCase):
