@@ -147,18 +147,6 @@ def main():
     parser.set_defaults(**defaults)
     options = parser.parse_args()
 
-    def _log_error():
-        dt = datetime.date.today().isoformat()
-        f = os.path.join(options.logs_dir, "traceback-{0}.log".format(dt))
-        message = "Unexpected error has occurred. Terminating application"
-        print(message, file=sys.stderr)
-        try:
-            with open(f, "w") as _f:
-                print("See '{0}' for more details".format(f), file=sys.stderr)
-                traceback.print_exc(file=_f)
-        except (IOError, OSError):
-            traceback.print_exc(file=sys.stderr)
-
     gooby = None
 
     try:
@@ -170,8 +158,17 @@ def main():
         return 0
 
     except:
-        _log_error()
-        raise
+        dt = datetime.date.today().isoformat()
+        f = os.path.join(options.logs_dir, "traceback-{0}.log".format(dt))
+        message = "Unexpected error has occurred. Terminating application"
+        print(message, file=sys.stderr)
+        try:
+            with open(f, "w") as _f:
+                print("See '{0}' for more details".format(f), file=sys.stderr)
+                traceback.print_exc(file=_f)
+        except (IOError, OSError):
+            traceback.print_exc(file=sys.stderr)
+        return 1
 
     finally:
         if gooby is not None:
