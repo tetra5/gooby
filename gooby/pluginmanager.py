@@ -194,6 +194,7 @@ def chat_is_whitelisted(chat, whitelist):
         return chat_name in whitelist or chat_id in whitelist
     except ValueError:
         pass
+    return False
 
 
 if __name__ == "__main__":
