@@ -143,7 +143,10 @@ class BirthdayReminder(Plugin):
         self._check()
 
     def _check(self):
-        today = datetime.datetime.today()
+        try:
+            today = datetime.datetime.today()
+        except AttributeError:
+            return
         recipients = list()
         for name, dt in self.birthdays.iteritems():
             dt = dt.replace(year=today.year)
