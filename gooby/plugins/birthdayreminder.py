@@ -14,6 +14,7 @@ from __future__ import unicode_literals
 __docformat__ = "restructuredtext en"
 
 
+import atexit
 import datetime
 from threading import Timer
 import random
@@ -115,6 +116,16 @@ def _format_recipients(recipients):
         return "{0} and {1}".format(", ".join(recs[:-1]), recs[-1])
 
 
+_timer = None
+
+@atexit.register
+def _cleanup():
+    global _timer
+    if _timer:
+        _timer.cancel()
+    del _timer
+
+
 class BirthdayReminder(Plugin):
     CHECK_INTERVAL = 600
 
@@ -139,14 +150,11 @@ class BirthdayReminder(Plugin):
         self._repeats = 0
         self._repeat_timers = list()
         self._logger.info("Parsed %d date(s)", len(self.birthdays))
-        self._timer = None
         self._check()
 
     def _check(self):
-        try:
-            today = datetime.datetime.today()
-        except AttributeError:
-            return
+        global _timer
+        today = datetime.datetime.today()
         recipients = list()
         for name, dt in self.birthdays.iteritems():
             dt = dt.replace(year=today.year)
@@ -159,9 +167,9 @@ class BirthdayReminder(Plugin):
                 self._notified = True
             return
         self._notified = False
-        self._timer = Timer(self.CHECK_INTERVAL, self._check)
-        self._timer.daemon = True
-        self._timer.start()
+        _timer = Timer(self.CHECK_INTERVAL, self._check)
+        _timer.daemon = True
+        _timer.start()
 
     def _notify(self, recipients):
         recs = _format_recipients(recipients)
