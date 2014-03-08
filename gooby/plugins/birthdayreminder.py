@@ -122,8 +122,7 @@ _timer = None
 def _cleanup():
     global _timer
     if _timer:
-        _timer.clear()
-    del _timer
+        _timer.cancel()
 
 
 class BirthdayReminder(Plugin):
