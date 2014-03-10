@@ -26,13 +26,6 @@ from plugin import Plugin
 from output import ChatMessage
 
 
-NOTIFICATION_TEMPLATE = "Today is {recipient} birthday! {interjection}!"
-
-REMINDER_TEMPLATE = """
-It was {last_recipient} birthday {last_delta} {last_day_or_days} ago.
-{next_recipient} birthday is coming up next in {next_delta} {next_day_or_days}.
-"""
-
 INTERJECTIONS = [
     "Hurrah",
     "Hooray",
@@ -54,6 +47,37 @@ INTERJECTIONS = [
     "Fantastic",
     "OMG",
 ]
+
+TODAY = "Today is {name} birthday! {interjection}!"
+
+PREVIOUS = "It was {name} birthday {delta_days} {day_or_days} ago."
+
+UPCOMING = "{name} birthday is coming up next in {delta_days} {day_or_days}."
+
+DAY_OR_DAYS = {
+    "singular": "day",
+    "plural": "days",
+}
+
+
+def humanize_names_list(names_list):
+    """
+    >>> humanize_names_list(["herp"])
+    u"herp's"
+
+    >>> humanize_names_list(["herp", "derp"])
+    u"herp's and derp's"
+
+    >>> humanize_names_list(["herp", "derp", "durp"])
+    u"herp's, derp's and durp's"
+    """
+
+    assert isinstance(names_list, (list, tuple))
+    names = ["{0}'s".format(name) for name in names_list[:]]
+    if len(names) is 1:
+        return names[0]
+    elif len(names) > 1:
+        return "{0} and {1}".format(", ".join(names[:-1]), names[-1])
 
 
 def str_to_datetime(date_str):
@@ -94,46 +118,29 @@ def str_to_datetime(date_str):
     return dt
 
 
-def _format_recipients(recipients):
-    """
-    >>> _format_recipients(["herp"])
-    u"herp's"
-
-    >>> _format_recipients(["herp", "derp"])
-    u"herp's and derp's"
-
-    >>> _format_recipients(["herp", "derp", "durp"])
-    u"herp's, derp's and durp's"
-    """
-
-    if not recipients:
-        raise ValueError("Input list should contain at least one string")
-
-    recs = ["{0}'s".format(recipient) for recipient in recipients[:]]
-    if len(recs) is 1:
-        return recs[0]
-    elif len(recs) > 1:
-        return "{0} and {1}".format(", ".join(recs[:-1]), recs[-1])
-
-
 _timer = None
-
-@atexit.register
-def _cleanup():
-    global _timer
-    if _timer:
-        _timer.cancel()
-        _timer.join()
-    del _timer
 
 
 class BirthdayReminder(Plugin):
+    # Time in seconds.
     CHECK_INTERVAL = 600
+
+    @staticmethod
+    @atexit.register
+    def __cleanup():
+        global _timer
+        try:
+            _timer.cancel()
+            _timer.join()
+        except AttributeError:
+            pass
+        finally:
+            del _timer
 
     def __init__(self, priority=0, whitelist=None, **kwargs):
         super(BirthdayReminder, self).__init__(priority, whitelist, **kwargs)
 
-        self.birthdays = dict()
+        self.dates = dict()
         birthdays = self.options.setdefault("birthdays")
         for name, date_str in birthdays.iteritems():
             try:
@@ -141,97 +148,120 @@ class BirthdayReminder(Plugin):
             except ValueError:
                 self._logger.error("Parse error: '%s' for '%s'", name, date_str)
             else:
-                self.birthdays.update({name: dt})
+                self.dates.update({name: dt})
 
-        if not self.birthdays:
+        if not self.dates:
             self._logger.warning("No valid dates has been parsed!")
             return
 
         self._notified = False
-        self._repeats = 0
-        self._repeat_timers = list()
-        self._logger.info("Parsed %d date(s)", len(self.birthdays))
-        self._check()
+        self._logger.info("Parsed %d date(s)", len(self.dates))
+        self._check_dates()
 
-    def _check(self):
+    def _check_dates(self):
         global _timer
+
         today = datetime.datetime.today()
-        recipients = list()
-        for name, dt in self.birthdays.iteritems():
+
+        persons = list()
+        for name, dt in self.dates.iteritems():
             dt = dt.replace(year=today.year)
             delta = today - dt
             if delta.days == 0:
-                recipients.append(name)
-        if recipients:
+                persons.append(name)
+        if persons:
             if not self._notified:
-                self._notify(recipients)
+                self._notify_chats(persons)
                 self._notified = True
             return
         self._notified = False
-        _timer = Timer(self.CHECK_INTERVAL, self._check)
+        _timer = Timer(self.CHECK_INTERVAL, self._check_dates)
         _timer.daemon = True
         _timer.start()
 
-    def _notify(self, recipients):
-        recs = _format_recipients(recipients)
+    def _notify_chats(self, names):
         substitutes = {
-            "recipient": recs,
+            "name": humanize_names_list(names),
             "interjection": random.choice(INTERJECTIONS),
         }
-        msg = NOTIFICATION_TEMPLATE.format(**substitutes)
+        message = TODAY.format(**substitutes)
 
         for chat in self.whitelist:
-            self.output.append(ChatMessage(chat, msg))
+            self.output.append(ChatMessage(chat, message))
 
     def on_message_status(self, message, status):
         if status != cmsReceived:
             return
 
-        if not message.Body.startswith("!birthdays"):
+        if not message.Body.strip().startswith("!birthdays"):
             return
 
-        _pluralize = lambda n, s: "{0}s".format(s) if n > 1 else s
-
-        last_deltas = list()
-        next_deltas = list()
-        todays_birthdays = list()
         today = datetime.datetime.today()
-        for name, dt in self.birthdays.iteritems():
+
+        previous_persons = list()
+        upcoming_persons = list()
+        today_names = list()
+        for name, dt in self.dates.iteritems():
             dt = dt.replace(year=today.year)
             delta = today - dt
-            item = (name, delta)
+            person = (name, delta)
             if delta.days > 0:
-                last_deltas.append(item)
+                previous_persons.append(person)
             elif delta.days < 0:
-                next_deltas.append(item)
+                upcoming_persons.append(person)
             elif delta.days == 0:
-                todays_birthdays.append(name)
+                today_names.append(name)
 
-        last_item = min(last_deltas, key=operator.itemgetter(1))
-        last_recipient = _format_recipients((last_item[0],))
-        last_delta = last_item[1].days
-        next_item = max(next_deltas, key=operator.itemgetter(1))
-        next_recipient = _format_recipients((next_item[0],))
-        next_delta = abs(next_item[1].days)
-        substitutes = {
-            "last_recipient": last_recipient,
-            "last_delta": last_delta,
-            "last_day_or_days": _pluralize(last_delta, "day"),
-            "next_recipient": next_recipient,
-            "next_delta": next_delta,
-            "next_day_or_days": _pluralize(next_delta, "day"),
-        }
-        msg = REMINDER_TEMPLATE.format(**substitutes)
-        if todays_birthdays:
-            recs = _format_recipients(todays_birthdays)
+        def __same_by_delta(persons, delta):
+            retval = list()
+            for _name, _delta in persons:
+                if _delta.days == delta.days:
+                    retval.append((_name, _delta))
+            return retval
+
+        previous_names = list()
+        previous_person = min(previous_persons, key=operator.itemgetter(1))
+        previous_delta = previous_person[1]
+        previous_delta_days = previous_delta.days
+        for name, _ in __same_by_delta(previous_persons, previous_delta):
+            previous_names.append(name)
+
+        upcoming_names = list()
+        upcoming_person = max(upcoming_persons, key=operator.itemgetter(1))
+        upcoming_delta = upcoming_person[1]
+        upcoming_delta_days = abs(upcoming_delta.days)
+        for name, _ in __same_by_delta(upcoming_persons, upcoming_delta):
+            upcoming_names.append(name)
+
+        out = list()
+
+        if today_names:
             substitutes = {
-                "recipient": recs,
+                "name": humanize_names_list(today_names),
                 "interjection": random.choice(INTERJECTIONS),
             }
-            notification = NOTIFICATION_TEMPLATE.format(**substitutes)
-            msg = "{0}{1}".format(notification, msg)
+            out.append(TODAY.format(**substitutes))
 
-        self.output.append(ChatMessage(message.Chat.Name, msg))
+        def __day_or_days(number):
+            if number > 1:
+                return DAY_OR_DAYS["plural"]
+            return DAY_OR_DAYS["singular"]
+
+        substitutes = {
+            "name": humanize_names_list(previous_names),
+            "delta_days": previous_delta_days,
+            "day_or_days": __day_or_days(previous_delta_days),
+        }
+        out.append(PREVIOUS.format(**substitutes))
+
+        substitutes = {
+            "name": humanize_names_list(upcoming_names),
+            "delta_days": upcoming_delta_days,
+            "day_or_days": __day_or_days(upcoming_delta_days),
+        }
+        out.append(UPCOMING.format(**substitutes))
+
+        self.output.append(ChatMessage(message.Chat.Name, "\n".join(out)))
 
         return message, status
 
