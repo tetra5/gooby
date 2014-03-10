@@ -59,25 +59,41 @@ DAY_OR_DAYS = {
     "plural": "days",
 }
 
+POSSESSIVE = "{name}'s"
 
-def humanize_names_list(names_list):
+CONJUNCTION = "and"
+
+
+def humanize_names_list(names_list,
+                        possessive=POSSESSIVE,
+                        conjunction=CONJUNCTION):
     """
-    >>> humanize_names_list(["herp"])
+    >>> possessive = "{name}'s"
+    >>> conjunction = "and"
+
+    >>> humanize_names_list(["herp"],
+    ...                     possessive=possessive,
+    ...                     conjunction=conjunction)
     u"herp's"
 
-    >>> humanize_names_list(["herp", "derp"])
+    >>> humanize_names_list(["herp", "derp"],
+    ...                     possessive=possessive,
+    ...                     conjunction=conjunction)
     u"herp's and derp's"
 
-    >>> humanize_names_list(["herp", "derp", "durp"])
+    >>> humanize_names_list(["herp", "derp", "durp"],
+    ...                     possessive=possessive,
+    ...                     conjunction=conjunction)
     u"herp's, derp's and durp's"
     """
 
     assert isinstance(names_list, (list, tuple))
-    names = ["{0}'s".format(name) for name in names_list[:]]
+    names = [possessive.format(name=name) for name in names_list[:]]
     if len(names) is 1:
         return names[0]
     elif len(names) > 1:
-        return "{0} and {1}".format(", ".join(names[:-1]), names[-1])
+        return "{0} {conjunction} {1}".format(", ".join(names[:-1]), names[-1],
+                                              conjunction=conjunction)
 
 
 def str_to_datetime(date_str):
