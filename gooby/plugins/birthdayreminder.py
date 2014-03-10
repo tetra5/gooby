@@ -146,6 +146,34 @@ _timer = None
 
 
 class BirthdayReminder(Plugin):
+    """
+    >>> import datetime
+    >>> class DateMock(datetime.date):
+    ...     @classmethod
+    ...     def today(cls):
+    ...         return datetime.datetime(2014, 3, 27)
+    >>> datetime.date = DateMock
+    >>> from Skype4Py.enums import cmsReceived
+    >>> class ChatStub:
+    ...     Name = "test"
+    >>> class MessageStub:
+    ...     Body = "!birthdays"
+    ...     Chat = ChatStub
+    >>> fake_status = cmsReceived
+
+    >>> birthdays = {
+    ...     "test1": "1986-03-27",
+    ...     "test2": "2000-03-27",
+    ...     "test3": "1986-03-25",
+    ...     "test4": "2000-04-30",
+    ... }
+    >>> plugin = BirthdayReminder(birthdays=birthdays)
+    >>> message, status = plugin.on_message_status(MessageStub, fake_status)
+    >>> output = plugin.flush_output()[0]
+    >>> output.text # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+    u"Today is test1's and test2's...test3's...2 days...test4's...34 days."
+    """
+
     # Time in seconds.
     CHECK_INTERVAL = 600
 
@@ -185,7 +213,7 @@ class BirthdayReminder(Plugin):
     def _check_dates(self):
         global _timer
 
-        today = datetime.datetime.today()
+        today = datetime.date.today()
 
         persons = list()
         for name, dt in self.dates.iteritems():
@@ -210,8 +238,9 @@ class BirthdayReminder(Plugin):
         }
         message = TODAY.format(**substitutes)
 
-        for chat in self.whitelist:
-            self.output.append(ChatMessage(chat, message))
+        if self.whitelist:
+            for chat in self.whitelist:
+                self.output.append(ChatMessage(chat, message))
 
     def on_message_status(self, message, status):
         if status != cmsReceived:
@@ -220,7 +249,7 @@ class BirthdayReminder(Plugin):
         if not message.Body.strip().startswith("!birthdays"):
             return
 
-        today = datetime.datetime.today()
+        today = datetime.date.today()
 
         previous_persons = list()
         upcoming_persons = list()
