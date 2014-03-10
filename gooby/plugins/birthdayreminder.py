@@ -171,7 +171,10 @@ class BirthdayReminder(Plugin):
     >>> plugin = BirthdayReminder(birthdays=birthdays)
     >>> message, status = plugin.on_message_status(MessageStub, fake_status)
     >>> output = plugin.flush_output()[0]
-    >>> output.text # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
+
+    Output with ``#doctest: +ELLIPSIS``:
+
+    >>> output.text #doctest: +ELLIPSIS
     u"Today is test1's and test2's...test3's...2 days...test4's...34 days."
     """
 
