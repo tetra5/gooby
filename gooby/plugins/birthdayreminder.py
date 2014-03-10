@@ -221,11 +221,9 @@ class BirthdayReminder(Plugin):
                 today_names.append(name)
 
         def __same_by_delta(persons, delta):
-            retval = list()
             for _name, _delta in persons:
                 if _delta.days == delta.days:
-                    retval.append((_name, _delta))
-            return retval
+                    yield (_name, _delta)
 
         previous_names = list()
         previous_person = min(previous_persons, key=operator.itemgetter(1))
