@@ -98,32 +98,32 @@ def humanize_names_list(names_list,
 
 def str_to_datetime(date_str):
     """
-    >>> str_to_datetime("13.1")
-    datetime.datetime(1900, 1, 13, 0, 0)
+    >>> str_to_datetime("13.1").strftime("%d.%m.%Y")
+    '13.01.1900'
 
-    >>> str_to_datetime("13.01")
-    datetime.datetime(1900, 1, 13, 0, 0)
+    >>> str_to_datetime("13.01").strftime("%d.%m.%Y")
+    '13.01.1900'
 
-    >>> str_to_datetime("01.13")
+    >>> str_to_datetime("01.13").strftime("%d.%m.%Y")
     Traceback (most recent call last):
         ...
     ValueError: Input string does not match any known date format
 
-    >>> str_to_datetime("13.1.2000")
-    datetime.datetime(2000, 1, 13, 0, 0)
+    >>> str_to_datetime("13.1.2000").strftime("%d.%m.%Y")
+    '13.01.2000'
 
-    >>> str_to_datetime("2000-01-13")
-    datetime.datetime(2000, 1, 13, 0, 0)
+    >>> str_to_datetime("2000-01-13").strftime("%d.%m.%Y")
+    '13.01.2000'
 
-    >>> str_to_datetime("2000-13-01")
+    >>> str_to_datetime("2000-13-01").strftime("%d.%m.%Y")
     Traceback (most recent call last):
         ...
     ValueError: Input string does not match any known date format
 
-    >>> str_to_datetime("13.01.2000")
-    datetime.datetime(2000, 1, 13, 0, 0)
+    >>> str_to_datetime("13.01.2000").strftime("%d.%m.%Y")
+    '13.01.2000'
 
-    >>> str_to_datetime("01.13.2000")
+    >>> str_to_datetime("01.13.2000").strftime("%d.%m.%Y")
     Traceback (most recent call last):
         ...
     ValueError: Input string does not match any known date format
@@ -148,11 +148,12 @@ _timer = None
 class BirthdayReminder(Plugin):
     """
     >>> import datetime
-    >>> class DateMock(datetime.date):
+    >>> class FakeDatetime(datetime.datetime):
     ...     @classmethod
     ...     def today(cls):
-    ...         return datetime.datetime(2014, 3, 27)
-    >>> datetime.date = DateMock
+    ...         return cls(2014, 3 , 27)
+    >>> datetime.datetime = FakeDatetime
+
     >>> from Skype4Py.enums import cmsReceived
     >>> class ChatStub:
     ...     Name = "test"
@@ -213,7 +214,7 @@ class BirthdayReminder(Plugin):
     def _check_dates(self):
         global _timer
 
-        today = datetime.date.today()
+        today = datetime.datetime.today()
 
         persons = list()
         for name, dt in self.dates.iteritems():
@@ -249,7 +250,7 @@ class BirthdayReminder(Plugin):
         if not message.Body.strip().startswith("!birthdays"):
             return
 
-        today = datetime.date.today()
+        today = datetime.datetime.today()
 
         previous_persons = list()
         upcoming_persons = list()
