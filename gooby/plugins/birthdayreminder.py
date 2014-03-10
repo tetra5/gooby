@@ -96,6 +96,14 @@ def str_to_datetime(date_str):
     >>> str_to_datetime("13.1.2000")
     datetime.datetime(2000, 1, 13, 0, 0)
 
+    >>> str_to_datetime("2000-01-13")
+    datetime.datetime(2000, 1, 13, 0, 0)
+
+    >>> str_to_datetime("2000-13-01")
+    Traceback (most recent call last):
+        ...
+    ValueError: Input string does not match any known date format
+
     >>> str_to_datetime("13.01.2000")
     datetime.datetime(2000, 1, 13, 0, 0)
 
@@ -127,7 +135,7 @@ class BirthdayReminder(Plugin):
 
     @staticmethod
     @atexit.register
-    def __cleanup():
+    def _cleanup():
         global _timer
         try:
             _timer.cancel()
