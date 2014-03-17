@@ -93,9 +93,6 @@ LOGGING_CONFIG = {
 # >>> cache = cache.get_cache("derp")
 #
 # will be looking for "derp" cache config entry firstly.
-#
-# Note this behaviour is a subject to change in a near future to remotely
-# match Django cache system which is far more flexible.
 CACHE_CONFIG = {
     "VimeoURLParser": {
         "backend": "cache.SQLiteCache",
@@ -175,36 +172,27 @@ PLUGINS_CONFIG = {
     "plugins.urldiscoverer.URLDiscoverer": {
         "priority": 42,
     },
-    "plugins.youtubeurlparser.YouTubeURLParser": {
 
-    },
-    "plugins.vimeourlparser.VimeoURLParser": {
+    "plugins.youtubeurlparser.YouTubeURLParser": {},
 
-    },
-    "plugins.steamurlparser.SteamURLParser": {
+    "plugins.vimeourlparser.VimeoURLParser": {},
 
-    },
-    "plugins.noncegenerator.NonceGenerator": {
+    "plugins.steamurlparser.SteamURLParser": {},
 
-    },
-    "plugins.imdburlparser.IMDbURLParser": {
+    "plugins.noncegenerator.NonceGenerator": {},
 
-    },
-    "plugins.herpderper.HerpDerper": {
+    "plugins.imdburlparser.IMDbURLParser": {},
 
-    },
-    "plugins.guessthepicture.GuessThePicture": {
+    "plugins.herpderper.HerpDerper": {},
 
-    },
-    "plugins.ezroller.EzRoller": {
+    "plugins.guessthepicture.GuessThePicture": {},
 
-    },
-    "plugins.duplicateurlchecker.DuplicateURLChecker": {
+    "plugins.ezroller.EzRoller": {},
 
-    },
-    "plugins.lentaurlparser.LentaURLParser": {
+    "plugins.duplicateurlchecker.DuplicateURLChecker": {},
 
-    },
+    "plugins.lentaurlparser.LentaURLParser": {},
+
     "plugins.birthdayreminder.BirthdayReminder": {
         "birthdays": {
             # Valid date formats:
@@ -216,6 +204,10 @@ PLUGINS_CONFIG = {
             # "Derp": "2000-12-31",
         },
     },
+
+    "plugins.azazafication.Azazafication": {},
+
+    # "plugins.littlehelper.LittleHelper": {},
 }
 
 # Import custom settings.
