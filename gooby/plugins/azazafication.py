@@ -42,6 +42,8 @@ JOYFUL_ANSWERS = [
     "{0}{1}".format("а", "за" * random.randint(2, 5)),
     "{0}{1}".format("ах", "за" * random.randint(2, 5)),
     "{0}{1}".format("а" * random.randint(0, 1), "ха" * random.randint(3, 5)),
+    "красава",
+    "+1",
 ]
 
 
@@ -85,10 +87,14 @@ class Azazafication(Plugin):
         if status != cmsReceived:
             return
 
-        if braces_are_matched(message.Body):
+        s = message.Body.strip()
+        s = s.replace(":(", "")
+        s = s.replace(":)", "")
+
+        if braces_are_matched(s):
             return
 
-        counter = Counter(message.Body)
+        counter = Counter(s)
         opening_braces_count = 0
         closing_braces_count = 0
         for opening_brace in OPENING_BRACES:
