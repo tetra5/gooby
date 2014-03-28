@@ -19,7 +19,7 @@ import unittest
 import tests
 from gooby.plugin import Plugin
 from gooby.pluginmanager import (PluginManager, camelcase_to_underscores,
-    chat_is_whitelisted)
+                                 chat_is_whitelisted)
 
 
 SAMPLE_CONFIG = {
