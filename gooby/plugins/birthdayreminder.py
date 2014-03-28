@@ -24,6 +24,9 @@ from Skype4Py.enums import cmsReceived
 
 from plugin import Plugin
 from output import ChatMessage
+from pluginmanager import chat_is_whitelisted
+from dispatcher import dispatcher
+import signals
 
 
 INTERJECTIONS = [
@@ -241,10 +244,14 @@ class BirthdayReminder(Plugin):
             "interjection": random.choice(INTERJECTIONS),
         }
         message = TODAY.format(**substitutes)
-
         if self.whitelist:
-            for chat in self.whitelist:
-                self.output.append(ChatMessage(chat, message))
+            # for chat in self.whitelist:
+            #     self.output.append(ChatMessage(chat, message))
+            responses = dispatcher.send(signals.REQUEST_CHATS)
+            chats = responses[0]
+            for chat in chats:
+                if chat_is_whitelisted(chat, self.whitelist):
+                    self.output.append(ChatMessage(chat, message))
 
     def on_message_status(self, message, status):
         if status != cmsReceived:
