@@ -124,6 +124,7 @@ class Gooby(object):
 
     def shutdown(self):
         log.info("Shutting down")
+        del self.skype
         logging.shutdown()
 
 
