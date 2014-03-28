@@ -18,7 +18,7 @@ import time
 
 from Skype4Py.errors import SkypeError
 
-from errors import OutputError
+from errors import PluginOutputError
 
 
 class ChatMessage(object):
@@ -32,8 +32,12 @@ class ChatMessage(object):
             chat = skype_instance.Chat(self.chat_name)
             message = chat.SendMessage(self.text)
         except SkypeError as e:
-            raise OutputError("skype error {0}: {1}".format(e[0], e[1]))
+            raise PluginOutputError("Skype error {0}: {1}".format(e[0], e[1]))
         return message
+
+    def __repr__(self):
+        return "<ChatMessage '{0}' to '{1}' on '{2}'>".format(
+            self.text, self.chat_name, self.timestamp)
 
 
 if __name__ == "__main__":

@@ -165,6 +165,9 @@ class Plugin(object):
         self.output = list()
         return output
 
+    def usage(self):
+        return "No known usage for {0}".format(self.__class__.__name__)
+
     @property
     def logger(self):
         return self._logger

@@ -26,7 +26,7 @@ class GoobyError(Exception):
     pass
 
 
-class OutputError(GoobyError):
+class PluginOutputError(GoobyError):
     pass
 
 
