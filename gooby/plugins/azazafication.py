@@ -46,6 +46,20 @@ JOYFUL_ANSWERS = [
     "+1",
 ]
 
+SKIPPED = [
+    ":)",
+    ":(",
+    "%)",
+    "%(",
+    ";)",
+    ";(",
+    ":-)",
+    ":-(",
+    "%-)",
+    "%-(",
+    ";-)",
+    ";-(",
+]
 
 def braces_are_matched(s,
                        opening_braces=OPENING_BRACES,
@@ -87,9 +101,9 @@ class Azazafication(Plugin):
         if status != cmsReceived:
             return
 
-        s = message.Body.strip()
-        s = s.replace(":(", "")
-        s = s.replace(":)", "")
+        s = message.Body.strip().replace(" ", "")
+        for smile in SKIPPED:
+            s = s.replace(smile, "")
 
         if braces_are_matched(s):
             return
