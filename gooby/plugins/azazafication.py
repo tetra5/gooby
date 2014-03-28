@@ -43,6 +43,9 @@ JOYFUL_ANSWERS = [
     "{0}{1}".format("ах", "за" * random.randint(2, 5)),
     "{0}{1}".format("а" * random.randint(0, 1), "ха" * random.randint(3, 5)),
     "красава",
+    "малаца",
+    "жжош",
+    "харош",
     "+1",
 ]
 
@@ -60,6 +63,7 @@ SKIPPED = [
     ";-)",
     ";-(",
 ]
+
 
 def braces_are_matched(s,
                        opening_braces=OPENING_BRACES,
@@ -118,11 +122,11 @@ class Azazafication(Plugin):
 
         if opening_braces_count > closing_braces_count:
             text = "{0}{1}".format(random.choice(SAD_ANSWERS),
-                                   "(" * random.randint(3, 7))
+                                   "(" * random.randint(1, 5))
             self.output.append(ChatMessage(message.Chat.Name, text))
         else:
             text = "{0}{1}".format(random.choice(JOYFUL_ANSWERS),
-                                   ")" * random.randint(3, 7))
+                                   ")" * random.randint(1, 5))
             self.output.append(ChatMessage(message.Chat.Name, text))
 
         return message, status
