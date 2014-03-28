@@ -24,6 +24,9 @@ import Skype4Py
 from pluginmanager import PluginManager, SKYPE_EVENTS
 from config import PLUGINS_CONFIG
 from version import __version__ as gooby_version
+from errors import PluginOutputError, PluginError
+from dispatcher import dispatcher
+import signals
 
 
 log = logging.getLogger("Gooby")
@@ -51,6 +54,38 @@ class Gooby(object):
         log.info("Cache: %s", os.path.abspath(options.cache_dir))
         log.info("Logs: %s", os.path.abspath(options.logs_dir))
 
+    def __connect_signals(self):
+        dispatcher.connect(self._plugins, signals.REQUEST_PLUGINS, False)
+        dispatcher.connect(self._usage, signals.REQUEST_USAGE, False)
+        dispatcher.connect(self._chats, signals.REQUEST_CHATS, False)
+
+    def _chats(self):
+        """Signal receiver."""
+
+        chats = list()
+        for chat in list(self.skype.RecentChats):
+            chats.append(chat.Name)
+        for chat in list(self.skype.BookmarkedChats):
+            chats.append(chat.Name)
+        return chats
+
+    def _usage(self, target, *args, **kwargs):
+        """Signal receiver."""
+
+        for plugin in self.plugin_manager.plugins:
+            usage = plugin.usage
+            if plugin.__class__.__name__.lower() == target.lower():
+                return [usage(*args, **kwargs)]
+        return None
+
+    def _plugins(self):
+        """Signal receiver."""
+
+        plugins = list()
+        for plugin in self.plugin_manager.plugins:
+            plugins.append(plugin.__class__.__name__)
+        return plugins
+
     def _list_chats(self):
         log.info("Recent chats:")
         for i, chat in enumerate(self.skype.RecentChats):
@@ -68,6 +103,8 @@ class Gooby(object):
             self._list_chats()
             return
 
+        self.__connect_signals()
+
         self.plugin_manager = PluginManager(PLUGINS_CONFIG)
         for event in SKYPE_EVENTS:
             self.skype.RegisterEventHandler(
@@ -78,7 +115,11 @@ class Gooby(object):
             for plugin in self.plugin_manager.plugins:
                 messages = plugin.flush_output()
                 for message in messages:
-                    message.send(self.skype)
+                    try:
+                        message.send(self.skype)
+                    except PluginOutputError, e:
+                        log.error("Unable to send message %s by plugin %s: %s",
+                                  plugin, message.text, e)
             time.sleep(self.options.sleep_time)
 
     def shutdown(self):
@@ -156,6 +197,9 @@ def main():
     except (KeyboardInterrupt, SystemExit):
         # Regular application exit.
         return 0
+
+    except PluginError, e:
+        log.error("Plugin error: %s", e)
 
     except:
         dt = datetime.date.today().isoformat()
