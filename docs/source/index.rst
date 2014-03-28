@@ -17,6 +17,7 @@ Core modules
    gooby.rst
    cache.rst
    config.rst
+   dispatcher.rst
    errors.rst
    output.rst
    plugin.rst
@@ -30,6 +31,7 @@ Plugins
    :maxdepth: 2
    :numbered:
 
+   azazafication.rst
    birthdayreminder.rst
    duplicateurlchecker.rst
    ezroller.rst
