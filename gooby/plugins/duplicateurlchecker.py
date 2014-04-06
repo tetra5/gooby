@@ -22,6 +22,7 @@ from Skype4Py.enums import cmsReceived
 
 from plugin import Plugin
 from output import ChatMessage
+from plugins.youtubeurlparser import get_video_id
 
 
 def find_urls(s):
@@ -90,6 +91,11 @@ class DuplicateURLChecker(Plugin):
         output = []
 
         for url in found:
+            if "youtube.com" in url:
+                video_id = get_video_id(url)
+                if video_id is not None:
+                    url = "https://www.youtube.com/watch?v={0}".format(video_id)
+
             if url not in self.cache:
                 self.cache[url] = (message.FromHandle,
                                    message.FromDisplayName,
