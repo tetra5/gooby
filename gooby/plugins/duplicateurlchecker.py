@@ -91,7 +91,7 @@ class DuplicateURLChecker(Plugin):
         output = []
 
         for url in found:
-            if "youtube.com" in url:
+            if any(s in url for s in ("youtu.be", "youtube.com")):
                 video_id = get_video_id(url)
                 if video_id is not None:
                     url = "https://www.youtube.com/watch?v={0}".format(video_id)
