@@ -124,9 +124,6 @@ class Azazafication(Plugin):
         for closing_brace in CLOSING_BRACES:
             closing_braces_count += counter.get(closing_brace, 0)
 
-        if opening_braces_count <= 1 or closing_braces_count <= 1:
-            return
-
         if opening_braces_count > closing_braces_count:
             text = "{0}{1}".format(random.choice(SAD_ANSWERS),
                                    "(" * random.randint(1, 5))
