@@ -105,6 +105,8 @@ class Azazafication(Plugin):
     http://xkcd.com/859/
     """
 
+    TRIGGER_THRESHOLD = 0.1
+
     def on_message_status(self, message, status):
         if status != cmsReceived:
             return
@@ -114,6 +116,9 @@ class Azazafication(Plugin):
             s = s.replace(smile, "")
 
         if braces_are_matched(s):
+            return
+
+        if random.uniform(0.0, 1.0) >= self.TRIGGER_THRESHOLD:
             return
 
         counter = Counter(s)
