@@ -207,6 +207,8 @@ PLUGINS_CONFIG = {
 
     "plugins.azazafication.Azazafication": {},
 
+    "plugins.fakesed.FakeSed": {},
+
     # "plugins.littlehelper.LittleHelper": {},
 }
 
