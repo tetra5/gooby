@@ -88,16 +88,14 @@ def braces_are_matched(s,
     >>> assert braces_are_matched("") is True
     """
 
-    assert isinstance(s, basestring)
-    stack = list()
-    for char in s:
-        if char in opening_braces:
-            stack.append(char)
-        elif char in closing_braces:
-            if not stack:
-                return False
-            stack.pop()
-    return not stack
+    counter = Counter(s)
+    opening_braces_count = 0
+    closing_braces_count = 0
+    for braces_type in opening_braces:
+        opening_braces_count += counter.get(braces_type, 0)
+    for braces_type in closing_braces:
+        closing_braces_count += counter.get(braces_type, 0)
+    return opening_braces_count == closing_braces_count
 
 
 class Azazafication(Plugin):
