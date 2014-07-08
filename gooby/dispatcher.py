@@ -95,10 +95,13 @@ class _Dispatcher(object):
                 for lookup_id in to_remove:
                     # Enumerate in reversed order to avoid index errors while
                     # deleting list elements.
-                    last_index = len(receivers) - 1
-                    for index, (r_id, _) in enumerate(reversed(receivers)):
+                    # last_index = len(receivers) - 1
+                    # for index, (r_id, _) in enumerate(reversed(receivers)):
+                    #     if r_id == lookup_id:
+                    #         del receivers[last_index - index]
+                    for index, (r_id, _) in enumerate(receivers):
                         if r_id == lookup_id:
-                            del receivers[last_index - index]
+                            receivers.pop(index)
 
 
 dispatcher = _Dispatcher()
