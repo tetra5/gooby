@@ -47,13 +47,14 @@ def find_shortened_urls(shorteners, haystack=""):
     .. note::
         URL path part is case-sensitive.
 
-    >>> shorteners = ["t.co", "tinyurl.com", "bit.ly", "goo.gl"]
+    >>> shorteners = ["t.co", "tinyurl.com", "bit.ly", "goo.gl", "plgn.co"]
     >>> haystack = '''http://www.t.co/derp,     BiT.Ly/HerP //tinyURL.com/TEST
     ... http://www.goo.gl/Test/WoNtWoRk testbit.ly/123.jpg testbit.ly/123 x
-    ... http://t.co/Rs99hUtCQu http://t.co/NqJILtGM4M'''
+    ... http://t.co/Rs99hUtCQu http://t.co/NqJILtGM4M plgn.co/e/000'''
     >>> found = list(find_shortened_urls(shorteners, haystack))
     >>> expected = ['t.co/derp', 'bit.ly/HerP', 'tinyurl.com/TEST',
-    ... 'goo.gl/Test/WoNtWoRk', 't.co/Rs99hUtCQu', 't.co/NqJILtGM4M']
+    ... 'goo.gl/Test/WoNtWoRk', 't.co/Rs99hUtCQu', 't.co/NqJILtGM4M',
+    ... 'plgn.co/e/000']
     >>> sorted(found) == sorted(expected)
     True
     """
@@ -101,6 +102,7 @@ class URLDiscoverer(Plugin):
         "trib.al",
         "vk.cc",
         "whrt.it",
+        "plgn.co",
     ]
 
     _headers = {
