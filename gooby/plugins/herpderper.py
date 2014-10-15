@@ -231,6 +231,11 @@ class HerpDerper(Plugin):
 
         msg = []
 
+        if "?" in message.Body:
+            msg = random.choice(["да", "нет"])
+            self.output.append(ChatMessage(message.Chat.Name, msg))
+            return
+
         max_words = 3
         words_count = random.randint(1, max_words)
         words = []
