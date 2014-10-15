@@ -8,6 +8,10 @@ from distutils.core import setup
 
 from pip.req import parse_requirements
 
+
+sys.path.append('./gooby')
+
+
 from gooby.version import __version__
 
 
