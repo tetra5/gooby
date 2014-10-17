@@ -48,7 +48,6 @@ class SteamStoreParser(Plugin):
         # >>> list(plugin.retrieve_app_infos(['570', '236430', '305620']))
         # ''
         """
-
         appids = ','.join(app_ids)
         args = dict()
         args.update(self._api_default_args)
@@ -97,6 +96,8 @@ class SteamStoreParser(Plugin):
 
         output = []
 
+        self._logger.info("Retrieving {0} for {1}".format(", ".join(found),
+                                                          message.FromHandle))
         for app_info in self.retrieve_app_infos(found):
             name, coming_soon, release_date, price, early_access = app_info
             if early_access:
@@ -120,7 +121,7 @@ class SteamStoreParser(Plugin):
                     price_fmt = "{0} {1}"
                     price = price_fmt.format(final, currency)
 
-            out = "{0} (Release Date: {1}) {2}"
+            out = "{0} ({1}) {2}"
             output.append(out.format(name, release_date, price))
 
         if not output:
