@@ -8,6 +8,9 @@
 
 .. note::
     This module requires `lxml library <http://lxml.de/>'_
+
+.. note::
+    This module is currently deprecated
 """
 
 
