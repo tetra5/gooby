@@ -109,11 +109,11 @@ CACHE_CONFIG = {
         "timeout": 128000.0 * 42,  # 42 days.
         "location": os.path.join(CACHE_DIR, "urls.sqlite"),
     },
-    "SteamURLParser": {
-        "backend": "cache.SQLiteCache",
-        "timeout": 3600.0,
-        "location": os.path.join(CACHE_DIR, "steam.sqlite"),
-    },
+    # "SteamURLParser": {
+    #     "backend": "cache.SQLiteCache",
+    #     "timeout": 3600.0,
+    #     "location": os.path.join(CACHE_DIR, "steam.sqlite"),
+    # },
     "HerpDerper": {
         "backend": "cache.SQLiteCache",
         "timeout": 0.0,
@@ -177,7 +177,9 @@ PLUGINS_CONFIG = {
 
     "plugins.vimeourlparser.VimeoURLParser": {},
 
-    "plugins.steamurlparser.SteamURLParser": {},
+    # "plugins.steamurlparser.SteamURLParser": {},
+
+    "plugins.steamstoreparser.SteamStoreParser": {},
 
     "plugins.noncegenerator.NonceGenerator": {},
 
