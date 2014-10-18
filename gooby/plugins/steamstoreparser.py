@@ -134,9 +134,9 @@ class SteamStoreParser(Plugin):
             return
 
         if len(output) is 1:
-            msg = u"Steam Store -> {0}".format(''.join(output))
+            msg = u"Steam -> {0}".format(''.join(output))
         else:
-            msg = u"Steam Store ->\n{0}".format('\n'.join(output))
+            msg = u"Steam ->\n{0}".format('\n'.join(output))
 
         self.output.append(ChatMessage(message.Chat.Name, msg))
         return message, status
