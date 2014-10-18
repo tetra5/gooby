@@ -109,7 +109,7 @@ class SteamStoreParser(Plugin):
             if release_date:
                 try:
                     release_date = release_date.strftime('%d.%m.%Y')
-                except ValueError:
+                except (ValueError, AttributeError):
                     pass
             if coming_soon:
                 if release_date:
