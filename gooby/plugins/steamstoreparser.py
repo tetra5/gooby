@@ -138,7 +138,7 @@ class SteamStoreParser(Plugin):
             if release_date:
                 out.append('({0})'.format(release_date))
             if price:
-                out.append('| {0}'.format(price))
+                out.append('{0}'.format(price))
 
             output.append(' '.join(out))
 
