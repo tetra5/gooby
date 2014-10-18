@@ -81,9 +81,9 @@ class SteamStoreParser(Plugin):
             try:
                 price = (
                     app_data['price_overview']['currency'],
-                    app_data['price_overview']['initial'] / 100.0,
+                    int(app_data['price_overview']['initial']) / 100,
                     app_data['price_overview']['discount_percent'],
-                    app_data['price_overview']['final'] / 100.0,
+                    int(app_data['price_overview']['final']) / 100,
                 )
             except KeyError:
                 price = "Free to play"
