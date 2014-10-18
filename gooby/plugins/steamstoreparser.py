@@ -71,16 +71,19 @@ class SteamStoreParser(Plugin):
             try:
                 release_date = app_data['release_date']['date']
                 fmt = '%d %b, %Y'
-                release_date = datetime.datetime.strptime(release_date, fmt)
+                try:
+                    release_date = datetime.datetime.strptime(release_date, fmt)
+                except ValueError:
+                    pass
             except KeyError:
                 release_date = None
 
             try:
                 price = (
                     app_data['price_overview']['currency'],
-                    int(app_data['price_overview']['initial']) / 100,
+                    app_data['price_overview']['initial'] / 100.0,
                     app_data['price_overview']['discount_percent'],
-                    int(app_data['price_overview']['final']) / 100,
+                    app_data['price_overview']['final'] / 100.0,
                 )
             except KeyError:
                 price = "Free to play"
@@ -104,7 +107,10 @@ class SteamStoreParser(Plugin):
                 name = " ".join(("[Early Access]", name))
 
             if release_date:
-                release_date = release_date.strftime('%d.%m.%Y')
+                try:
+                    release_date = release_date.strftime('%d.%m.%Y')
+                except ValueError:
+                    pass
             if coming_soon:
                 if release_date:
                     release_date = ", ".join(("Coming soon", release_date))
