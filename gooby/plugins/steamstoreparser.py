@@ -44,9 +44,9 @@ class SteamStoreParser(Plugin):
 
     def retrieve_app_infos(self, app_ids):
         """
-        # >>> plugin = SteamStoreParser()
-        # >>> list(plugin.retrieve_app_infos(['570', '236430', '305620']))
-        # ''
+        >>> plugin = SteamStoreParser()
+        >>> list(plugin.retrieve_app_infos(['570', '310510', '305620']))
+        ''
         """
         appids = ','.join(app_ids)
         args = dict()
@@ -62,7 +62,7 @@ class SteamStoreParser(Plugin):
             app_data = data[appid]['data']
             early_access = False
             for genre in app_data['genres']:
-                if genre['description'] == 'Early Access':
+                if genre['description'] == "Early Access":
                     early_access = True
                     break
 
@@ -78,6 +78,7 @@ class SteamStoreParser(Plugin):
             except KeyError:
                 release_date = None
 
+            price = None
             try:
                 price = (
                     app_data['price_overview']['currency'],
@@ -86,7 +87,10 @@ class SteamStoreParser(Plugin):
                     int(app_data['price_overview']['final']) / 100,
                 )
             except KeyError:
-                price = "Free to play"
+                for genre in app_data['genres']:
+                    if genre['description'] == "Free to Play":
+                        price = "Free to Play"
+
             yield name, coming_soon, release_date, price, early_access
 
     def on_message_status(self, message, status):
@@ -114,21 +118,25 @@ class SteamStoreParser(Plugin):
             if coming_soon:
                 if release_date:
                     release_date = ", ".join(("Coming soon", release_date))
-                else:
-                    release_date = "Coming soon"
 
             if isinstance(price, tuple):
                 currency, initial, discount_percent, final = price
                 if discount_percent != 0:
-                    price_fmt = "{0} - {1}% = {2} {3}"
+                    price_fmt = '{0} - {1}% = {2} {3}'
                     price = price_fmt.format(initial, discount_percent,
                                              final, currency)
                 else:
-                    price_fmt = "{0} {1}"
+                    price_fmt = '{0} {1}'
                     price = price_fmt.format(final, currency)
 
-            out = "{0} ({1}) {2}"
-            output.append(out.format(name, release_date, price))
+            out = list()
+            out.append(name)
+            if release_date:
+                out.append(release_date)
+            if price:
+                out.append(price)
+
+            output.append(' '.join(out))
 
         if not output:
             return
