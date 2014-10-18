@@ -90,6 +90,10 @@ class SteamStoreParser(Plugin):
                 for genre in app_data['genres']:
                     if genre['description'] == "Free to Play":
                         price = "Free to Play"
+                        break
+                    if genre['description'] == "Free to Use":
+                        price = "Free to Use"
+                        break
 
             yield name, coming_soon, release_date, price, early_access
 
@@ -134,7 +138,7 @@ class SteamStoreParser(Plugin):
             if release_date:
                 out.append('({0})'.format(release_date))
             if price:
-                out.append(price)
+                out.append('| {0}'.format(price))
 
             output.append(' '.join(out))
 
