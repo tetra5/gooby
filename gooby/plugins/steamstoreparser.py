@@ -42,24 +42,27 @@ class SteamStoreParser(Plugin):
     _opener = urllib2.build_opener()
     _opener.addheaders = [(k, v) for k, v in _headers.iteritems()]
 
-    def retrieve_app_infos(self, app_ids):
+    def retrieve_app_info(self, app_ids):
         """
         >>> plugin = SteamStoreParser()
-        >>> list(plugin.retrieve_app_infos(['570', '310510', '305620']))
-        ''
+        >>> info = plugin.retrieve_app_info(['570', '123'])
+        >>> list(info) #doctest: +NORMALIZE_WHITESPACE
+        [(u'Dota 2',
+        False, datetime.datetime(2013, 7, 9, 0, 0),
+        u'Free to Play', False), None]
         """
-        appids = ','.join(app_ids)
+
         args = dict()
         args.update(self._api_default_args)
-        args.update(dict(appids=appids))
+        args.update(dict(appids=','.join(app_ids)))
         url = ''.join((self._api_url, '?', urllib.urlencode(args)))
         data = json.loads(self._opener.open(url).read())
-        for appid in app_ids:
-            if not data[appid]['success']:
+        for app_id in app_ids:
+            if not data[app_id]['success']:
                 yield None
                 continue
 
-            app_data = data[appid]['data']
+            app_data = data[app_id]['data']
             early_access = False
             for genre in app_data['genres']:
                 if genre['description'] == "Early Access":
@@ -106,7 +109,7 @@ class SteamStoreParser(Plugin):
 
         self._logger.info("Retrieving {0} for {1}".format(", ".join(found),
                                                           message.FromHandle))
-        for app_info in self.retrieve_app_infos(found):
+        for app_info in self.retrieve_app_info(found):
             if app_info is None:
                 continue
 
