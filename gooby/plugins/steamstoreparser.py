@@ -88,11 +88,8 @@ class SteamStoreParser(Plugin):
                 )
             except KeyError:
                 for genre in app_data['genres']:
-                    if genre['description'] == "Free to Play":
-                        price = "Free to Play"
-                        break
-                    if genre['description'] == "Free to Use":
-                        price = "Free to Use"
+                    if genre['description'] in ("Free to Play", "Free to Use"):
+                        price = genre['description']
                         break
 
             yield name, coming_soon, release_date, price, early_access
