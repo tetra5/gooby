@@ -107,6 +107,9 @@ class SteamStoreParser(Plugin):
         self._logger.info("Retrieving {0} for {1}".format(", ".join(found),
                                                           message.FromHandle))
         for app_info in self.retrieve_app_infos(found):
+            if app_info is None:
+                continue
+
             name, coming_soon, release_date, price, early_access = app_info
             if early_access:
                 name = " ".join(("[Early Access]", name))
