@@ -126,7 +126,7 @@ def find_urls(s):
     retval = []
     for found in re.findall(pattern, s):
         for ext in ("gif", "png", "jpg", "jpeg"):
-            if found[0].endswith(".{0}".format(ext)):
+            if found[0].lower().endswith(".{0}".format(ext)):
                 retval.append(found[0])
     return retval
 
