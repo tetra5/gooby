@@ -145,11 +145,11 @@ class GuessThePicture(Plugin):
 
         >>> url = "http://d24w6bsrhbeh9d.cloudfront.net/photo/a09n4Yq_460sa_v1.gif"
         >>> plugin.guess_the_picture(url)
-        'firewood processor'
+        'firewood machine'
 
         >>> url = "http://armarium.org/u/2014/02/13/JRbC65Q.gif"
         >>> plugin.guess_the_picture(url)
-        'family guy fart'
+        'peter griffin gif'
         """
 
         cached_guess = self._cache.get(image_url)
@@ -168,7 +168,7 @@ class GuessThePicture(Plugin):
 
         html = retrieve_html()
 
-        path = ".//div[@class='qb-bmqc']/a[@class='qb-b']"
+        path = ".//div[@class='_hUb']/a[@class='_gUb']"
 
         try:
             guess = html.find(path).text.strip()
