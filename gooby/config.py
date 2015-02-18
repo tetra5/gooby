@@ -139,6 +139,11 @@ CACHE_CONFIG = {
         "timeout": 0,
         "location": os.path.join(CACHE_DIR, "lentaurlparser.sqlite"),
     },
+    "CoubURLParser": {
+        "backend": "cache.SQLiteCache",
+        "timeout": 0,
+        "location": os.path.join(CACHE_DIR, "couburlparser.sqlite"),
+    },
 }
 
 # Plugin configuration syntax:
@@ -194,6 +199,8 @@ PLUGINS_CONFIG = {
     "plugins.duplicateurlchecker.DuplicateURLChecker": {},
 
     "plugins.lentaurlparser.LentaURLParser": {},
+    
+    "plugins.couburlparser.CoubURLParser": {},
 
     "plugins.birthdayreminder.BirthdayReminder": {
         "birthdays": {
