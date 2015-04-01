@@ -144,6 +144,11 @@ CACHE_CONFIG = {
         "timeout": 0,
         "location": os.path.join(CACHE_DIR, "couburlparser.sqlite"),
     },
+    "TwitchTvNotifier": {
+        "backend": "cache.SQLiteCache",
+        "timeout": 0,
+        "location": os.path.join(CACHE_DIR, "twitchtvnotifier.sqlite"),
+    },
 }
 
 # Plugin configuration syntax:
@@ -201,6 +206,14 @@ PLUGINS_CONFIG = {
     "plugins.lentaurlparser.LentaURLParser": {},
     
     "plugins.couburlparser.CoubURLParser": {},
+
+    "plugins.twitchtvnotifier.TwitchTvNotifier": {
+        "check_interval": 60,
+        "streams": [
+            # "herp",
+            # "derp",
+        ],
+    },
 
     "plugins.birthdayreminder.BirthdayReminder": {
         "birthdays": {
