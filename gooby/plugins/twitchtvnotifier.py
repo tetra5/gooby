@@ -91,7 +91,8 @@ class TwitchTvNotifier(Plugin):
         self.check_interval = self.options.get('check_interval',
                                                DEFAULT_CHECK_INTERVAL)
         self.stream_names = self.options.get('streams', list())
-        # self._check_streams()
+        self.logger.info("Watching %s", self.stream_names)
+        self._check_streams()
 
     def retrieve_stream_info(self, stream_names):
         """
