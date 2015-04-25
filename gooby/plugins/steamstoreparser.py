@@ -64,10 +64,14 @@ class SteamStoreParser(Plugin):
 
             app_data = data[app_id]['data']
             early_access = False
-            for genre in app_data['genres']:
-                if genre['description'] == "Early Access":
-                    early_access = True
-                    break
+
+            try:
+                for genre in app_data['genres']:
+                    if genre['description'] == "Early Access":
+                        early_access = True
+                        break
+            except KeyError:
+                pass
 
             name = app_data['name']
             coming_soon = app_data['release_date']['coming_soon']
@@ -90,10 +94,14 @@ class SteamStoreParser(Plugin):
                     int(app_data['price_overview']['final']) / 100,
                 )
             except KeyError:
-                for genre in app_data['genres']:
-                    if genre['description'] in ("Free to Play", "Free to Use"):
-                        price = genre['description']
-                        break
+                try:
+                    for genre in app_data['genres']:
+                        if genre['description'] in ("Free to Play",
+                                                    "Free to Use"):
+                            price = genre['description']
+                            break
+                except KeyError:
+                    pass
 
             yield name, coming_soon, release_date, price, early_access
 
