@@ -5,11 +5,6 @@
 """
 :mod:`youtubeurlparser` --- YouTube URL parser plugin
 =====================================================
-
-.. note::
-    This module optionally uses `lxml library <http://lxml.de/>`_ if it's
-    available, otherwise falls back to default (and much slower) xml.etree
-    parser.
 """
 
 
@@ -30,7 +25,7 @@ from Skype4Py.enums import cmsReceived, cmsSent
 from plugin import Plugin
 from utils import retry_on_exception
 from output import ChatMessage
-from config import GOOGLE_API_KEY
+import config
 
 
 def get_video_id(url):
@@ -138,7 +133,7 @@ class YouTubeURLParser(Plugin):
     _args = {
         'part': 'snippet,contentDetails',
         'fields': 'items(snippet(title),contentDetails(duration))',
-        'key': GOOGLE_API_KEY,
+        'key': config.GOOGLE_API_KEY,
     }
 
     _api_url = 'https://www.googleapis.com/youtube/v3/videos'
