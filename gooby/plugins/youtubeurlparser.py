@@ -21,21 +21,16 @@ __docformat__ = "restructuredtext en"
 
 import re
 import urllib2
+import urllib
 import urlparse
-
-try:
-    from lxml import etree
-except ImportError:
-    try:
-        from xml.etree import cElementTree as etree
-    except ImportError:
-        from xml.etree import ElementTree as etree
+import json
 
 from Skype4Py.enums import cmsReceived, cmsSent
 
 from plugin import Plugin
 from utils import retry_on_exception
 from output import ChatMessage
+from config import GOOGLE_API_KEY
 
 
 def get_video_id(url):
@@ -49,17 +44,17 @@ def get_video_id(url):
     :rtype: `unicode` or `None`
 
     >>> get_video_id("https://www.youtube.com/watch?v=XXXXXXXXXXX")
-    'XXXXXXXXXXX'
+    u'XXXXXXXXXXX'
     >>> get_video_id("https://www.youtube.com/watch?v=XXXXXXXXXXXZ")
-    'XXXXXXXXXXX'
+    u'XXXXXXXXXXX'
     >>> get_video_id("https://www.youtube.com///watch?v=XXXXXXXXXXX///")
-    'XXXXXXXXXXX'
+    u'XXXXXXXXXXX'
     >>> get_video_id("youtube.com/watch?v=XXXXXXXXXXX")
-    'XXXXXXXXXXX'
+    u'XXXXXXXXXXX'
     >>> get_video_id("http://youtu.be/XXXXXXXXXXX")
-    'XXXXXXXXXXX'
+    u'XXXXXXXXXXX'
     >>> get_video_id("http://www.youtube.com/watch?feature=&v=XXXXXXXXXXX")
-    'XXXXXXXXXXX'
+    u'XXXXXXXXXXX'
     >>> get_video_id("http://youtu.be/YYYYYYYYYY") is None
     True
     >>> get_video_id("https://www.youtube.com/watch?v=") is None
@@ -67,19 +62,19 @@ def get_video_id(url):
     >>> get_video_id("https://www.youtube.com/watch?v=X") is None
     True
     >>> get_video_id("http://youtu.be/XXXXXXXXXXX?t=0m00s")
-    'XXXXXXXXXXX'
+    u'XXXXXXXXXXX'
     >>> get_video_id("http://youtu.be///X///") is None
     True
     >>> get_video_id("http://youtu.be///XXXXXXXXXXX///")
-    'XXXXXXXXXXX'
+    u'XXXXXXXXXXX'
     >>> get_video_id("http://youtu.be///XXXXXXXXXXXZ///")
-    'XXXXXXXXXXX'
+    u'XXXXXXXXXXX'
     >>> get_video_id("http://www.youtube.com") is None
     True
     >>> get_video_id("youtube.com/watch?v=XXXXXXXXXXX&feature=youtu.be")
-    'XXXXXXXXXXX'
+    u'XXXXXXXXXXX'
     >>> get_video_id("youtube.com/watch?feature=youtu.be&v=XXXXXXXXXXX")
-    'XXXXXXXXXXX'
+    u'XXXXXXXXXXX'
     """
 
     vid_id = ""
@@ -98,17 +93,60 @@ def get_video_id(url):
     return vid_id if len(vid_id) is 11 else None
 
 
+def get_duration(youtube_duration):
+    """
+    >>> get_duration('PT15M51S')
+    951
+
+    >>> get_duration('PT1H11M10S')
+    4270
+
+    :param unicode youtube_duration: YouTube weirdly formatted duration
+    :return int: duration in seconds for the human beings!
+    """
+
+    youtube_duration = youtube_duration.lower()
+
+    duration = 0
+
+    pattern = re.compile(r'([0-9]+)([HMS])', re.I | re.U)
+
+    matches = re.finditer(pattern, youtube_duration)
+    if not matches:
+        return duration
+
+    for part in matches:
+        value, letter = part.groups()
+        value = int(value)
+        if letter == 'h':
+            duration += value * 3600
+        elif letter == 'm':
+            duration += value * 60
+        elif letter == 's':
+            duration += value
+        else:
+            raise Exception("Unsupported letter: %s" % letter)
+
+    return duration
+
+
 class YouTubeURLParser(Plugin):
     """This plugin monitors received messages and outputs video title and its
     duration if that message contains a valid YouTube video URL.
     """
 
-    _api_url = "http://gdata.youtube.com/feeds/api/videos/{0}"
+    _args = {
+        'part': 'snippet,contentDetails',
+        'fields': 'items(snippet(title),contentDetails(duration))',
+        'key': GOOGLE_API_KEY,
+    }
+
+    _api_url = 'https://www.googleapis.com/youtube/v3/videos'
 
     _pattern = re.compile(ur"((?:youtube\.com|youtu\.be)/\S+)")
 
     _headers = {
-        "User-Agent": "Googlebot/2.1 (+http://www.googlebot.com/bot.html)",
+        "User-Agent": "Gooby",
         "Accept-Language": "en-US,en;q=0.5",
         "Connection": "Keep-Alive",
     }
@@ -130,40 +168,35 @@ class YouTubeURLParser(Plugin):
         if cached_title is not None:
             return cached_title
 
-        url = self._api_url.format(video_id)
-
-        @retry_on_exception((urllib2.URLError, urllib2.HTTPError), tries=2,
-                            backoff=0, delay=1)
-        def retrieve_xml():
-            response = self._opener.open(url)
-            buf = response.read()
-            return etree.fromstring(buf)
-
-        xml = retrieve_xml()
+        args = self._args.copy()
+        args.update({'id': video_id})
+        url = ''.join((self._api_url, '?', urllib.urlencode(args)))
 
         try:
-            ns = "http://www.w3.org/2005/Atom"
-            title = xml.find(".//{%s}title" % ns).text
-            # title = xml.xpath("//ns:title", namespaces={"ns": ns})[0].text
+            data = json.loads(self._opener.open(url).read())
+        except urllib2.HTTPError as error:
+            raise Exception("Check your Google API key")
 
-            yt_ns = "http://gdata.youtube.com/schemas/2007"
-            duration = xml.find(".//{%s}duration" % yt_ns).attrib.get("seconds")
-            # duration = xml.xpath("//ns:duration/@seconds",
-            #                      namespaces={"ns": yt_ns})[0]
+        try:
+            title = data['items'][0]['snippet']['title']
+        except (IndexError, AttributeError):
+            title = ''
 
-        except (AttributeError, etree.ParseError):
-            return None
+        try:
+            duration = data['items'][0]['contentDetails']['duration']
+        except (IndexError, AttributeError):
+            duration = ''
 
-        else:
-            # Convert duration from seconds to h:m:s
-            minutes, seconds = divmod(int(duration), 60)
-            hours, minutes = divmod(minutes, 60)
-            duration = "{0:02d}:{1:02d}:{2:02d}".format(hours, minutes, seconds)
+        duration = get_duration(duration)
 
-            title = u"{0} [{1}]".format(title, duration)
+        minutes, seconds = divmod(int(duration), 60)
+        hours, minutes = divmod(minutes, 60)
+        duration = "{0:02d}:{1:02d}:{2:02d}".format(hours, minutes, seconds)
 
-            self._cache.set(video_id, title)
-            return title
+        title = u"{0} [{1}]".format(title, duration)
+
+        self._cache.set(video_id, title)
+        return title
 
     def on_message_status(self, message, status):
         if status not in (cmsReceived, cmsSent):

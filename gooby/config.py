@@ -30,6 +30,8 @@ LOGS_DIR = os.path.normpath(os.path.join(HOME_DIR, "./logs"))
 
 SLEEP_TIME = 1
 
+GOOGLE_API_KEY = 'your_google_API_key'
+
 LOGGING_CONFIG = {
     "version": 1,
     "disable_existing_loggers": True,
