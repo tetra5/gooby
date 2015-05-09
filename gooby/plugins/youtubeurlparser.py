@@ -23,7 +23,6 @@ import json
 from Skype4Py.enums import cmsReceived, cmsSent
 
 from plugin import Plugin
-from utils import retry_on_exception
 from output import ChatMessage
 import config
 
