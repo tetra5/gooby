@@ -103,14 +103,14 @@ def get_duration(youtube_duration):
 
     duration = 0
 
-    pattern = re.compile(r'([0-9]+)([HMS])', re.I | re.U)
+    pattern = re.compile(r'([0-9]+)([hms])', re.I | re.U)
 
     matches = re.finditer(pattern, youtube_duration)
     if not matches:
         return duration
 
-    for part in matches:
-        value, letter = part.groups()
+    for match in matches:
+        value, letter = match.groups()
         value = int(value)
         if letter == 'h':
             duration += value * 3600
@@ -129,13 +129,13 @@ class YouTubeURLParser(Plugin):
     duration if that message contains a valid YouTube video URL.
     """
 
-    _args = {
+    _url_args = {
         'part': 'snippet,contentDetails',
         'fields': 'items(snippet(title),contentDetails(duration))',
         'key': config.GOOGLE_API_KEY,
     }
 
-    _api_url = 'https://www.googleapis.com/youtube/v3/videos'
+    _api_base_url = 'https://www.googleapis.com/youtube/v3/videos'
 
     _pattern = re.compile(ur"((?:youtube\.com|youtu\.be)/\S+)")
 
@@ -162,24 +162,27 @@ class YouTubeURLParser(Plugin):
         if cached_title is not None:
             return cached_title
 
-        args = self._args.copy()
+        args = self._url_args.copy()
         args.update({'id': video_id})
-        url = ''.join((self._api_url, '?', urllib.urlencode(args)))
+        url = ''.join((self._api_base_url, '?', urllib.urlencode(args)))
 
         try:
             data = json.loads(self._opener.open(url).read())
-        except urllib2.HTTPError as error:
+        except urllib2.HTTPError:
             raise Exception("Check your Google API key")
 
         try:
             title = data['items'][0]['snippet']['title']
         except (IndexError, AttributeError):
-            title = ''
+            title = None
 
         try:
             duration = data['items'][0]['contentDetails']['duration']
         except (IndexError, AttributeError):
-            duration = ''
+            duration = None
+
+        if None in (title, duration):
+            raise Exception("Unable to retrieve video title parts")
 
         duration = get_duration(duration)
 
