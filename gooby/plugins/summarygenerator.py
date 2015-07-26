@@ -48,7 +48,7 @@ def sanitize_string(s):
 class MarkovChain(object):
     """
     >>> mc = MarkovChain.from_textfile('D:/Projects/Miscellaneous/the_golem_-_intro.txt')
-    >>> mc.generate_text(sentences_count=3)
+    >>> mc.generate_sentences(sentences_count=3)
     """
     BRACKETS = ('()', '[]', '{}', '<>')
     QUOTES = '\'"'
@@ -104,14 +104,14 @@ class MarkovChain(object):
             key = key[1:] + (word, )
         return ' '.join(words)
 
-    def generate_text(self, sentences_count=3, max_word_per_sentence=15):
+    def generate_sentences(self, sentences_count=3, max_word_per_sentence=15):
         sentences = []
         for _ in xrange(sentences_count):
             sentence = self.generate_sentence()
             sentences.append(sentence)
             if len(sentence.split()) > max_word_per_sentence:
                 break
-        return sentences
+        return '\n'.join(sentences)
 
     @classmethod
     def from_string(cls, text, order=1):
@@ -156,7 +156,8 @@ class SummaryGenerator(Plugin):
         if len(cached_messages) >= self.MESSAGE_THRESHOLD:
             text = ' '.join([sanitize_string(s) for s in cached_messages])
             mc = MarkovChain.from_string(text)
-            self.output.append(ChatMessage(chat_name, mc.generate_text()))
+            output = '\n'.join(mc.generate_sentences())
+            self.output.append(ChatMessage(chat_name, output))
             self.cache.set(chat_name, list())
 
         return message, status
