@@ -50,8 +50,8 @@ class MarkovChain(object):
     >>> mc = MarkovChain.from_textfile('D:/Projects/Miscellaneous/the_golem_-_intro.txt')
     >>> mc.generate_sentences(sentences_count=3)
     """
-    BRACKETS = ('()', '[]', '{}', '<>')
-    QUOTES = '\'"'
+    # BRACKETS = ('()', '[]', '{}', '<>')
+    # QUOTES = '\'"'
     ENDING_CHARACTERS = ('!', '?', '.')
 
     _db = dict()
