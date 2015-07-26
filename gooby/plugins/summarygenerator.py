@@ -161,11 +161,20 @@ class SummaryGenerator(Plugin):
             cached_messages.append(message.Body)
             self.cache.set(chat_name, cached_messages)
 
-        if len(cached_messages) >= self.MESSAGE_THRESHOLD:
+        cached_messages_count = len(cached_messages)
+
+        if not cached_messages_count % 50:
+            self.logger.info("Accumulated %s/%s messages at %s",
+                             cached_messages_count, self.MESSAGE_THRESHOLD,
+                             chat_name)
+
+        if cached_messages_count >= self.MESSAGE_THRESHOLD:
             text = ' '.join([sanitize_string(s) for s in cached_messages])
             mc = MarkovChain.from_string(text)
             output = '\n'.join(mc.generate_sentences())
+            self.logger.info("Generating gibberish for %s", chat_name)
             self.output.append(ChatMessage(chat_name, output))
+            self.logger.info("Flushing cache for %s", chat_name)
             self.cache.set(chat_name, list())
 
         return message, status
