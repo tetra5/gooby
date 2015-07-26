@@ -133,8 +133,9 @@ class SummaryGenerator(Plugin):
     # messages received.
     MESSAGE_THRESHOLD = 500
 
-    def _init_cache(self):
-        return from_dict({
+    def __init__(self, priority=0, whitelist=None, **kwargs):
+        super(SummaryGenerator, self).__init__(priority, whitelist, **kwargs)
+        self._cache = from_dict({
             'backend': 'cache_new.SQLiteCache',
             'location': os.path.join(CACHE_DIR, "summarygenerator.sqlite"),
             'timeout': 0,
