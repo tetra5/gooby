@@ -133,13 +133,12 @@ class SummaryGenerator(Plugin):
     # messages received.
     MESSAGE_THRESHOLD = 500
 
-    def __init__(self, priority=0, whitelist=None, **kwargs):
-        super(SummaryGenerator, self).__init__(priority, whitelist, **kwargs)
-        self._cache = from_dict({
+    def _init_cache(self):
+        return from_dict({
             'backend': 'cache_new.SQLiteCache',
             'location': os.path.join(CACHE_DIR, "summarygenerator.sqlite"),
             'timeout': 0,
-            'prefix': '',
+            'key_prefix': '',
         })
 
     def on_message_status(self, message, status):
