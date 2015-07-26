@@ -163,7 +163,7 @@ class SummaryGenerator(Plugin):
 
         cached_messages_count = len(cached_messages)
 
-        if not cached_messages_count % 50:
+        if not cached_messages_count % 50 and cached_messages_count:
             self.logger.info("Accumulated %s/%s messages at %s",
                              cached_messages_count, self.MESSAGE_THRESHOLD,
                              chat_name)
