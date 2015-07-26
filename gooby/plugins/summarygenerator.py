@@ -114,9 +114,15 @@ class MarkovChain(object):
         return sentences
 
     @classmethod
-    def from_string(cls, text, order=1):
+    def from_string(cls, text, order=1, skip_urls=True):
         obj = cls(order)
-        words = [word for word in text.split() if word]
+        words = []
+        for word in text.split():
+            if not word:
+                continue
+            if skip_urls and any(s in word for s in ('http', 'www.')):
+                continue
+            words.append(word)
         obj.generate_db(words)
         return obj
 
