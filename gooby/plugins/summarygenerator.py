@@ -81,7 +81,7 @@ class MarkovChain(object):
                 possible_keys.append(key)
         return random.choice(possible_keys)
 
-    def generate_sentence(self):
+    def generate_sentence(self, max_len=5):
         key = self._find_first_key()
         words = list()
         words.append(key[0])
@@ -99,24 +99,24 @@ class MarkovChain(object):
             #             if not any(left_bracket in w for w in words):
             #                 continue
             words.append(word)
-            if word.endswith(self.ENDING_CHARACTERS) and len(words) > 5:
+            if word.endswith(self.ENDING_CHARACTERS) and len(words) > max_len:
                 break
             key = key[1:] + (word, )
         return ' '.join(words)
 
-    def generate_sentences(self, sentences_count=3, max_word_per_sentence=15):
+    def generate_sentences(self, sentences_count=3, max_word_per_sentence=10):
         sentences = []
         for _ in xrange(sentences_count):
             sentence = self.generate_sentence()
             sentences.append(sentence)
             if len(sentence.split()) > max_word_per_sentence:
                 break
-        return '\n'.join(sentences)
+        return sentences
 
     @classmethod
     def from_string(cls, text, order=1):
         obj = cls(order)
-        words = text.split()
+        words = [word for word in text.split() if word]
         obj.generate_db(words)
         return obj
 
