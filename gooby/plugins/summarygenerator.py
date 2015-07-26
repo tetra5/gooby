@@ -120,7 +120,7 @@ class MarkovChain(object):
         for word in text.split():
             if not word:
                 continue
-            if skip_urls and any(s in word for s in ('http', 'www.')):
+            if skip_urls and any(s in word.lower() for s in ('http', 'www.')):
                 continue
             words.append(word)
         obj.generate_db(words)
