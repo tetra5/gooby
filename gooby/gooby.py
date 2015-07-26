@@ -18,7 +18,7 @@ import os
 import sys
 import logging
 import time
-import itertools
+from itertools import chain
 
 import Skype4Py
 
@@ -63,8 +63,7 @@ class Gooby(object):
     def _chats(self):
         """Signal receiver."""
 
-        for chat in itertools.chain(self.skype.RecentChats,
-                                    self.skype.BookmarkedChats):
+        for chat in chain(self.skype.RecentChats, self.skype.BookmarkedChats):
             yield chat.Name
 
     def _usage(self, target, *args, **kwargs):

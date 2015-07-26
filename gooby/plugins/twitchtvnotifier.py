@@ -16,12 +16,11 @@ __docformat__ = "restructuredtext en"
 
 import urllib2
 import urllib
-import datetime
 import json
 import atexit
 from threading import Timer
 
-from Skype4Py.enums import cmsReceived, cmsSent
+# from Skype4Py.enums import cmsReceived, cmsSent
 
 from plugin import Plugin
 from output import ChatMessage
@@ -34,8 +33,10 @@ _timer = None
 
 DEFAULT_CHECK_INTERVAL = 60
 
-ONLINE = 1
-OFFLINE = 0
+STATUS_ONLINE = 1
+STATUS_OFFLINE = 0
+
+MESSAGE_TEMPLATE = "{display_name} is now streaming {game} at {url}"
 
 
 class TwitchTvNotifier(Plugin):
@@ -62,18 +63,20 @@ class TwitchTvNotifier(Plugin):
             del _timer
 
     def _check_streams(self):
+        if not self.stream_names:
+            return
+
         global _timer
         output = []
-        message_template = "{display_name} is now streaming {game} at {url}"
-        stream_info = self.retrieve_stream_info(self.stream_names)
-        for name, options in stream_info.iteritems():
-            if not options:
-                self.cache.set(name, OFFLINE)
+        data = self.retrieve_stream_data(self.stream_names)
+        for stream, params in data.iteritems():
+            if not params:
+                self.cache.set(stream, STATUS_OFFLINE)
                 continue
-            previous_state = self.cache.get(name)
-            if previous_state in (None, OFFLINE):
-                output.append(message_template.format(**stream_info))
-            self.cache.set(name, ONLINE)
+            previous_state = self.cache.get(stream)
+            if previous_state in (None, STATUS_OFFLINE):
+                output.append(MESSAGE_TEMPLATE.format(**data))
+            self.cache.set(stream, STATUS_ONLINE)
 
         if self.whitelist:
             message = "\n".join(output)
@@ -94,34 +97,34 @@ class TwitchTvNotifier(Plugin):
         self.logger.info("Watching %s", self.stream_names)
         self._check_streams()
 
-    def retrieve_stream_info(self, stream_names):
+    def retrieve_stream_data(self, channels):
         """
         >>> plugin = TwitchTvNotifier()
-        >>> info = plugin.retrieve_stream_info(['pingeee', 'beyondthesummit'])
-        >>> info #doctest: +NORMALIZE_WHITESPACE
-        {u'beyondthesummit': {u'url': u'http://www.twitch.tv/beyondthesummit',
-        u'game': u'Dota 2', u'display_name': u'BeyondTheSummit'}, u'pingeee':
-        {}}
+        >>> data = plugin.retrieve_stream_data(['pingeee', 'beyondthesummit'])
+        >>> data  #doctest: +NORMALIZE_WHITESPACE
+        {u'beyondthesummit': {}, u'pingeee':
+        {u'url': u'http://www.twitch.tv/pingeee', u'game':
+        u'Heroes of the Storm', u'display_name': u'Pingeee'}}
         """
 
         args = dict()
-        args.update(dict(channel=','.join(stream_names)))
+        args.update({'channel': ','.join(channels)})
         url = ''.join((self._api_url, '?', urllib.urlencode(args)))
         data = json.loads(self._opener.open(url).read())
         streams = dict()
         for stream_data in data.get('streams'):
-            name = stream_data.get('channel').get('name')
-            if name is None:
+            try:
+                name = stream_data.get('channel').get('name')
+            except AttributeError:
                 continue
-            stream = streams.setdefault(name, dict())
-            stream.update({
+            streams.setdefault(name, {
                 'display_name': stream_data.get('channel').get('display_name'),
                 'url': stream_data.get('channel').get('url'),
                 'game': stream_data.get('game'),
             })
-        for stream_name in stream_names:
-            if stream_name not in streams:
-                streams.update({stream_name: dict()})
+        for channel in channels:
+            if channel not in streams:
+                streams.update({channel: dict()})
         return streams
 
 if __name__ == '__main__':

@@ -37,7 +37,7 @@ _p = re.compile(
     r"""
     (?P<url>
         (http://)?
-        lenta.ru/news/
+        lenta\.ru/(?:news|articles)/
         (?P<year>
             \d{4}
         )/
@@ -51,17 +51,22 @@ _p = re.compile(
             \w+
         )
     )
-    \S
+    \S?
     """, re.VERBOSE | re.UNICODE | re.IGNORECASE)
 
 
 def find_article_urls(s):
     """
     >>> s = '''http://lenta.ru/news/2014/02/28/herp,
-    ... lenta.ru/news/2014/02/28/derp/asdf'''
+    ... lenta.ru/news/2014/02/28/derp/asdf,
+    ... http://lenta.ru/articles/2015/07/19/part,
+    ... asdf
+    ... '''
     >>> found = list(find_article_urls(s))
     >>> expected = ["http://lenta.ru/news/2014/02/28/herp",
-    ... "http://lenta.ru/news/2014/02/28/derp"]
+    ... "http://lenta.ru/news/2014/02/28/derp",
+    ... "http://lenta.ru/articles/2015/07/19/part",
+    ... ]
     >>> assert sorted(found) == sorted(expected)
     """
 
@@ -69,6 +74,7 @@ def find_article_urls(s):
         url = match.group("url")
         if not url.startswith("http://"):
             url = "http://{0}".format(url)
+        # return url
         yield url
 
 

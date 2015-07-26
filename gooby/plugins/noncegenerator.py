@@ -91,11 +91,11 @@ def _translate(s, characters, translate_to=u" "):
 
 def find_first_vowel_index(word):
     """
-    >>> assert find_first_vowel_index("учёт".decode("utf8")) is 2
+    >>> assert find_first_vowel_index("учёт") is 2
 
-    >>> assert find_first_vowel_index("АОРТА".decode("utf8")) is 1
+    >>> assert find_first_vowel_index("АОРТА") is 1
 
-    >>> assert find_first_vowel_index("прнс".decode("utf8")) is None
+    >>> assert find_first_vowel_index("прнс") is None
     """
 
     index = word.lower().find(u"ё")
@@ -118,15 +118,12 @@ def find_first_vowel_index(word):
 
 def word_is_eligible(word, vowel_threshold=2):
     """
-    >>> assert word_is_eligible("учёт".decode("utf8"), 2) is True
+    >>> assert word_is_eligible("учёт", 2) is True
 
-    >>> assert word_is_eligible("откос".decode("utf8"), 2) is True
+    >>> assert word_is_eligible("откос", 2) is True
 
-    >>> assert word_is_eligible("молоко".decode("utf8"), 4) is False
+    >>> assert word_is_eligible("молоко", 4) is False
     """
-
-    #if len(word) <= 2:
-    #    return False
 
     if any(sub.lower() in word.lower() for sub in SUBSTITUTES.itervalues()):
         return False
@@ -141,20 +138,26 @@ def word_is_eligible(word, vowel_threshold=2):
 
 def generate_nonce_word(word, preserve_case=False):
     """
-    >>> nw = generate_nonce_word("ЛАЛКА".decode("utf8"), preserve_case=True)
-    >>> assert nw == "ХУЯЛКА".decode("utf8")
+    >>> nw = generate_nonce_word("ЛАЛКА", preserve_case=True)
+    >>> assert nw == "ХУЯЛКА"
 
-    >>> nw = generate_nonce_word("Лалка!".decode("utf8"), preserve_case=True)
-    >>> assert nw == "Хуялка!".decode("utf8")
+    >>> nw = generate_nonce_word("Лалка!", preserve_case=True)
+    >>> print nw
+    Хуялка!
 
-    >>> nw = generate_nonce_word("ЛАЛКА".decode("utf8"), preserve_case=False)
-    >>> assert nw == "хуялка".decode("utf8")
+    >>> nw = generate_nonce_word("ЛАЛКА", preserve_case=False)
+    >>> print nw
+    хуялка
 
-    >>> nw = generate_nonce_word("ннармкрч".decode("utf-8"), False)
-    >>> assert nw == "хуярмкрч".decode("utf-8")
+    >>> nw = generate_nonce_word("ЛАлка", preserve_case=True)
+    >>> print nw
+    Хуялка
 
-    >>> nw = generate_nonce_word("да".decode("utf-8"), False)
-    >>> assert nw == "да".decode("utf-8")
+    >>> nw = generate_nonce_word("ннармкрч", False)
+    >>> assert nw == "хуярмкрч"
+
+    >>> nw = generate_nonce_word("да", False)
+    >>> assert nw == "да"
     """
 
     index = find_first_vowel_index(word)
@@ -173,10 +176,20 @@ def generate_nonce_word(word, preserve_case=False):
     if not preserve_case:
         return nonce_word.lower()
 
-    if word[:index + 1].isupper():
-        nonce_word = nonce_word.upper()
-    elif word[:index + 1].istitle():
-        nonce_word = nonce_word.title()
+    is_title = word[0].isupper()
+    is_uppercase = False
+
+    for char in word[1:]:
+        if char.isupper():
+            is_uppercase = True
+        else:
+            is_uppercase = False
+
+    if is_uppercase:
+        return nonce_word.upper()
+
+    if is_title:
+        return nonce_word.title()
 
     return nonce_word
 
@@ -189,41 +202,41 @@ def generate_nonce_phrase(phrase,
                           templates_nonce_only=TEMPLATES_NONCE_ONLY,
                           preserve_case=True):
     """
-    >>> templates_simple = ["{word}-{nonce_word}".decode("utf8")]
-    >>> templates_composite = ["{word}-{nonce_word}".decode("utf8")]
-    >>> templates_nonce_only = ["test".decode("utf8")]
-    >>> extra_words = ["двач".decode("utf8")]
+    >>> templates_simple = ["{word}-{nonce_word}"]
+    >>> templates_composite = ["{word}-{nonce_word}"]
+    >>> templates_nonce_only = ["test"]
+    >>> extra_words = ["двач"]
 
-    >>> np = generate_nonce_phrase("ПРОВЕРКА, двач!".decode("utf8"),
+    >>> np = generate_nonce_phrase("ПРОВЕРКА, двач!",
     ...                            extra_words=extra_words,
     ...                            templates_simple=templates_simple,
     ...                            nonce_quantity=1.0)
-    >>> assert np == "ПРОВЕРКА-ХУЁВЕРКА, двач-хуяч!".decode("utf8")
+    >>> assert np == "ПРОВЕРКА-ХУЁВЕРКА, двач-хуяч!"
 
-    >>> np = generate_nonce_phrase("Проверка".decode("utf8"),
+    >>> np = generate_nonce_phrase("Проверка",
     ...                            templates_composite=templates_composite,
     ...                            nonce_quantity=1.0)
-    >>> assert np == "Проверка-Хуёверка".decode("utf8")
+    >>> assert np == "Проверка-Хуёверка"
 
-    >>> np = generate_nonce_phrase("рики-тики-тави".decode("utf8"),
+    >>> np = generate_nonce_phrase("рики-тики-тави",
     ...                            templates_nonce_only=templates_nonce_only,
     ...                            nonce_quantity=1.0)
-    >>> assert np == "test-test-test".decode("utf8")
+    >>> assert np == "test-test-test"
 
-    >>> np = generate_nonce_phrase("без изменений".decode("utf8"),
+    >>> np = generate_nonce_phrase("без изменений",
     ...                            nonce_quantity=0.0)
-    >>> assert np == "без изменений".decode("utf8")
+    >>> assert np == "без изменений"
 
-    >>> np = generate_nonce_phrase("а лахкороч".decode("utf-8"),
+    >>> np = generate_nonce_phrase("а лахкороч",
     ...                            templates_simple=templates_simple,
     ...                            nonce_quantity=1.0)
-    >>> assert np == "а лахкороч-хуяхкороч".decode("utf-8")
+    >>> assert np == "а лахкороч-хуяхкороч"
 
-    >>> np = generate_nonce_phrase("да бля это".decode("utf-8"),
+    >>> np = generate_nonce_phrase("да бля это",
     ...                            templates_simple=templates_simple,
     ...                            templates_composite=templates_composite,
     ...                            nonce_quantity=1.0)
-    >>> assert np == "да бля это-хуэто".decode("utf-8")
+    >>> assert np == "да бля это-хуэто"
     """
 
     assert 0 <= nonce_quantity <= 1.0
@@ -263,7 +276,7 @@ def generate_nonce_phrase(phrase,
 
 def count_vowels(word):
     """
-    >>> assert count_vowels("проверка".decode("utf8")) is 3
+    >>> assert count_vowels("проверка") is 3
     """
 
     return len([char for char in word if char.lower() in VOWELS])
@@ -286,7 +299,7 @@ class NonceGenerator(Plugin):
 
     # A value which "special words only" algorithm should trigger on
     # randomly. (float 0 <= x <= 1.0). Default is 1/1.
-    #EXTRA_TRIGGER_THRESHOLD = 1.0
+    # EXTRA_TRIGGER_THRESHOLD = 1.0
     EXTRA_TRIGGER_THRESHOLD = 0.1
 
     HISTORY_LIMIT = 5
@@ -325,7 +338,6 @@ class NonceGenerator(Plugin):
                 word = word.strip(u"{0}{1}".format(u"—", punctuation))
                 for keyword in EXTRA_WORDS:
                     if word.lower().startswith(keyword.lower()):
-                        #if self.EXTRA_TRIGGER_THRESHOLD - uniform(0.0, 1.0) > 0:
                         if uniform(0.0, 1.0) <= self.EXTRA_TRIGGER_THRESHOLD:
                             _output.append(generate_nonce_phrase(word))
 
@@ -354,7 +366,6 @@ class NonceGenerator(Plugin):
         # Algorithm which triggers randomly if nothing else has been
         # triggered before.
         if not _output:
-            #if self.TRIGGER_THRESHOLD - uniform(0.0, 1.0) > 0:
             if uniform(0.0, 1.0) <= self.TRIGGER_THRESHOLD:
                 result = generate_nonce_phrase(phrase=message.Body,
                                                nonce_quantity=uniform(0.1, 0.9))
@@ -373,7 +384,7 @@ class NonceGenerator(Plugin):
         if msg:
             shuffle(msg)
             self.output.append(ChatMessage(message.Chat.Name, "\n".join(msg)))
-            #message.Chat.SendMessage(u"\n".join(msg))
+            # message.Chat.SendMessage(u"\n".join(msg))
 
         return message, status
 

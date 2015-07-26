@@ -21,7 +21,7 @@ from gooby.dispatcher import dispatcher, _id
 
 
 SIGNAL = "test_signal"
-ANOTHER_SIGNAL = "herp derp"
+ANOTHER_SIGNAL = 1
 
 
 class DispatcherTestCase(unittest.TestCase):

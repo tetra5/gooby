@@ -89,10 +89,10 @@ def get_video_id(url):
 
 def get_duration(youtube_duration):
     """
-    >>> get_duration('PT15M51S')
+    >>> get_duration(u'PT15M51S')
     951
 
-    >>> get_duration('PT1H11M10S')
+    >>> get_duration(u'PT1H11M10S')
     4270
 
     :param unicode youtube_duration: YouTube weirdly formatted duration
@@ -103,7 +103,7 @@ def get_duration(youtube_duration):
 
     duration = 0
 
-    pattern = re.compile(r'([0-9]+)([hms])', re.I | re.U)
+    pattern = re.compile(r'([0-9]+)([hms])', re.U)
 
     matches = re.finditer(pattern, youtube_duration)
     if not matches:

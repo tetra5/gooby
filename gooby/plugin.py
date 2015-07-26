@@ -147,18 +147,22 @@ class Plugin(object):
     """
 
     def __init__(self, priority=0, whitelist=None, **kwargs):
-        self._logger_name = "Gooby.Plugin." + self.__class__.__name__
-
-        self._logger = logging.getLogger(self._logger_name)
+        self._logger = self._init_logger()
         self._logger.debug("Logger initialized")
-
-        self._cache = cache.get_cache(self.__class__.__name__)
+        self._cache = self._init_cache()
         self._logger.debug("Cache initialized")
 
         self.priority = priority
         self.whitelist = whitelist
         self.options = kwargs
         self.output = list()
+
+    def _init_logger(self):
+        self._logger_name = "Gooby.Plugin." + self.__class__.__name__
+        return logging.getLogger(self._logger_name)
+
+    def _init_cache(self):
+        return cache.get_cache(self.__class__.__name__)
 
     def flush_output(self):
         output = self.output[:]

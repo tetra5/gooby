@@ -109,7 +109,7 @@ class Azazafication(Plugin):
         if status != cmsReceived:
             return
 
-        s = message.Body.strip().replace(" ", "")
+        s = ''.join(message.Body.strip().split())
         for smile in SKIPPED:
             s = s.replace(smile, "")
 

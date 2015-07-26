@@ -234,6 +234,8 @@ PLUGINS_CONFIG = {
     "plugins.fakesed.FakeSed": {},
 
     # "plugins.littlehelper.LittleHelper": {},
+
+    "plugins.summarygenerator.SummaryGenerator": {},
 }
 
 # Import custom settings.

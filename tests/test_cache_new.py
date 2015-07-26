@@ -3,8 +3,8 @@
 
 
 """
-:mod:`test_cache` --- Cache unit tests
-======================================
+:mod:`test_cache_new` --- New caching system unit tests
+=======================================================
 """
 
 
@@ -19,13 +19,14 @@ import time
 import tempfile
 import shutil
 import datetime
+from itertools import izip, imap
 
 from tests import *
-from gooby import cache_new as cache
+from gooby import cache_new
 
 
 class CacheTestCase(unittest.TestCase):
-    klass = cache.BaseCache
+    klass = cache_new.BaseCache
     args = tuple()
     kwargs = dict()
 
@@ -68,7 +69,7 @@ class CacheTestCase(unittest.TestCase):
         self.cache.set('derp', 42, timeout=-1)
         self.cache.set('k', 'v', timeout=1)
         time.sleep(0.2)
-        self.cache._prune()
+        self.cache._trim()
         self.assertIsNone(self.cache.get('derp'))
         self.assertEqual(self.cache.get('k'), 'v')
 
@@ -77,21 +78,21 @@ class CacheTestCase(unittest.TestCase):
         self.cache.set('k', 'v', timeout=10)
         self.cache.set('herp', 'derp')
         time.sleep(0.2)
-        self.cache._prune()
+        self.cache._trim()
         self.assertIsNone(self.cache.get('derp'))
         self.assertEqual(self.cache.get('k'), 'v')
         self.assertEqual(self.cache.get('herp'), 'derp')
         self.cache.set('derp', 42, timeout=10)
         self.cache.set('derp', 'v', timeout=0.1)
         time.sleep(0.2)
-        self.cache._prune()
+        self.cache._trim()
         self.assertIsNone(self.cache.get('derp'))
 
     def test_cache_never_expires_on_zero_timeout(self):
         self.cache.set('derp', 42, timeout=0)
         self.cache.set('k', 'v', timeout=0.1)
         time.sleep(0.2)
-        self.cache._prune()
+        self.cache._trim()
         self.assertEqual(self.cache.get('derp'), 42)
         self.assertIsNone(self.cache.get('k'))
         self.cache.set('derp', 42, timeout=1)
@@ -109,6 +110,7 @@ class CacheTestCase(unittest.TestCase):
 
     def test_delitem(self):
         self.cache.set('derp', 42)
+        self.assertEqual(self.cache.get('derp'), 42)
         del self.cache['derp']
         self.assertIsNone(self.cache.get('derp'))
 
@@ -116,20 +118,32 @@ class CacheTestCase(unittest.TestCase):
         dt = datetime.datetime.now()
         self.cache.set('dt', dt, timeout=1)
         time.sleep(0.2)
-        self.cache._prune()
+        self.cache._trim()
         self.assertEqual(self.cache.get('dt'), dt)
+
+    def test_iter(self):
+        sequence = []
+        sequence_len = 10
+        for k, v in izip(imap(lambda x: unicode(x), xrange(sequence_len)),
+                         imap(lambda x: 'v_%s' % x, xrange(sequence_len))):
+            sequence.append((k, v))
+        for k, v in sequence:
+            self.cache.add(k, v)
+        self.assertEqual(len(self.cache), len(sequence))
+        cached_sequence = [item for item in self.cache]
+        self.assertSequenceEqual(sorted(cached_sequence), sorted(sequence))
 
 
 class SimpleCacheTestCase(CacheTestCase):
-    klass = cache.SimpleCache
+    klass = cache_new.SimpleCache
 
 
 class SimpleCacheZeroDefaultTimeoutTestCase(SimpleCacheTestCase):
-    kwargs = {'default_timeout': 0}
+    kwargs = {'timeout': 0}
 
 
 class SQLiteCacheTestCase(CacheTestCase):
-    klass = cache.SQLiteCache
+    klass = cache_new.SQLiteCache
 
     def setUp(self):
         self.tmp_dir = tempfile.mkdtemp()
@@ -155,13 +169,23 @@ class SQLiteCacheTestCase(CacheTestCase):
         self.assertEqual(cache_without_prefix.get('k'), 'v')
         self.assertEqual(another_cache_without_prefix.get('k'), 'v')
 
+        for cache in (cache_with_prefix, cache_without_prefix):
+            cache.clear()
+            cache.add('kk', 'v', key_prefix='prefix')
+            cache.add('kk', '000', key_prefix='p')
+            cache.add('kk', '123')
+            self.assertEqual(len(cache), 3)
+            self.assertEqual(cache.get('kk', key_prefix='prefix'), 'v')
+            self.assertEqual(cache.get('kk', key_prefix='p'), '000')
+            self.assertEqual(cache.get('kk', key_prefix=None), '123')
+
         del cache_with_prefix
         del cache_without_prefix
         del another_cache_without_prefix
 
 
 class SQLiteCacheZeroDefaultTimeoutTestCase(SQLiteCacheTestCase):
-    kwargs = {'default_timeout': 0}
+    kwargs = {'timeout': 0}
 
 
 TEST_CASES = (SimpleCacheTestCase, SQLiteCacheTestCase,
