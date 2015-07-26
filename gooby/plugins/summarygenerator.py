@@ -87,6 +87,8 @@ class MarkovChain(object):
         words.append(key[0])
         while 1:
             possible_words = self._db.get(key)
+            if not possible_words:
+                break
             word = random.choice(possible_words)
             # if any(quote in word for quote in self.QUOTES):
             #     for quote in self.QUOTES:
