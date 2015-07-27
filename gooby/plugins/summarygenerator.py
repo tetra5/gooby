@@ -81,7 +81,7 @@ class MarkovChain(object):
                 possible_keys.append(key)
         return random.choice(possible_keys)
 
-    def generate_sentence(self, max_len=5):
+    def generate_sentence(self, max_len=7):
         key = self._find_first_key()
         words = list()
         words.append(key[0])
@@ -106,7 +106,7 @@ class MarkovChain(object):
             key = key[1:] + (word, )
         return ' '.join(words)
 
-    def generate_sentences(self, sentences_count=3, max_word_per_sentence=10):
+    def generate_sentences(self, sentences_count=3, max_word_per_sentence=15):
         sentences = []
         for _ in xrange(sentences_count):
             sentence = self.generate_sentence()
@@ -139,7 +139,7 @@ class MarkovChain(object):
 class SummaryGenerator(Plugin):
     # Determines text generation frequency, i.e. generate text for every n
     # messages received.
-    MESSAGE_THRESHOLD = 200
+    MESSAGE_THRESHOLD = 100
 
     def _init_cache(self):
         return from_dict({
