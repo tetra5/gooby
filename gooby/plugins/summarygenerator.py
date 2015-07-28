@@ -169,6 +169,7 @@ class SummaryGenerator(Plugin):
                              chat_name)
 
         if cached_messages_count >= self.MESSAGE_THRESHOLD:
+            cached_messages = self.cache.get(chat_name)
             text = ' '.join([sanitize_string(s) for s in cached_messages])
             mc = MarkovChain.from_string(text)
             output = '\n'.join(mc.generate_sentences())
