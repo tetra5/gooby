@@ -54,11 +54,10 @@ class MarkovChain(object):
     # QUOTES = '\'"'
     ENDING_CHARACTERS = ('!', '?', '.')
 
-    _db = dict()
-    _order = 1
-
     def __init__(self, order=1):
         self._order = order
+        self._db = dict()
+        self._order = 1
 
     def generate_db(self, words):
         for i, word in enumerate(words[:-(self._order + 1)]):
@@ -169,7 +168,6 @@ class SummaryGenerator(Plugin):
                              chat_name)
 
         if cached_messages_count >= self.MESSAGE_THRESHOLD:
-            cached_messages = self.cache.get(chat_name)
             text = ' '.join([sanitize_string(s) for s in cached_messages])
             mc = MarkovChain.from_string(text)
             output = '\n'.join(mc.generate_sentences())
