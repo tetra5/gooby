@@ -72,12 +72,17 @@ class MarkovChain(object):
         possible_keys = []
         for key in self._db.iterkeys():
             first_word = key[0]
+            last_word = key[-1]
             if first_word.endswith(tuple(string.punctuation)):
                 continue
             if first_word.startswith(tuple(string.punctuation)):
                 continue
-            if first_word[0].isupper():
+            if last_word.endswith(tuple(string.punctuation)):
+                continue
+            if first_word.istitle():
                 possible_keys.append(key)
+        if not possible_keys:
+            possible_keys.extend(self._db.iterkeys())
         return random.choice(possible_keys)
 
     def generate_sentence(self, max_len=7):
@@ -136,8 +141,8 @@ class MarkovChain(object):
 
 
 class SummaryGenerator(Plugin):
-    # Determines text generation frequency, i.e. generate text for every n
-    # messages received.
+    # Determines text generation frequency, i.e. generate text for every
+    # n messages received.
     MESSAGE_THRESHOLD = 100
 
     def _init_cache(self):
@@ -170,7 +175,7 @@ class SummaryGenerator(Plugin):
         if cached_messages_count >= self.MESSAGE_THRESHOLD:
             text = ' '.join([sanitize_string(s) for s in cached_messages])
             mc = MarkovChain.from_string(text)
-            output = '\n'.join(mc.generate_sentences())
+            output = ' '.join(mc.generate_sentences())
             self.logger.info("Generating gibberish for %s", chat_name)
             self.output.append(ChatMessage(chat_name, output))
             self.logger.info("Flushing cache for %s", chat_name)
