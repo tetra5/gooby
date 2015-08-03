@@ -53,6 +53,9 @@ class MarkovChain(object):
     # BRACKETS = ('()', '[]', '{}', '<>')
     # QUOTES = '\'"'
     ENDING_CHARACTERS = ('!', '?', '.')
+    RUSSIAN_ALPHABET = u'абвгдеёжзийклмнопрстуфхцчшщъыьэюя'
+    ENGLISH_ALPHABET = string.lowercase
+    ALPHABETIC = RUSSIAN_ALPHABET + ENGLISH_ALPHABET
 
     def __init__(self, order=1):
         self._order = order
@@ -73,6 +76,8 @@ class MarkovChain(object):
         for key in self._db.iterkeys():
             first_word = key[0]
             last_word = key[-1]
+            if not first_word.lower().startswith(tuple(self.ALPHABETIC)):
+                continue
             if first_word.endswith(tuple(string.punctuation)):
                 continue
             if first_word.startswith(tuple(string.punctuation)):
