@@ -148,7 +148,7 @@ class MarkovChain(object):
 class SummaryGenerator(Plugin):
     # Determines text generation frequency, i.e. generate text for every
     # n messages received.
-    MESSAGE_THRESHOLD = 100
+    MESSAGE_THRESHOLD = 200
 
     def _init_cache(self):
         return from_dict({
