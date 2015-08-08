@@ -37,7 +37,7 @@ def all_same(myiter):
     False
     """
 
-    return all([myiter[0] == item for item in myiter])
+    return len(set(myiter)) is 1
 
 
 def parse_linux_quote(message):
@@ -78,19 +78,19 @@ def parse_linux_quote(message):
             )
         )\s
         (?P<sender>
-            .*
+            .+
         )
-        ]\s
+        \]\s
         (?P<quote>
             .*
         )\n?
         (?P<message>
             .*
-        )
+        )\W*
         """,
         re.UNICODE | re.VERBOSE)
 
-    return re.search(pattern, message)
+    return pattern.search(message)
 
 
 def parse_macosx_quote(message):
@@ -110,7 +110,7 @@ def parse_macosx_quote(message):
         # Conversation message pattern which matches Mac OS X Skype client
         # message quotation.
         (?P<date>
-            \d{2}.\d{2}.\d{2}
+            \d{2}\.\d{2}\.\d{2}
         )\s\w+\s
         (?P<time>
             \d{2}:\d{2}
@@ -125,11 +125,11 @@ def parse_macosx_quote(message):
         )\n*
         (?P<message>
             .*
-        )
+        )\W*
         """,
         re.UNICODE | re.VERBOSE)
 
-    return re.search(pattern, message)
+    return pattern.search(message)
 
 
 def parse_windows_quote(message):
@@ -152,7 +152,7 @@ def parse_windows_quote(message):
         )\s*
         (?P<ampm>
             \w{2}
-        )?]\s
+        )?\]\s
         (?P<sender>
             .*
         ):\s
@@ -162,11 +162,11 @@ def parse_windows_quote(message):
         <<<\s*
         (?P<message>
             .*
-        )
+        )\W*
         """,
         re.UNICODE | re.VERBOSE)
 
-    return re.search(pattern, message)
+    return pattern.search(message)
 
 
 def message_is_quoted(message):
