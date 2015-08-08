@@ -81,13 +81,14 @@ class TwitchTvNotifier(Plugin):
                 output.append(MESSAGE_TEMPLATE.format(**params))
             self.cache.set(stream, STATUS_ONLINE)
 
-        if self.whitelist:
+        if self.whitelist and output:
             message = "\n".join(output)
             responses = dispatcher.send(signals.REQUEST_CHATS)
             chats = responses[0]
             for chat in chats:
                 if chat_is_whitelisted(chat, self.whitelist):
                     self.output.append(ChatMessage(chat, message))
+
         _timer = Timer(self.check_interval, self._check_streams)
         _timer.daemon = True
         _timer.start()
