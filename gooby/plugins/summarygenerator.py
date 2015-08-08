@@ -161,10 +161,14 @@ def another_sentence_quote_filter(sentence, *args, **kwargs):
     return output
 
 
+def sentence_min_length_limiter(sentence, *args, **kwargs):
+    return '' if len(sentence.split()) < 2 else sentence
+
+
 # Filter order matters.
 SENTENCE_PREFILTERS = (sentence_quote_filter, another_sentence_quote_filter, )
-WORD_FILTERS = (url_filter, timestamp_filter, quotation_filter)
-SENTENCE_POSTFILTERS = (sentence_normalizer, )
+WORD_FILTERS = (url_filter, timestamp_filter, quotation_filter, )
+SENTENCE_POSTFILTERS = (sentence_normalizer, sentence_min_length_limiter, )
 
 
 class MarkovChain(object):
