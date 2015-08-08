@@ -306,6 +306,7 @@ class SummaryGenerator(Plugin):
             cached_sentences.append((processed_message, time()))
             self.cache.set(chat_name, cached_sentences)
             counter += 1
+            self.cache.set('counter', counter, key_prefix=chat_name)
 
         if not counter % 50 and counter:
             self.logger.info("Triggering in %s messages at %s",
