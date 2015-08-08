@@ -279,7 +279,7 @@ class SummaryGenerator(Plugin):
             except IndexError:
                 break
             msg_dt_utc = datetime.fromtimestamp(msg_timestamp_utc)
-            if now_dt_utc - msg_dt_utc > self.EXPIRATION_TIMEDELTA:
+            if now_dt_utc - msg_dt_utc < self.EXPIRATION_TIMEDELTA:
                 cached_messages.appendleft((message, msg_timestamp_utc))
                 break
             purged_count += 1
