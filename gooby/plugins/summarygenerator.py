@@ -18,13 +18,16 @@ import os
 import random
 import string
 import re
+from collections import deque
+from datetime import datetime, timedelta
+from time import time
 
 from Skype4Py.enums import cmsReceived
 
 from plugin import Plugin
 from output import ChatMessage
 from config import CACHE_DIR
-from cache_new import from_dict
+from cache_new import from_dict, SQLiteCache
 from plugins.herpderper import (
     parse_linux_quote, parse_macosx_quote, parse_windows_quote
 )
@@ -164,6 +167,7 @@ class MarkovChain(object):
         self._order = order
         self._db = dict()
         self._order = 1
+        self._used_first_keys = list()
 
     def generate_db(self, words):
         for i, word in enumerate(words[:-(self._order + 1)]):
@@ -178,6 +182,8 @@ class MarkovChain(object):
         for key in self._db.iterkeys():
             first_word = key[0]
             last_word = key[-1]
+            if key in self._used_first_keys:
+                continue
             if not first_word.lower().startswith(tuple(self.ALPHABETIC)):
                 continue
             if first_word.endswith(tuple(string.punctuation)):
@@ -190,7 +196,9 @@ class MarkovChain(object):
                 possible_keys.append(key)
         if not possible_keys:
             possible_keys.extend(self._db.keys())
-        return random.choice(possible_keys)
+        first_key = random.choice(possible_keys)
+        self._used_first_keys.append(first_key)
+        return first_key
 
     def generate_sentence(self, max_len=8):
         key = self._find_first_key()
@@ -217,13 +225,11 @@ class MarkovChain(object):
         return sentences
 
     @classmethod
-    def from_string(cls, text, order=1, skip_urls=True):
+    def from_string(cls, text, order=1):
         obj = cls(order)
         words = []
         for word in text.split():
             if not word:
-                continue
-            if skip_urls and any(s in word.lower() for s in ('http', 'www.')):
                 continue
             words.append(word)
         obj.generate_db(words)
@@ -240,7 +246,9 @@ class MarkovChain(object):
 class SummaryGenerator(Plugin):
     # Determines text generation frequency, i.e. generate text for every
     # n messages received.
-    MESSAGE_THRESHOLD = 200
+    TRIGGER_THRESHOLD = 150
+
+    EXPIRATION_TIMEDELTA = timedelta(days=7)
 
     def _init_cache(self):
         return from_dict({
@@ -261,35 +269,56 @@ class SummaryGenerator(Plugin):
             output = f(output)
         return output
 
+    def _purge_expired(self, chat_name):
+        cached_messages = self.cache.get(chat_name) or deque()
+        now_dt_utc = datetime.utcnow()
+        purged_count = 0
+        while 1:
+            try:
+                message, msg_timestamp_utc = cached_messages.popleft()
+            except IndexError:
+                break
+            msg_dt_utc = datetime.fromtimestamp(msg_timestamp_utc)
+            if now_dt_utc - msg_dt_utc > self.EXPIRATION_TIMEDELTA:
+                cached_messages.appendleft((message, msg_timestamp_utc))
+                break
+            purged_count += 1
+        self.cache.set(chat_name, cached_messages)
+        self.logger.info("Purged %s messages from %s (%s left)",
+                         purged_count, chat_name, len(cached_messages))
+
     def on_message_status(self, message, status):
         if status != cmsReceived:
             return
 
         chat_name = message.Chat.Name
 
-        cached_messages = self.cache.get(chat_name) or list()
+        try:
+            counter = int(self.cache.get('counter', key_prefix=chat_name))
+        except (TypeError, ValueError):
+            counter = 0
+
+        cached_sentences = self.cache.get(chat_name) or deque()
 
         processed_message = self.process_message(message)
 
         if processed_message:
-            cached_messages.append(processed_message)
-            self.cache.set(chat_name, cached_messages)
+            cached_sentences.append((processed_message, time()))
+            self.cache.set(chat_name, cached_sentences)
+            counter += 1
 
-        cached_messages_count = len(cached_messages)
+        if not counter % 50 and counter:
+            self.logger.info("Triggering in %s messages at %s",
+                             self.TRIGGER_THRESHOLD - counter, chat_name)
 
-        if not cached_messages_count % 50 and cached_messages_count:
-            self.logger.info("Accumulated %s/%s messages at %s",
-                             cached_messages_count, self.MESSAGE_THRESHOLD,
-                             chat_name)
-
-        if cached_messages_count >= self.MESSAGE_THRESHOLD:
-            text = ' '.join([sentence for sentence in cached_messages])
+        if counter >= self.TRIGGER_THRESHOLD:
+            self._purge_expired(chat_name)
+            self.logger.info("Generating gibberish for %s", chat_name)
+            text = ' '.join([sentence[0] for sentence in cached_sentences])
             mc = MarkovChain.from_string(text)
             output = ' '.join(mc.generate_sentences())
-            self.logger.info("Generating gibberish for %s", chat_name)
             self.output.append(ChatMessage(chat_name, output))
-            self.logger.info("Flushing cache for %s", chat_name)
-            self.cache.set(chat_name, list())
+            self.cache.set('counter', 0, key_prefix=chat_name)
 
         return message, status
 
