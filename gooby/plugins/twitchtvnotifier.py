@@ -73,10 +73,13 @@ class TwitchTvNotifier(Plugin):
             if not params:
                 self.cache.set(stream, STATUS_OFFLINE)
                 continue
-            previous_state = self.cache.get(stream)
-            if previous_state in (None, STATUS_OFFLINE):
+            try:
+                previous_state = int(self.cache.get(stream))
+            except (TypeError, ValueError):
+                previous_state = None
+            if previous_state in (None, STATUS_OFFLINE) and params:
                 output.append(MESSAGE_TEMPLATE.format(**data))
-            self.cache.set(stream, STATUS_ONLINE)
+                self.cache.set(stream, STATUS_ONLINE)
 
         if self.whitelist:
             message = "\n".join(output)
