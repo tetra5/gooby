@@ -71,22 +71,22 @@ def parse_windows_multiple_quote(message):
     return []
 
 
-def url_filter(word):
+def url_filter(word, *args, **kwargs):
     crap = ('http', 'ftp', 'www', 'mailto')
     return '' if any(substring in word.lower() for substring in crap) else word
 
 
-def timestamp_filter(word):
+def timestamp_filter(word, *args, **kwargs):
     pattern = re.compile(ur'(\[\d{1,2}:\d{1,2}:\d{2}\])')
     return pattern.sub('', word)
 
 
-def quotation_filter(word):
+def quotation_filter(word, *args, **kwargs):
     s = set(word)
     return '' if len(s) is 1 and any(char in s for char in '<>') else word
 
 
-def sentence_normalizer(sentence):
+def sentence_normalizer(sentence, *args, **kwargs):
     """
     >>> print sentence_normalizer("чот рофл, ходил ")
     Чот рофл, ходил.
@@ -133,7 +133,7 @@ def sentence_normalizer(sentence):
     return ' '.join(output)
 
 
-def sentence_quote_filter(sentence):
+def sentence_quote_filter(sentence, *args, **kwargs):
     for func in (parse_windows_quote, parse_linux_quote, parse_macosx_quote):
         match = func(sentence)
         if match is not None:
@@ -147,8 +147,22 @@ def sentence_quote_filter(sentence):
     return sentence
 
 
+def another_sentence_quote_filter(sentence, *args, **kwargs):
+    """
+    >>> chat_members = ['member 1', 'some dude']
+    >>> sentence = u'member 1: herp derp'
+    >>> another_sentence_quote_filter(sentence, chat_members=chat_members)
+    u'herp derp'
+    """
+    chat_members = kwargs.get('chat_members', list())
+    output = sentence
+    for member in chat_members:
+        output = ' '.join(filter(None, [w.strip() for w in output.split(member + ':')]))
+    return output
+
+
 # Filter order matters.
-SENTENCE_PREFILTERS = (sentence_quote_filter, )
+SENTENCE_PREFILTERS = (sentence_quote_filter, another_sentence_quote_filter, )
 WORD_FILTERS = (url_filter, timestamp_filter, quotation_filter)
 SENTENCE_POSTFILTERS = (sentence_normalizer, )
 
@@ -260,9 +274,15 @@ class SummaryGenerator(Plugin):
 
     @staticmethod
     def process_message(message):
+        names = [m.DisplayName for m in message.Chat.Members]
+        usernames = [m.Handle for m in message.Chat.Members]
+        chat_members = names + usernames
+        kwargs = {
+            'chat_members': chat_members,
+        }
         output = message.Body
         for f in SENTENCE_PREFILTERS:
-            output = f(output)
+            output = f(output, **kwargs)
         for f in WORD_FILTERS:
             output = ' '.join(filter(None, [f(w) for w in output.split()]))
         for f in SENTENCE_POSTFILTERS:
