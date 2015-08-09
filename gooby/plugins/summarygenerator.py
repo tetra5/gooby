@@ -70,6 +70,7 @@ def parse_android_quote(message):
 
     return pattern.search(message)
 
+
 def parse_windows_multiple_quote(message):
     """
     >>> message = ur'''[06.08.2015 12:30:27] some derp: le message >> Kappa
