@@ -115,7 +115,15 @@ def url_filter(word, *args, **kwargs):
 
 
 def timestamp_filter(word, *args, **kwargs):
-    pattern = re.compile(ur'(\[\d{1,2}:\d{1,2}:\d{2}\])')
+    """
+    >>> timestamp_filter(u'[4:14:19 AM] 1')
+    u'1'
+    >>> timestamp_filter(u'[04:14:19] 2')
+    u'2'
+    >>> timestamp_filter(u'[4:14:19 PM] 3')
+    u'3'
+    """
+    pattern = re.compile(ur'(\[\d{1,2}:\d{1,2}:\d{2}(?:\s\w{2})?\]\s*)')
     return pattern.sub('', word)
 
 
