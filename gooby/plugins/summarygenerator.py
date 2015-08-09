@@ -33,6 +33,43 @@ from plugins.herpderper import (
 )
 
 
+def parse_android_quote(message):
+    """
+    >>> message = ur'''
+    ... some skype name - Сегодня 6:19
+    ... > A Quoted message.
+    ... some answer
+    ... '''
+    >>> match = parse_android_quote(message)
+    >>> match.group('quote')
+    u'A Quoted message.'
+    >>> match.group('message')
+    u'some answer'
+    """
+    pattern = re.compile(
+        r"""
+        (?P<sender>
+            .*
+        )\s\-\s
+        (?P<date>
+            .*
+        )\s
+        (?P<time>
+            \d{1,2}:\d{1,2}
+        )\n
+        >\s*
+        (?P<quote>
+            .*
+        )\n*
+        (?P<message>
+            .*
+        )
+        """,
+        re.VERBOSE | re.UNICODE | re.MULTILINE
+    )
+
+    return pattern.search(message)
+
 def parse_windows_multiple_quote(message):
     """
     >>> message = ur'''[06.08.2015 12:30:27] some derp: le message >> Kappa
@@ -143,7 +180,8 @@ def sentence_normalizer(sentence, *args, **kwargs):
 
 
 def sentence_quote_filter(sentence, *args, **kwargs):
-    for func in (parse_windows_quote, parse_linux_quote, parse_macosx_quote):
+    for func in (parse_windows_quote, parse_linux_quote, parse_macosx_quote,
+                 parse_android_quote):
         match = func(sentence)
         if match is not None:
             try:
