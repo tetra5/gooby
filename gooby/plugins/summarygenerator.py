@@ -102,7 +102,12 @@ def sentence_normalizer(sentence, *args, **kwargs):
     <BLANKLINE>
     >>> print sentence_normalizer('.')
     <BLANKLINE>
+    >>> print sentence_normalizer('asdf ._.')
+    Asdf ._.
     """
+    replacements = {
+        '. _.': ' ._.',
+    }
     pattern = re.compile(r'\w+', re.U)
     sentences = [word.strip() for word in re.split(ur'(\.)', sentence) if word]
     ending = '.'
@@ -130,7 +135,11 @@ def sentence_normalizer(sentence, *args, **kwargs):
     if not filter(None, ' '.join(output).split(ending)):
         return ''
 
-    return ' '.join(output)
+    output = ' '.join(output)
+    for old, new in replacements.iteritems():
+        output = output.replace(old, new)
+
+    return output
 
 
 def sentence_quote_filter(sentence, *args, **kwargs):
