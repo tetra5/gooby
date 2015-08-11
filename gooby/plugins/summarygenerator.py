@@ -27,7 +27,7 @@ from Skype4Py.enums import cmsReceived
 from plugin import Plugin
 from output import ChatMessage
 from config import CACHE_DIR
-from cache_new import from_dict, SQLiteCache
+from cache_new import from_dict
 from plugins.herpderper import (
     parse_linux_quote, parse_macosx_quote, parse_windows_quote
 )
@@ -247,9 +247,9 @@ class MarkovChain(object):
         for i, word in enumerate(words[:-(self._order + 1)]):
             value_pos = i + self._order
             key = tuple(words[i:i + self._order])
-            values = self._db.setdefault(key, set())
+            values = self._db.setdefault(key, list())
             value = words[value_pos]
-            values.add(value)
+            values.append(value)
 
     def _find_first_key(self):
         possible_keys = []
