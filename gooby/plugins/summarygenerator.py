@@ -388,7 +388,7 @@ class SummaryGenerator(Plugin):
             counter += 1
             self.cache.set('counter', counter, key_prefix=chat_name)
 
-        if not counter % 50 and counter:
+        if not counter % 50 and counter and self.TRIGGER_THRESHOLD - counter:
             self.logger.info("Triggering in %s messages at %s",
                              self.TRIGGER_THRESHOLD - counter, chat_name)
 
