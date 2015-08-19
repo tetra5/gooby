@@ -322,7 +322,7 @@ class SummaryGenerator(Plugin):
     # n messages received.
     TRIGGER_THRESHOLD = 150
 
-    EXPIRATION_TIMEDELTA = timedelta(days=7)
+    EXPIRATION_TIMEDELTA = timedelta(days=14)
 
     def _init_cache(self):
         return from_dict({
