@@ -208,7 +208,7 @@ def message_is_quoted(message):
 class HerpDerper(Plugin):
     """
     A very simple and "fun" plugin which reacts on certain keywords by replying
-    messages with random amount of "herp"'s and "derp"'s while maintaining
+    messages with random amount of "herp"s and "derp"s while maintaining
     meaningless statistics.
     """
 
@@ -232,7 +232,8 @@ class HerpDerper(Plugin):
         msg = []
 
         if "?" in message.Body:
-            msg = random.choice(["да", "нет"])
+            msg = random.choice(["да", "нет", 'Да.', 'Нет.', 'Да', 'Нет',
+                                 'да.', 'нет.'])
             self.output.append(ChatMessage(message.Chat.Name, msg))
             return
 
