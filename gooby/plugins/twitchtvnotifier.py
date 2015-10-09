@@ -68,7 +68,10 @@ class TwitchTvNotifier(Plugin):
 
         global _timer
         output = []
-        data = self.retrieve_stream_data(self.stream_names)
+        try:
+            data = self.retrieve_stream_data(self.stream_names)
+        except:
+            data = dict()
         for stream, params in data.iteritems():
             if not params:
                 self.cache.set(stream, STATUS_OFFLINE)
