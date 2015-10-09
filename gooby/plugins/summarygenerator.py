@@ -240,7 +240,7 @@ class MarkovChain(object):
     def __init__(self, order=1):
         self._order = order
         self._db = dict()
-        self._order = 1
+        self._order = 2
         self._used_first_keys = list()
 
     def generate_db(self, words):
@@ -322,7 +322,7 @@ class SummaryGenerator(Plugin):
     # n messages received.
     TRIGGER_THRESHOLD = 150
 
-    EXPIRATION_TIMEDELTA = timedelta(weeks=8)
+    EXPIRATION_TIMEDELTA = timedelta(weeks=12)
 
     def _init_cache(self):
         return from_dict({
